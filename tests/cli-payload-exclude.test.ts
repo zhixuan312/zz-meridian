@@ -17,7 +17,7 @@ describe('the payload exclusion', () => {
         fs.mkdirSync(path.dirname(path.join(root, rel)), { recursive: true });
         fs.writeFileSync(path.join(root, rel), bytes);
       };
-      for (const rel of ['cli/scripts/build-payload.ts', 'cli/src/files.ts', 'cli/package.json', 'scripts/lib/update-session.ts']) {
+      for (const rel of ['cli/scripts/build-payload.ts', 'cli/src/files.ts', 'cli/src/jsonc.ts', 'cli/package.json', 'scripts/lib/update-session.ts', 'scripts/lib/jsonc.ts']) {
         put(rel, fs.readFileSync(path.join(ROOT, rel)));
       }
       put('package.json', '{"type":"module"}');

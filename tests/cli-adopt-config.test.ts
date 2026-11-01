@@ -88,6 +88,7 @@ describe('the skill adopt brings', () => {
     const pkg = project();
     put(pkg, 'package.json', JSON.stringify({ type: 'module', version: '0.0.0' }));
     put(pkg, 'src/files.ts', fs.readFileSync(path.join(ROOT, 'cli/src/files.ts')));
+    put(pkg, 'src/jsonc.ts', fs.readFileSync(path.join(ROOT, 'cli/src/jsonc.ts')));
     put(pkg, 'payload/other.txt', 'unrelated payload');
     if (missing === 'entry point') put(pkg, 'payload/skills/zz-meridian/references/note.md', 'Reference without a skill entry point.');
     const result = spawnSync(process.execPath, ['--input-type=module', '-e', `import { installSkill } from ${JSON.stringify(pathToFileURL(path.join(pkg, 'src/files.ts')).href)}; installSkill(${JSON.stringify(root)});`], { encoding: 'utf8' });

@@ -11,7 +11,7 @@ export function aliasesOf(tsconfig: string | null): Map<string, string> {
   const out = new Map<string, string>([['@meridian/', 'src/']]);
   if (!tsconfig) return out;
   try {
-    const raw = parseJsonc(tsconfig);
+    const raw = parseJsonc(tsconfig) as { compilerOptions?: { baseUrl?: unknown; paths?: Record<string, unknown> }; baseUrl?: unknown; paths?: Record<string, unknown> };
     const options = raw?.compilerOptions ?? raw;
     const base = typeof options?.baseUrl === 'string' ? options.baseUrl : '.';
     for (const [alias, targets] of Object.entries(options?.paths ?? {})) {

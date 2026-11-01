@@ -1,7 +1,27 @@
 import { describe, expect, it } from 'vitest';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { spawnSync } from 'node:child_process';
 import { aliasesOf, importTarget } from '../scripts/lib/aliases.ts';
 
 describe('the import aliases the checks resolve', () => {
+  it('resolves JSONC in a standalone Node process without installed packages', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'meridian-aliases-'));
+    try {
+      fs.cpSync(path.resolve(import.meta.dirname, '../scripts/lib'), path.join(dir, 'lib'), { recursive: true });
+      fs.writeFileSync(path.join(dir, 'package.json'), '{"type":"module"}');
+      const config = '\uFEFF{"compilerOptions":{"baseUrl":"./code",/* old path */"paths":{"@/*":["./live/*"],},},}';
+      const run = spawnSync(process.execPath, ['--input-type=module', '--eval', `import { aliasesOf } from './lib/aliases.ts'; console.log(JSON.stringify(aliasesOf(${JSON.stringify(config)})))`], { cwd: dir, encoding: 'utf8' });
+      expect(run.status, run.stderr).toBe(0);
+      expect(JSON.parse(run.stdout)).toContainEqual(['@/', 'code/live/']);
+    } finally { fs.rmSync(dir, { recursive: true, force: true }); }
+  });
+
+  it('refuses unterminated comments and never joins tokens across a comment', () => {
+    expect(() => aliasesOf('{"compilerOptions":{}} /* unfinished')).toThrow();
+    expect(() => aliasesOf('{"compilerOptions":{},"x":tru/* gap */e}')).toThrow();
+  });
   it('ignores commented paths and resolves live paths against baseUrl', () => {
     const a = aliasesOf(`{
       "compilerOptions": {

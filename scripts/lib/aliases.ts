@@ -5,16 +5,17 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import ts from 'typescript';
+import { parseJsonc } from './jsonc.ts';
 
 /** Each alias prefix (`@/`, `@meridian/`) and the project directory it names (`src/`, or `` for the root). */
 export function aliasesOf(tsconfig: string | null): [string, string][] {
   const out = new Map<string, string>();
   if (tsconfig !== null) {
-    // Use the compiler's JSONC reader: commented-out mappings are not configuration.
-    const parsed = ts.parseConfigFileTextToJson('tsconfig.json', tsconfig);
-    if (parsed.error) throw new Error(`tsconfig.json: ${ts.flattenDiagnosticMessageText(parsed.error.messageText, ' ')}`);
-    const options = parsed.config?.compilerOptions;
+    let config: unknown;
+    try { config = parseJsonc(tsconfig); } catch (error) {
+      throw new Error(`tsconfig.json: ${error instanceof Error ? error.message : String(error)}`);
+    }
+    const options = (config as { compilerOptions?: { baseUrl?: unknown; paths?: Record<string, unknown> } } | null)?.compilerOptions;
     const base = typeof options?.baseUrl === 'string' ? options.baseUrl : '.';
     for (const [alias, targets] of Object.entries(options?.paths ?? {})) {
       if (!/^@[\w-]*\/\*$/.test(alias) || !Array.isArray(targets) || typeof targets[0] !== 'string' || !/^[^*]*\*$/.test(targets[0])) continue;
