@@ -2,6 +2,7 @@
 import type { ReactElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { Tooltip } from 'radix-ui';
+import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const jar = vi.hoisted(() => ({ value: undefined as string | undefined }));
@@ -178,10 +179,11 @@ describe("Home's states", () => {
     expect(doc.querySelector('[aria-busy="true"]')).toBeTruthy();
   });
 
-  it('error: what failed, and Retry', () => {
-    const html = renderToStaticMarkup(<Tooltip.Provider><DashboardError error={Object.assign(new Error('days'), { digest: 'd1' })} retry={() => {}} /></Tooltip.Provider>);
-    expect(html).toMatch(/did not load/);
-    expect(html).toMatch(/Retry/);
+
+  it.each([null, undefined, 'private-thrown-detail', 42, { digest: {} }])('keeps the error fallback usable for a thrown non-Error value: %j', (error) => {
+    const { container } = render(<Tooltip.Provider><DashboardError error={error} retry={() => {}} /></Tooltip.Provider>);
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeEnabled();
+    if (typeof error === 'string') expect(container.textContent).not.toContain(error);
   });
 
   it('empty: nothing has arrived yet, said once, and no figure drawn as if it had', async () => {
