@@ -1,14 +1,21 @@
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { cleanup, render, screen } from '@testing-library/react';
 import type { ReactElement } from 'react';
 import { describe, expect, it } from 'vitest';
 import { Busy, ChartSkeleton, LeadRoom, LoadingPage, TableSkeleton, TilesSkeleton } from '@/components/patterns/page-loading';
+import { projectAliases } from '../scripts/lib/aliases.ts';
+import { blankedText, resolveSpec, valueImports } from '../scripts/lib/layer-rules.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const CARD = 'src/components/patterns/page-loading';
 /** The skeleton lines an element draws: each is a span hidden from assistive technology. */
 const lines = (el: ReactElement) => render(el).container.querySelectorAll('span[aria-hidden="true"]').length;
+const productDependencies = (file: string, source: string, aliases: [string, string][], root: string) =>
+  valueImports(blankedText(source))
+    .map(({ spec }) => resolveSpec(file, spec, aliases, root))
+    .filter((target) => target !== null && /^src\/(?:data|views|system)\/|^src\/app\.config\./.test(target));
 
 describe('a page on its way', () => {
   it('is announced once as busy under its own name, with its heading already there', () => {
@@ -103,6 +110,61 @@ describe('where the loading states come from', () => {
   it('knows nothing of the product: the card imports no data, view, system or config module', () => {
     const files = fs.readdirSync(path.join(ROOT, CARD)).filter((f) => /\.tsx?$/.test(f) && f !== 'preview.tsx');
     expect(files.length).toBeGreaterThan(0);
-    for (const f of files) expect(fs.readFileSync(path.join(ROOT, CARD, f), 'utf8'), f).not.toMatch(/from '@\/(data|views|system|app\.config)/);
+    const aliases = projectAliases(ROOT);
+    for (const f of files) {
+      const file = `${CARD}/${f}`;
+      expect(productDependencies(file, fs.readFileSync(path.join(ROOT, file), 'utf8'), aliases, ROOT), f).toEqual([]);
+    }
+  });
+
+  it('rejects runtime-extension product imports without confusing toolkit, type or missing imports', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'meridian-loading-imports-'));
+    try {
+      const files = ['src/data/orders.ts', 'src/views/orders.tsx', 'src/system/session.mts', 'src/app.config.cts', 'src/components/toolkit.ts'];
+      for (const file of files) {
+        fs.mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
+        fs.writeFileSync(path.join(root, file), 'export const value = 1;');
+      }
+      const aliases: [string, string][] = [['@/', 'src/']];
+      const file = 'src/components/patterns/page-loading/index.tsx';
+      expect(productDependencies(file, [
+        'import { value } from "@/data/orders.js";',
+        'export { value as view } from "@/views/orders.jsx";',
+        'import("@/system/session.mjs");',
+        'import "@/app.config.cjs";',
+      ].join('\n'), aliases, root)).toEqual(files.slice(0, 4));
+      expect(productDependencies(file, [
+        'import type { value } from "@/data/orders.js";',
+        'import { type value } from "@/views/orders.jsx";',
+        'import { value } from "../../toolkit.js";',
+        'import "@/data/missing.js";',
+      ].join('\n'), aliases, root)).toEqual([]);
+      expect(resolveSpec(file, '../../toolkit.js', aliases, root)).toBe('src/components/toolkit.ts');
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('uses TypeScript substitution order before runtime files, never a suffix after an explicit JavaScript extension', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'meridian-import-resolution-'));
+    try {
+      fs.mkdirSync(path.join(root, 'src'), { recursive: true });
+      for (const file of ['module.ts', 'module.tsx', 'module.js', 'runtime.js', 'runtime.js.ts', 'esm.mts', 'esm.mjs', 'common.cts', 'common.cjs', 'types.d.ts', 'types.js', 'missing.js.ts']) {
+        fs.writeFileSync(path.join(root, 'src', file), '');
+      }
+      const resolve = (spec: string) => resolveSpec('src/from.ts', spec, [], root);
+      expect(resolve('./module.js')).toBe('src/module.ts');
+      expect(resolve('./module.jsx')).toBe('src/module.tsx');
+      expect(resolve('./runtime.js')).toBe('src/runtime.js');
+      expect(resolve('./esm.mjs')).toBe('src/esm.mts');
+      expect(resolve('./common.cjs')).toBe('src/common.cts');
+      expect(resolve('./types.js')).toBe('src/types.d.ts');
+      expect(resolve('./missing.js')).toBeNull();
+      expect(resolve('./module')).toBe('src/module.ts');
+      expect(resolve('./module.tsx')).toBe('src/module.tsx');
+      expect(resolve('external-package')).toBeNull();
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
   });
 });

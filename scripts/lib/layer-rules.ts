@@ -40,11 +40,24 @@ export function valueImports(src: string): { spec: string; at: number }[] {
   return out;
 }
 
+/** TypeScript/bundler extension substitution, in source, declaration, then runtime order. */
+const RUNTIME_SUBSTITUTIONS: Record<string, string[]> = {
+  '.js': ['.ts', '.tsx', '.d.ts', '.js', '.jsx'],
+  '.jsx': ['.tsx', '.ts', '.d.ts', '.jsx', '.js'],
+  '.mjs': ['.mts', '.d.mts', '.mjs'],
+  '.cjs': ['.cts', '.d.cts', '.cjs'],
+};
 /** The project file an import specifier names, with the extension resolved, or null for a package or a missing module. */
 export function resolveSpec(from: string, spec: string, aliases: [string, string][], root: string): string | null {
   const base = importTarget(from, spec, aliases);
   if (!base) return null;
-  return [base, `${base}.ts`, `${base}.tsx`, `${base}/index.ts`, `${base}/index.tsx`].find((c) => /\.tsx?$/.test(c) && fs.existsSync(path.join(root, c)) && fs.statSync(path.join(root, c)).isFile()) ?? null;
+  const extension = path.posix.extname(base);
+  const substitutions = RUNTIME_SUBSTITUTIONS[extension];
+  // TypeScript tries source/declaration counterparts before JavaScript, never orders.js.ts or orders.js/index.ts.
+  const candidates = substitutions
+    ? substitutions.map((ext) => `${base.slice(0, -extension.length)}${ext}`)
+    : [base, `${base}.ts`, `${base}.tsx`, `${base}/index.ts`, `${base}/index.tsx`];
+  return candidates.find((c) => /\.(?:[cm]?ts|tsx|[cm]?js|jsx)$/.test(c) && fs.existsSync(path.join(root, c)) && fs.statSync(path.join(root, c)).isFile()) ?? null;
 }
 
 const lineOf = (src: string, at: number) => src.slice(0, at).split('\n').length;

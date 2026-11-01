@@ -19,9 +19,17 @@ const FILES = [
 
 // `--no-vitals` is a retired flag a migration names, not a claim about what runs.
 const TIMED_WORK = /web vitals|(?<!-)\bvitals\b|live data|live-data|\bLCP\b|\bINP\b|navigation budget/i;
-/** A line that says what `--full` does not do is the new text, not the old. */
+/** Negation covers the timed work in its own clause, including a sentence wrapped across lines. */
 const NEGATED = /does not run|no longer|without the|nothing in it judges/i;
 const EXCUSED_GATE = /left out|leave|outside|--exclude|without|\bnot\b|no longer|own command|own step/i;
+const TIMED_CLAUSE = /[.!?;]\s+|\n(?=\s*(?:it\b|`?--full\b))|\b(?:but|yet|whereas|while)\b|\band\s+(?=(?:it\s+)?(?:does not run|runs?\b))/i;
+
+function claimsTimedWork(text: string): boolean {
+  return text.split(TIMED_CLAUSE).some((clause) => {
+    const work = TIMED_WORK.exec(clause);
+    return work !== null && !NEGATED.test(clause.slice(0, work.index));
+  });
+}
 
 export function stale(file: string, text: string): string[] {
   const out: string[] = [];
@@ -30,7 +38,7 @@ export function stale(file: string, text: string): string[] {
     const at = `${file}:${i + 1}`;
     const window = `${line} ${lines[i + 1] ?? ''}`;
     if (line.includes('--full') && !window.includes('--timed')) {
-      if (TIMED_WORK.test(window) && !NEGATED.test(line)) out.push(`${at}: says --full runs timed work`);
+      if (claimsTimedWork(`${line}\n${lines[i + 1] ?? ''}`)) out.push(`${at}: says --full runs timed work`);
       if (/meets the/.test(window)) out.push(`${at}: says --full alone meets the standard`);
       if (/runs the rest/.test(window)) out.push(`${at}: says --full runs the rest`);
       if (line.includes('--perf')) out.push(`${at}: lists verify's modes without --timed`);
@@ -55,5 +63,13 @@ describe('every document says what docs/testing.md says', () => {
     expect(stale('x.md', '`pnpm gate` runs every test, tests/deep-* included')).toEqual(['x.md:1: says the gate runs tests/deep-*']);
     expect(stale('x.md', '`pnpm verify --full --timed` ends with "the project meets the Meridian standard"')).toEqual([]);
     expect(stale('x.md', '`pnpm verify --full` does not run the live data or Web Vitals')).toEqual([]);
+    expect(stale('x.md', '`pnpm verify --full` does not run\nthe live data or Web Vitals')).toEqual([]);
+    expect(stale('x.md', '`pnpm verify --full`\ndoes not run the live data or Web Vitals')).toEqual([]);
+    expect(stale('x.md', '--full runs live data\nIt does not run Web Vitals')).toEqual(['x.md:1: says --full runs timed work']);
+    expect(stale('x.md', '--full does not run Web Vitals\nIt runs live data')).toEqual(['x.md:1: says --full runs timed work']);
+    expect(stale('x.md', '--full runs live data. It does not run Web Vitals.')).toEqual(['x.md:1: says --full runs timed work']);
+    expect(stale('x.md', '--full does not run Web Vitals; it runs live data.')).toEqual(['x.md:1: says --full runs timed work']);
+    expect(stale('x.md', '--full does not run Web Vitals but runs live data')).toEqual(['x.md:1: says --full runs timed work']);
+    expect(stale('x.md', '--full runs live data and does not run Web Vitals')).toEqual(['x.md:1: says --full runs timed work']);
   });
 });

@@ -1,6 +1,7 @@
 // @vitest-environment node
 import fs from 'node:fs';
 import path from 'node:path';
+import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
@@ -18,6 +19,14 @@ describe('every page', () => {
   it('is a server module', () => {
     const all = pages('app');
     expect(all.length).toBeGreaterThan(0);
-    expect(all.filter((f) => /^\s*['"]use client['"]/.test(fs.readFileSync(path.join(ROOT, f), 'utf8')))).toEqual([]);
+    const clients = all.filter((file) => {
+      const source = ts.createSourceFile(file, fs.readFileSync(path.join(ROOT, file), 'utf8'), ts.ScriptTarget.Latest, false, ts.ScriptKind.TSX);
+      for (const statement of source.statements) {
+        if (!ts.isExpressionStatement(statement) || !ts.isStringLiteral(statement.expression)) break;
+        if (statement.expression.text === 'use client') return true;
+      }
+      return false;
+    });
+    expect(clients).toEqual([]);
   });
 });
