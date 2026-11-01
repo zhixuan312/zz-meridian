@@ -18,7 +18,11 @@ type DateInput = Date | string | number;
 
 function toDate(input: DateInput): Date | null {
   const d = input instanceof Date ? input : new Date(input);
-  return Number.isNaN(d.getTime()) ? null : d;
+  if (Number.isNaN(d.getTime())) return null;
+  // Date accepts overflow days such as February 30 and silently moves them into March. A calendar label must never
+  // turn an impossible input into a different date that looks valid.
+  if (typeof input === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(input) && d.toISOString().slice(0, 10) !== input) return null;
+  return d;
 }
 
 /** Built once: an Intl formatter costs far more to construct than to use, and a table formats a date per row. */
@@ -97,10 +101,11 @@ export function formatDateTime(input: DateInput): string {
 let DAY_FMT: Intl.DateTimeFormat | null = null;
 
 function calendarParts(date: string): Record<string, string> | null {
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
-  if (!m) return null;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return null;
+  const d = toDate(date);
+  if (!d) return null;
   DAY_FMT ??= new Intl.DateTimeFormat('en-GB', { timeZone: 'UTC', weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
-  return Object.fromEntries(DAY_FMT.formatToParts(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]))).map((p) => [p.type, p.value]));
+  return Object.fromEntries(DAY_FMT.formatToParts(d).map((p) => [p.type, p.value]));
 }
 
 /** The calendar day `n` days after `date` (before it when negative), both YYYY-MM-DD: whole days, whatever the timezone. */

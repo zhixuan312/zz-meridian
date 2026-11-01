@@ -133,6 +133,7 @@ The same figure for many things, each with its own change and shape, is a wall o
 
 ## Time in an incident, and a run of days
 
+- A calendar date without a time (`YYYY-MM-DD`) names its own day, regardless of the reporting timezone. The date formatters preserve valid years and leap days; an impossible date stays as the original input so the data error is visible, rather than silently rolling into another month.
 - An incident's updates are timed from the incident's start, not from now: "at the start", "after 42m", "after 1.1h", in the product's durations. A reader of a timeline asks how long each step took, and that reading does not move as the clock does. An update inside the first minute reads "at the start". Only the head says when the incident started against now, and each update keeps its exact time in its title.
 - An incident names who has it and where the work is tracked, on one caption line under its head: the owner as text, the ticket as a link named by the ticket's title. Either stands alone, and with neither there is no line. Neither is passed to a card customers read.
 - A service's run is the operational days in a row that end today, counted from the same days its strip draws: "Operational for 40 days". The Status list draws it with `run`, on a line of its own under the bars.
