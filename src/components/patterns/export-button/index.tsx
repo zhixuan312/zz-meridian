@@ -4,6 +4,7 @@ import { Download } from 'lucide-react';
 import { Button, type ButtonProps } from '@/components/ui/button';
 import { toast } from '@/components/ui/toast';
 import { downloadFile, toCsv, type CsvRow } from '@/lib/csv';
+import { plural } from '@/lib/format';
 
 /**
  * Save what the page shows as a CSV file: the rows behind the view, with the filters and period already applied, so
@@ -15,6 +16,7 @@ export function ExportButton({
   href,
   filename,
   noun,
+  one,
   label = 'Export',
   ...rest
 }: {
@@ -26,6 +28,8 @@ export function ExportButton({
   filename: string;
   /** What a row is, plural, for the toast: "days", "requests". */
   noun: string;
+  /** What one row is, for a toast about a single row: "day", "request". Without it one row reads with `noun`. */
+  one?: string;
   label?: string;
 } & Omit<ButtonProps, 'onClick' | 'children'>) {
   if (href) {
@@ -43,7 +47,7 @@ export function ExportButton({
     if (data == null) return toast({ tone: 'critical', title: 'Export unavailable', description: 'The data could not be read. Refresh the page and try again.' });
     if (!data.length) return toast({ tone: 'neutral', title: `No ${noun} to export` });
     downloadFile(filename, toCsv(data));
-    toast({ tone: 'positive', title: `Exported ${data.length.toLocaleString('en-US')} ${noun}`, description: filename });
+    toast({ tone: 'positive', title: `Exported ${data.length.toLocaleString('en-US')} ${plural(data.length, one ?? noun, noun)}`, description: filename });
   };
   return (
     <Button icon={<Download />} onClick={save} {...rest}>

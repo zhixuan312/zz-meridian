@@ -1,6 +1,6 @@
 import { Unauthenticated, can, collectionFor, resolveAccess } from '@/data/access';
 import { requestsQuery } from '@/data/requests';
-import { csvHeader, csvRow, type CsvRow } from '@/lib/csv';
+import { CSV_BOM, csvHeader, csvRow, type CsvRow } from '@/lib/csv';
 
 const BATCH = 100;
 const COLUMNS = ['id', 'received', 'method', 'route', 'status', 'latency_ms', 'customer', 'region', 'bytes', 'model'];
@@ -40,7 +40,7 @@ export async function GET(request: Request): Promise<Response> {
       try {
         const batch = await collection.query({ where: query.where, sort: query.sort, limit: BATCH, offset }); // allow-no-direct-query: read() cannot serve this — a streamed export must not be cached
         total = batch.total;
-        const head = offset === 0 ? csvHeader(COLUMNS) + '\r\n' : '';
+        const head = offset === 0 ? CSV_BOM + csvHeader(COLUMNS) + '\r\n' : '';
         const fresh = batch.rows.filter((r) => !written.has(r.id));
         for (const r of fresh) written.add(r.id);
         const lines = fresh.map((r) => csvRow(COLUMNS, line(r)));

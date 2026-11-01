@@ -16,10 +16,12 @@ Button and Toast, with `toCsv` and `downloadFile` from `src/lib/csv.ts`; with `h
 ## Data
 
 - `rows` is what the view shows: one plain object per row, the first row's keys as the header. Pass a function when building the rows is costly; it runs only on press. Pass `null` when the source could not be read, not an empty array. An empty array means a successful read with no rows; a missing source is unavailable.
-- `href` is a server export's address, with the view's filters in it: the button becomes a download link and `rows` is not needed. Use it when the set is larger than the page shows; the route must authorize, stream and encode with `csvHeader` and `csvRow`.
+- `href` is a server export's address, with the view's filters in it: the button becomes a download link and `rows` is not needed. Use it when the set is larger than the page shows; the route must authorize, stream and encode with `csvHeader` and `csvRow`, and start the file with `CSV_BOM`.
 - A text value that starts with `=`, `+`, `-`, `@`, a tab or a carriage return is written with a leading `'`, so a spreadsheet reads it as text. Numbers are never prefixed.
+- The file starts with a byte order mark, so Excel on Windows reads non-ASCII text (an accented name, a Chinese title) as UTF-8 rather than in the system code page.
 - Values are written raw (ISO dates, milliseconds, cents as decimals), not formatted: a spreadsheet sorts and sums them.
 - `filename` carries what was exported: `home-30d.csv`, `requests-5xx.csv`.
+- `noun` names the rows in the toast, plural ("days"); `one` is the singular ("day") for a toast about a single row, so it reads "Exported 1 day".
 
 ## Variants
 

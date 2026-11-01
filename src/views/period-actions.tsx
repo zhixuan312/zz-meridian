@@ -22,7 +22,7 @@ export function PeriodActionsRoom() {
     <>
       <PeriodRoom />
       <div aria-hidden inert className="contents invisible">
-        <ExportButton rows={[]} filename="days.csv" noun="days" />
+        <ExportButton rows={[]} filename="days.csv" noun="days" one="day" />
       </div>
     </>
   );

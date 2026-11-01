@@ -27,12 +27,12 @@ describe('client exports', () => {
 
   it('builds deferred rows only on press and saves their actual CSV', () => {
     const rows = vi.fn(() => [{ date: '2026-10-01', requests: 17 }]);
-    render(<ExportButton rows={rows} filename="days.csv" noun="days" />);
+    render(<ExportButton rows={rows} filename="days.csv" noun="days" one="day" />);
     expect(rows).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('button', { name: 'Export' }));
     expect(rows).toHaveBeenCalledTimes(1);
     expect(downloadFile).toHaveBeenCalledWith('days.csv', 'date,requests\r\n2026-10-01,17\r\n');
-    expect(toast).toHaveBeenCalledWith(expect.objectContaining({ tone: 'positive', title: 'Exported 1 days' }));
+    expect(toast).toHaveBeenCalledWith(expect.objectContaining({ tone: 'positive', title: 'Exported 1 day' }));
   });
 
   it('keeps server exports as download links without requiring client rows', () => {
