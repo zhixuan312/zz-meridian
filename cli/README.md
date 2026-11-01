@@ -92,6 +92,8 @@ writes nothing; run it first.
 styles) and `src/app.config.ts` for the new flags and records them in the manifest together, or changes nothing. It
 refuses when one of those outputs was edited, while an update is open, or on a dirty tree (unless `--allow-dirty`). Run
 it with the version the manifest records. The project's own `pnpm brand` still works, but its changes count as your edits.
+If a write fails, rollback attempts every changed file. A failed restore names each affected path and its error;
+recover those files before retrying rather than assuming the original tree was restored.
 
 **skill** checks both `.agents/skills/zz-meridian` and `.claude/skills/zz-meridian` before writing either. Identical files are retained; different content or symlinks are refused. Move a customized copy aside, install the shipped skill, then reconcile the customization manually rather than losing it to an overwrite.
 An incomplete package without its `SKILL.md` is refused before either destination is written.

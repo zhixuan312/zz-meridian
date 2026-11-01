@@ -133,12 +133,14 @@ function attempt(ctx: RebrandContext, change: Record<string, string>, allowDirty
     if (configAfter !== configBefore.toString('utf8')) put(APP_CONFIG, configAfter);
     put(MANIFEST, manifestAfter);
   } catch (e) {
+    const unrestored: string[] = [];
     for (const t of touched.reverse()) {
       try {
         if (t.was === null) fs.rmSync(inside(root, t.rel), { force: true });
         else writeAtomic(inside(root, t.rel), t.was, t.mode);
-      } catch { /* keep restoring the rest */ }
+      } catch (restoreError) { unrestored.push(`${t.rel}: ${(restoreError as Error).message}`); }
     }
+    if (unrestored.length) throw new Refusal(`a write failed (${(e as Error).message}); rollback is incomplete. Recover these files before retrying:\n${unrestored.map((line) => `  ${line}`).join('\n')}`);
     throw new Refusal(`a write failed (${(e as Error).message}); every file was put back. Nothing was changed.`);
   }
 

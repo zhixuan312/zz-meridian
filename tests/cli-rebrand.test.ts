@@ -70,6 +70,35 @@ describe('mergeBrand', () => {
 });
 
 describe('rebrand', () => {
+  it('reports failed rollback paths and still restores the other changed files', () => {
+    const root = project();
+    const before = snapshot(root);
+    const said: string[] = [];
+    const rename = fs.renameSync;
+    let failedWrite = false;
+    const spy = vi.spyOn(fs, 'renameSync').mockImplementation((from, to) => {
+      if (to === path.join(root, '.meridian/manifest.json') && !failedWrite) {
+        failedWrite = true;
+        throw new Error('manifest write refused');
+      }
+      if (failedWrite && to === path.join(root, 'src/styles/tokens.css')) throw new Error('stylesheet restore refused');
+      return rename(from, to);
+    });
+    try {
+      expect(rebrand(ctx(root, { log: (line) => said.push(line) }), { hex: '#2E6BE4' }, { allowDirty: false })).toBe(1);
+    } finally { spy.mockRestore(); }
+    expect(said.join('\n')).toContain('src/styles/tokens.css');
+    expect(said.join('\n')).toContain('stylesheet restore refused');
+    expect(said.join('\n')).not.toContain('Nothing was changed');
+    const after = snapshot(root);
+    const recovery = `src/styles/tokens.css.${process.pid}.zz-tmp`;
+    expect(after[recovery]).toBe(before['src/styles/tokens.css']);
+    delete after[recovery];
+    expect(after['src/styles/tokens.css']).not.toBe(before['src/styles/tokens.css']);
+    delete after['src/styles/tokens.css'];
+    delete before['src/styles/tokens.css'];
+    expect(after).toEqual(before);
+  });
   it('rewrites the brand outputs and records the brand and its baseline together', () => {
     const root = project();
     expect(rebrand(ctx(root), { hex: '#2E6BE4' }, { allowDirty: false })).toBe(0);
