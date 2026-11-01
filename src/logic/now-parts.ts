@@ -141,10 +141,10 @@ export function nowData(r: NowReads): NowData {
   // A model's figures need its rows and its label: either read failing leaves the part unread, and each that failed is named.
   const usage = read(r.usage, 'the usage') ? r.usage : null;
   if (read(r.models, 'the models') && usage) {
-    const dates = [...new Set(usage.map((u) => u.date).filter((d) => d < today))].sort().slice(-WINDOW_DAYS);
-    const kept = new Set(dates);
+    // A quiet day still belongs to the month: gaps must not pull older measurements into a current figure.
+    const inWindow = usage.filter((u) => u.date >= from && u.date < today);
     models = r.models.map((m): NowModel => {
-      const days = usage.filter((u) => u.model === m.id && kept.has(u.date));
+      const days = inWindow.filter((u) => u.model === m.id);
       const requests = sum(days.map((d) => d.requests)), errors = sum(days.map((d) => d.errors));
       const ttft = days.flatMap((d) => (d.ttft === null ? [] : [d.ttft]));
       // A model with no row in the window answered nothing: its requests are none. Its p95 and its error share were

@@ -75,7 +75,7 @@ Every figure is read on the server by the Now tool's read (`nowTool` in `src/log
 
 - **The services and the incidents**: `readServices()` and `readIncidents()` in `src/data/metrics.ts`; an incident's ticket is joined to its title and the address the Tickets page finds it at.
 - **The band, its facts, the Featured metric and the title's days**: every complete day kept (`readDays('all')`), held to `facts.band` by `steady`, and each of the last 360 days' p95 in whole milliseconds for the Featured metric's chart; the year and the requests answered are written by the functions Home writes them with.
-- **The models**: the `usage` rows of the last 30 complete days, a model's p95 and first token the lower median of its days', labelled from `models`.
+- **The models**: the `usage` rows of the last 30 complete calendar days, ending yesterday in the product timezone; gaps do not pull older rows into that window. A model's p95 and first token are the lower median of its recorded days', labelled from `models`.
 - **Compute in use**: the `compute` rows of the latest complete day, a region's share its GPU-hours used over its GPUs times 24.
 - **Shipping and Releases out**: `readReleases()` in `src/data/engineering.ts`, through `releaseFigures`, `stageOf` and `unresolvedText` in `src/logic/releases-context.ts`.
 - **Work and Tickets closed**: `readTickets()`; the reader's own is the ticket assigned to `resolveAccess().subjectId`, read on the server.
