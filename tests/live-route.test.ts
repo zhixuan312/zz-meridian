@@ -71,6 +71,32 @@ describe('GET /api/live', () => {
 });
 
 describe('liveStream', () => {
+  it.each(['subscribe', 'revision'] as const)('releases earlier subscriptions when setup fails in %s', (failure) => {
+    const ac = new AbortController();
+    const off = vi.fn();
+    const remove = vi.spyOn(ac.signal, 'removeEventListener');
+    const first = { ...members, subscribe: () => off };
+    const second = {
+      ...members,
+      subscribe: () => { if (failure === 'subscribe') throw new Error('adapter unavailable'); return off; },
+      revision: () => { throw new Error('revision unavailable'); },
+    };
+    expect(() => liveStream({ names: ['first', 'second'], collections: [first, second], signal: ac.signal, authorize: async () => true, since: { first: 'seen', second: 'seen' } })).toThrow(/unavailable/);
+    expect(off).toHaveBeenCalledTimes(failure === 'subscribe' ? 1 : 2);
+    expect(remove).toHaveBeenCalledWith('abort', expect.any(Function));
+  });
+
+  it('releases a subscription that aborts synchronously while it is being installed', async () => {
+    const ac = new AbortController();
+    const off = vi.fn();
+    const next = vi.fn(() => off);
+    const first = { ...members, subscribe: () => { ac.abort(); return off; } };
+    const res = liveStream({ names: ['first', 'next'], collections: [first, { ...members, subscribe: next }], signal: ac.signal, authorize: async () => true });
+    expect((await res.body!.getReader().read()).done).toBe(true);
+    expect(off).toHaveBeenCalledOnce();
+    expect(next).not.toHaveBeenCalled();
+  });
+
   it('beats at the interval it is given', async () => {
     const ac = new AbortController();
     const t = tap(liveStream({ names: ['members'], collections: [members], signal: ac.signal, heartbeatMs: 20, authorize: async () => true }));

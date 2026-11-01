@@ -110,16 +110,24 @@ export function liveStream({ names, collections, signal, heartbeatMs = 15000, au
       endOnShutdown(close);
       // Subscribe first, then compare: a write after the page's read either moves a revision the greeting names or
       // arrives as a hint.
-      collections.forEach((collection, i) => {
-        const off = collection.subscribe?.(() => hint(names[i]!));
-        if (off) unsubscribe.push(off);
-      });
-      const moved = names.filter((n, i) => {
-        const was = since?.[n];
-        return was === undefined || was !== collections[i]!.revision?.();
-      });
-      send(moved.length ? `event: resync\ndata: ${JSON.stringify({ collections: moved })}\n\n` : 'event: synced\ndata: {}\n\n');
-      timer = setInterval(() => { if (!closed) send(`: beat ${Date.now()}\n\n`); }, heartbeatMs);
+      try {
+        for (const [i, collection] of collections.entries()) {
+          const off = collection.subscribe?.(() => hint(names[i]!));
+          // An adapter can synchronously abort while subscribing, before its cleanup is returned.
+          if (closed) { off?.(); return; }
+          if (off) unsubscribe.push(off);
+        }
+        const moved = names.filter((n, i) => {
+          const was = since?.[n];
+          return was === undefined || was !== collections[i]!.revision?.();
+        });
+        if (closed) return;
+        send(moved.length ? `event: resync\ndata: ${JSON.stringify({ collections: moved })}\n\n` : 'event: synced\ndata: {}\n\n');
+        timer = setInterval(() => { if (!closed) send(`: beat ${Date.now()}\n\n`); }, heartbeatMs);
+      } catch (error) {
+        close();
+        throw error;
+      }
     },
     cancel: close,
   });

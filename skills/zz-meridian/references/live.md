@@ -1,5 +1,9 @@
 # Live data: one stream per tab, hints, resync and the safety poll
 
+Stream setup owns its subscriptions immediately. If an adapter throws while subscribing or reading a revision,
+the stream releases earlier subscriptions and its abort handler before propagating the error. A synchronous abort
+inside subscription also releases the newly returned cleanup and stops setup.
+
 A console tab keeps its tables fresh with one Server-Sent Events stream that carries hints, never data. A hint says
 which collection changed; the tab then reads that collection again through the authorized `read()` of
 `cache.md`. Every migration `update` reports for the live console names a section below.
