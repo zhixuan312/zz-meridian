@@ -30,7 +30,8 @@ export function ActivityFeed({ events, now, className }: { events: ActivityEvent
             {e.via ? <AgentMark size="md" /> : e.system ? <span className="grid size-6 place-items-center rounded-full bg-fill-track"><span role={e.tone ? 'img' : undefined} aria-label={e.tone ? TONE[e.tone] : undefined} title={e.tone ? TONE[e.tone] : undefined} className={cn('size-2 rounded-full', e.tone ? DOT[e.tone] : 'bg-ink-3')} /></span> : e.unknown ? <span data-actor-unknown className="block size-6 rounded-full border border-dashed border-line-strong" /> : <Avatar name={e.actor} size="sm" />}
           </span>
           <div className="min-w-0 flex-1 pt-0.5">
-            <p className="text-sm text-ink-2">
+            {/* An actor named by an email address is one word to the line breaker: it breaks where it must, not past the line. */}
+            <p className="text-sm text-ink-2 [overflow-wrap:anywhere]">
               <span className="font-medium text-ink">{e.via ? e.via : e.actor}</span> {e.verb} {e.href ? <Link href={e.href} className="row-link font-medium text-ink">{e.object}<ArrowRight aria-hidden className="ml-1 inline size-3.5 align-middle" /></Link> : <span className="text-ink">{e.object}</span>}
               {e.via ? <span className="text-ink-3"> · for {e.actor}</span> : null}
             </p>

@@ -29,7 +29,7 @@ Avatar, Agent mark, and the date formatters, inside a Card with a divided header
 
 ## Surfaces
 
-- **Console** and **Mobile**: the same; on phones the sentence wraps and the time stays top right.
+- **Console** and **Mobile**: the same; on phones the sentence wraps and the time stays top right. A word wider than the line, such as an actor named by an email address, breaks inside itself rather than spilling.
 - **Embed**: the five newest, with Expand for the rest.
 
 ## Agents
