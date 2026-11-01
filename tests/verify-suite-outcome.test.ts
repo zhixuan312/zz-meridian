@@ -2,7 +2,7 @@
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { finalOutcome, NOT_RUN_EXIT, suiteCoverage, suiteOutcome } from '../scripts/lib/coverage.ts';
+import { finalOutcome, NOT_RUN_EXIT, suiteCoverage, suiteOutcome, withoutMetrics } from '../scripts/lib/coverage.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 
@@ -38,5 +38,16 @@ describe('the suites the coverage line names', () => {
   });
   it('counts a suite that passed one run and failed another as failed only', () => {
     expect(suiteCoverage(['assistant'], new Set(['assistant']), new Set(['assistant']))).toEqual({ notRun: [], failed: ['assistant'] });
+  });
+});
+
+describe('a failed audit beneath its line', () => {
+  it('keeps its FAIL blocks and its last line, and leaves out the design-metrics table (#120)', () => {
+    const out = ['FAIL /usage at 320', '  spills: span "a@b.c" by 32px', '', 'Design metrics at 1440:', ...Array.from({ length: 80 }, (_, i) => `/r${i}  12 cards`), '', 'audit: 1 issues across 81 pages'];
+    expect(withoutMetrics(out)).toEqual(['FAIL /usage at 320', '  spills: span "a@b.c" by 32px', '', '', 'audit: 1 issues across 81 pages']);
+  });
+
+  it('leaves output without the table as it is', () => {
+    expect(withoutMetrics(['FAIL x', 'audit: 1 issues'])).toEqual(['FAIL x', 'audit: 1 issues']);
   });
 });

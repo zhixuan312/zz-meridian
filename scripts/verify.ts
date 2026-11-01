@@ -50,7 +50,7 @@ import { answers, bin, freePort, spawnNext } from './lib/bin.ts';
 import { CHROME as chromePath, launch } from './lib/chrome.ts';
 import type { BudgetsConfig, NavigationCheck } from './lib/budgets.ts';
 import { fakeModelArgs, fakeModelProblems, type FakeModelStep } from './lib/config-hooks.ts';
-import { finalOutcome, judgedNothingIn, resolveCoverage, SUITE_NAMES, selectSmokeRoutes, suiteCoverage, suiteOutcome } from './lib/coverage.ts';
+import { finalOutcome, judgedNothingIn, resolveCoverage, SUITE_NAMES, selectSmokeRoutes, suiteCoverage, suiteOutcome, withoutMetrics } from './lib/coverage.ts';
 import { unsafeDataUrls } from './lib/data-url.ts';
 import { APP_DIR, railRoutes } from './lib/routes.ts';
 import { sampleSurfaces } from './lib/sample.ts';
@@ -415,17 +415,6 @@ function summaryOf<T>(out: string, tag: string): T | null {
   const last = out.split('\n').pop() ?? '';
   if (!last.startsWith(`${tag}: `)) return null;
   try { return JSON.parse(last.slice(tag.length + 2)) as T; } catch { return null; }
-}
-
-/**
- * A failed suite's output without the audit's design-metrics table: one line per route, printed last, so on a product of
- * fifty routes the lines kept beneath a failure were nearly all metrics and the FAIL blocks above them were cut off.
- */
-function withoutMetrics(out: string[]): string[] {
-  const start = out.findIndex((l) => /^Design metrics at \d+:$/.test(l));
-  if (start < 0) return out;
-  const end = out.findIndex((l, i) => i > start && l.trim() === '');
-  return [...out.slice(0, start), ...(end < 0 ? [] : out.slice(end))];
 }
 
 /** A suite's line. One that left a case unrun is `not run`, stays in the coverage line's not-run list, and fails nothing. */
