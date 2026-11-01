@@ -90,7 +90,7 @@ function main() {
     const p = palette(theme);
     fails += p.fails.length;
     for (const f of p.fails) console.log(`FAIL ${theme} chart palette: ${f}`);
-    if (all) console.log(`ok   ${theme} chart palette: worst adjacent CVD ${p.worstCvd.toFixed(1)}, normal ${p.worstNormal.toFixed(1)}`);
+    if (all && !p.fails.length) console.log(`ok   ${theme} chart palette: worst adjacent CVD ${p.worstCvd.toFixed(1)}, normal ${p.worstNormal.toFixed(1)}`);
   }
   console.log(`contrast: ${count} pairs across every theme and accent, ${fails} failures`);
   process.exit(fails ? 1 : 0);
