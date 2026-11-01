@@ -71,11 +71,14 @@ a seam, not a storage design: it describes the shape of an answer, and never a t
 `{ rows, total, revision?, observedAt }`: the page of rows the question keeps, how many rows it keeps in all, the state
 the caller read, and when the read ran. `readAll()` answers every row with the same marker and the same moment, and
 `aggregate()` answers a figure over every row the same way.
+`readAll()` normalizes its filters and order once, ignores caller pagination and traverses internal pages of at most
+500 rows. Its internal offsets may exceed 100000; public `read()` offsets remain bounded from 0 to 100000.
 
 **Authorization happens before any cache** — a copy kept to save work, correct only while nothing it was made from has
 changed. A read asks whether the scope holds the grant before any cached code runs; a scope without it is refused, and
-nothing is read or served from a cache on its way out. The cache is keyed by tenant and collection, so it can never
-answer a person who could not have asked.
+nothing is read or served from a cache on its way out. Cache identity includes the whole authorization scope (tenant,
+subject and authorization identity), the collection and the normalized query. Tenant plus collection is an invalidation
+tag, not a cache key: it retires every authorized variant for that tenant's collection without sharing their answers.
 
 **A write is validated and names the reads it invalidates.** A write parses its input against the collection's fields —
 a derived field is not writable — authorizes the operation, commits, and then drops the answers its change makes wrong:

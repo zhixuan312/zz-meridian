@@ -80,11 +80,14 @@ const PAGE = 500;
  * something else. Any `limit` or `offset` the caller passes is ignored: asking here means every matching row.
  */
 export async function readAllInScope(scope: AccessScope, name: string, q: Query = {}): Promise<{ rows: Record<string, unknown>[]; revision?: string; observedAt: string }> {
-  const first = await readInScope(scope, name, { ...q, limit: PAGE, offset: 0 });
-  // The first page says how many there are, so the rest are asked together: one after another, a read of N pages waited
-  // N round trips (a year of usage for twenty models is fifteen).
+  if (!(await can(scope, name, 'read'))) throw new AccessDenied();
+  const query = normalizeQuery(collectionFor(scope, name), { ...q, limit: PAGE, offset: 0 });
+  const first = await cachedRead(scope, name, query);
+  // Normalize the caller's question once. Only this traversal supplies later offsets: the public read's offset ceiling
+  // still holds, but it must not cap a question asking for every row. All pages share the ordinary scoped read cache.
+  // Ask the remaining pages together rather than waiting one network round trip per page.
   const offsets = Array.from({ length: Math.max(0, Math.ceil(first.total / PAGE) - 1) }, (_, i) => (i + 1) * PAGE);
-  const rest = await Promise.all(offsets.map((offset) => readInScope(scope, name, { ...q, limit: PAGE, offset })));
+  const rest = await Promise.all(offsets.map((offset) => cachedRead(scope, name, { ...query, offset })));
   const rows = [...first.rows, ...rest.flatMap((page) => page.rows)];
   if (rows.length < first.total) throw new Error(`${name} could not be read in full.`);
   return { rows, revision: first.revision, observedAt: first.observedAt };

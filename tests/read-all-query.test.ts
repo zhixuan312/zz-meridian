@@ -4,22 +4,23 @@
  * of at most 500 rows, so `readAll` keeps asking — and it must keep asking for *the same question*, or a caller that
  * needs the rows in an order or with a condition gets the first page of a different one.
  *
- * The request fixtures exercise real product queries; the separate array collection also crosses the 500-row boundary.
+ * The request fixtures exercise real product queries; array collections cross both the page and public offset boundaries.
  */
 import { describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 
-import { readAll } from '@/data/read';
+import { readAll, readInScope } from '@/data/read';
 import { REQUESTS } from '@/system/fixtures/sample';
 import { arrayCollection } from '@/lib/collection';
 import type * as Access from '@/data/access';
+import { resolveAccess } from '@/data/access';
 
 vi.mock('@/data/access', async (importOriginal) => {
   const real = await importOriginal<typeof Access>();
   return {
     ...real,
-    collectionFor: (...args: Parameters<typeof real.collectionFor>) => args[1] === BULK ? bulk : real.collectionFor(...args),
-    can: (...args: Parameters<typeof real.can>) => args[1] === BULK && args[2] === 'read' ? Promise.resolve(true) : real.can(...args),
+    collectionFor: (...args: Parameters<typeof real.collectionFor>) => args[1] === BULK ? bulk : args[1] === LARGE ? large : real.collectionFor(...args),
+    can: (...args: Parameters<typeof real.can>) => [BULK, LARGE].includes(args[1]) && args[2] === 'read' ? Promise.resolve(true) : real.can(...args),
   };
 });
 
@@ -28,6 +29,15 @@ const bulkRows = Array.from({ length: 1101 }, (_, rank) => ({ id: `row-${rank}`,
 const bulk = arrayCollection({
   name: BULK, label: 'Rows', description: 'Pagination regression rows.', key: 'id', title: (row) => String(row.rank),
   fields: z.object({ rank: z.number(), lane: z.string() }), rows: bulkRows, allow: [],
+});
+
+const LARGE = 'read-all-offset-boundary';
+const largeRows = Array.from({ length: 100502 }, (_, rank) => ({
+  id: `row-${String(rank).padStart(6, '0')}`, rank, lane: rank === 100501 ? 'excluded' : 'kept',
+}));
+const large = arrayCollection({
+  name: LARGE, label: 'Rows', description: 'Public offset boundary regression rows.', key: 'id', title: (row) => String(row.rank),
+  fields: z.object({ rank: z.number(), lane: z.string() }), rows: largeRows, allow: [],
 });
 
 describe('readAll with a question', () => {
@@ -65,4 +75,17 @@ describe('readAll with a question', () => {
     });
     expect(rows.map((row) => row.id)).toEqual(bulkRows.filter((row) => row.lane === 'even').reverse().map((row) => row.id));
   });
+
+  it('reads more than 100500 matching rows without widening the public offset limit', async () => {
+    const { rows } = await readAll(LARGE, {
+      where: [{ field: 'lane', op: 'eq', value: 'kept' }],
+      sort: { field: 'rank', dir: 'desc' }, limit: 1, offset: 999999,
+    });
+    expect(rows.map((row) => row.id)).toEqual(largeRows.slice(0, -1).reverse().map((row) => row.id));
+    const scope = await resolveAccess();
+    await expect(readInScope(scope, LARGE, { offset: 100001 })).rejects.toThrow('offset must be a whole number from 0 to 100000');
+    const page = await readInScope(scope, LARGE, { offset: 100000, limit: 1000, sort: { field: 'rank', dir: 'asc' } });
+    expect(page.rows.map((row) => row.id)).toEqual(largeRows.slice(100000, 100500).map((row) => row.id));
+    expect(page.total).toBe(largeRows.length);
+  }, 30_000);
 });
