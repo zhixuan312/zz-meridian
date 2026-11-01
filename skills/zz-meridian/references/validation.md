@@ -53,7 +53,9 @@ line naming the command that runs them. Steps in order:
    control the empty page does not have is reported `interactive not measured: the page shows its first-run state`, a
    warning and never a pass. The error state (`data-empty="error"`) stays a failure.
 1. **The gate** (`node scripts/gate.ts`): tokens regenerate to the same CSS; the card registry is fresh; every card and
-   page specification follows the anatomy; the product's own rules in `optional:scripts/check.local.ts`, when the file exists;
+   page specification follows the anatomy; the product's own rules in `optional:scripts/check.local.ts`, when the file exists
+   (a rule there that asks whether a path is Meridian's reads `effectiveManifest()` from `scripts/lib/effective-manifest.ts`,
+   which during an update answers with the files the update brings, where `optional:.meridian/manifest.json` is still the old release's);
    contrast holds for every pair in every theme and accent, and the chart palette passes the colour-vision checks;
    eslint-config-next; TypeScript; the tests.
 2. **A production build** (`next build`), against the fake API when `scripts/verify.config.ts` names one. Then the route
