@@ -31,6 +31,7 @@ Input's states, plus:
 - Escape clears the query; a second Escape leaves the field. The clear button returns focus to the field.
 - A caller's `onKeyDown` runs first. It can consume a key with `preventDefault()`; observing keys does not disable the search's Escape behavior.
 - Escape during an in-progress IME composition belongs to the input method; it does not erase the query or blur the field.
+- A disabled or read-only query cannot be cleared by its button; Escape preserves a read-only query. A disabled search does not consume its global shortcut.
 - The shortcut key focuses the field unless focus is already in a text control.
 - The query belongs in the URL (`?q=`), so a filtered view can be shared and an agent can open it.
 

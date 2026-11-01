@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { useState } from 'react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { SearchInput } from '@/components/ui/search-input';
 
 function Search({ dismissOnEscape = false }: { dismissOnEscape?: boolean }) {
@@ -18,6 +18,27 @@ function Search({ dismissOnEscape = false }: { dismissOnEscape?: boolean }) {
 }
 
 describe('search keyboard composition', () => {
+  it.each([{ disabled: true }, { readOnly: true }])('keeps the query unchanged when unavailable: %j', (state) => {
+    const change = vi.fn();
+    render(<SearchInput aria-label="Locked query" value="keep me" onValueChange={change} {...state} />);
+    const clear = screen.getByRole('button', { name: 'Clear search' });
+    expect(clear).toBeDisabled();
+    fireEvent.click(clear);
+    expect(change).not.toHaveBeenCalled();
+  });
+
+  it('does not clear a read-only query on Escape', () => {
+    const change = vi.fn();
+    render(<SearchInput aria-label="Read-only query" value="keep me" onValueChange={change} readOnly />);
+    fireEvent.keyDown(screen.getByRole('searchbox'), { key: 'Escape' });
+    expect(change).not.toHaveBeenCalled();
+  });
+
+  it('does not consume a global shortcut for a disabled search', () => {
+    render(<SearchInput aria-label="Disabled query" value="" onValueChange={() => {}} disabled shortcut="/" />);
+    expect(fireEvent.keyDown(document.body, { key: '/' })).toBe(true);
+  });
+
   it('keeps the caller’s Enter action without losing Escape clear and second-Escape blur', () => {
     render(<Search />);
     const input = screen.getByRole('searchbox', { name: 'Search records' }) as HTMLInputElement;

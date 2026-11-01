@@ -6,6 +6,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 
 ### Fixed
 
+- **Unavailable searches preserve their query.** Disabled and read-only inputs no longer offer an active clear button; Escape preserves a read-only query, and a disabled search leaves its global shortcut alone.
 - **Engineering's model figures use 30 complete calendar days.** Gaps in recorded usage no longer pull older measurements into the current month; a model with only older traffic keeps zero requests and unmeasured latency.
 - **Committed key writes survive cache-refresh failures.** Creating a key still returns its one-time secret, and revocation stays successful, with a visible refresh warning rather than a false failure that invites another write. Precommit refusals still fail normally.
 - **Customer query figures agree with the page after a departure.** Revenue, requests and tokens exclude departed customer records just as the customer count does, even if those records retain nonzero values. The query runner now retains numeric measures' own conditions and withholds a measure whose conditions read hidden fields; the shared source corrects Customers, Home and Revenue answers together.
