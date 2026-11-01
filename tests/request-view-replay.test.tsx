@@ -1,8 +1,10 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-vi.mock('next/navigation', () => ({ usePathname: () => '/requests/x', useRouter: () => ({ refresh() {}, push() {}, replace() {} }) }));
-vi.mock('@/components/ui/toast', () => ({ toast() {} }));
+const navigation = vi.hoisted(() => ({ refresh: vi.fn(), push: vi.fn(), replace: vi.fn() }));
+vi.mock('next/navigation', () => ({ usePathname: () => '/requests/x', useRouter: () => navigation }));
+const toasts = vi.hoisted(() => vi.fn());
+vi.mock('@/components/ui/toast', () => ({ toast: toasts }));
 
 import { RequestView } from '@/views/request';
 import { REQUESTS } from '@/system/fixtures/sample';
@@ -31,4 +33,19 @@ describe('captured request body presence', () => {
     rerender(<RequestView {...props} payloads={{ request: null, response: '{}' }} />);
     expect(screen.getAllByRole('button', { name: 'Copy' })).toHaveLength(1);
   });
+});
+
+it('reports a committed replay and its refresh warning with the new request address', async () => {
+  const warning = 'The replay was saved, but the request list could not be refreshed.';
+  view(async () => ({ ok: true, id: 'owned-replay', status: 201, warning }));
+  fireEvent.click(screen.getByRole('button', { name: 'Replay' }));
+  await waitFor(() => expect(toasts).toHaveBeenCalledWith(expect.objectContaining({
+    title: 'Replayed: 201 Created',
+    description: expect.stringContaining(warning),
+    action: expect.objectContaining({ label: 'Open' }),
+  })));
+  expect(navigation.refresh).toHaveBeenCalled();
+  const saved = toasts.mock.calls.find(([message]) => message.description?.includes(warning))![0];
+  saved.action.onClick();
+  expect(navigation.push).toHaveBeenCalledWith('/requests/owned-replay');
 });

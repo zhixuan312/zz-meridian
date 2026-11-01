@@ -15,7 +15,7 @@ import type { ActionResult } from '@/lib/collection';
  * calls a model that writes tokens the replay has a first token, which the sample puts two fifths of the way through. Authorized like any
  * write, then the tenant's request reads are refreshed.
  */
-export async function replayRequest(id: string): Promise<ActionResult<{ id: string; status: number }>> {
+export async function replayRequest(id: string): Promise<ActionResult<{ id: string; status: number; warning?: string }>> {
   try {
     const scope = await resolveAccess();
     if (!(await can(scope, 'requests', 'create'))) return { ok: false, error: 'You do not have permission to replay requests.' };
@@ -30,7 +30,12 @@ export async function replayRequest(id: string): Promise<ActionResult<{ id: stri
       customer: original.customer, region: original.region, bytes: original.bytes, model: original.model, replayOf: original.id,
       ttft: writesTokens(original.model) ? Math.max(1, Math.round(original.latency * 0.4)) : null,
     });
-    updateTag(collectionTag(scope.tenantId, 'requests'));
+    // Creating the record is the commit. A later cache failure cannot undo it or invite a second replay.
+    try {
+      updateTag(collectionTag(scope.tenantId, 'requests'));
+    } catch {
+      return { ok: true, id: String(replay.id), status, warning: 'The replay was saved, but the request list could not be refreshed. Reload it before replaying again.' };
+    }
     return { ok: true, id: String(replay.id), status };
   } catch (e) {
     // Only the answer written for the person: a collection that rejected the record says why in its own words, which are

@@ -103,7 +103,7 @@ function Code({ body, label }: { body: string; label: string }) {
  * `mayOpenKeys` is whether the person may open API keys, so the More menu leads there only for them; it defaults to yes.
  * `customerHref` is the page of the customer it names, worked out by the page; without one the name is text.
  */
-export function RequestView({ request: r, trace, payloads, routeP95, now, replay, mayReplay = true, mayOpenKeys = true, customerHref }: { request: RequestRow; trace: Span[]; payloads: { request: string | null; response: string }; /** The route's p95 over the period, for "is this slow?". */ routeP95: number | null; now: string; replay: (id: string) => Promise<ActionResult<{ id: string; status: number }>>; mayReplay?: boolean; mayOpenKeys?: boolean; customerHref?: string | null }) {
+export function RequestView({ request: r, trace, payloads, routeP95, now, replay, mayReplay = true, mayOpenKeys = true, customerHref }: { request: RequestRow; trace: Span[]; payloads: { request: string | null; response: string }; /** The route's p95 over the period, for "is this slow?". */ routeP95: number | null; now: string; replay: (id: string) => Promise<ActionResult<{ id: string; status: number; warning?: string }>>; mayReplay?: boolean; mayOpenKeys?: boolean; customerHref?: string | null }) {
   useShareView(requestContext({ request: r, trace, routeP95, statusText: STATUS_TEXT[r.status] ?? '', payloadChars: { request: payloads.request?.length ?? null, response: payloads.response.length }, now }));
   const router = useRouter();
   const usage = usageOf(r);
@@ -120,7 +120,7 @@ export function RequestView({ request: r, trace, payloads, routeP95, now, replay
     });
     if (!result.ok) return toast({ tone: 'critical', title: unconfirmed ? 'Replay unconfirmed' : 'Not replayed', description: result.error });
     router.refresh();
-    toast({ tone: 'positive', title: `Replayed: ${result.status} ${STATUS_TEXT[result.status] ?? ''}`.trim(), description: `${r.method} ${r.route} ran again as ${result.id}.`, action: { label: 'Open', onClick: () => router.push(requestAddress(result.id)) } });
+    toast({ tone: 'positive', title: `Replayed: ${result.status} ${STATUS_TEXT[result.status] ?? ''}`.trim(), description: `${r.method} ${r.route} ran again as ${result.id}.${result.warning ? ` ${result.warning}` : ''}`, action: { label: 'Open', onClick: () => router.push(requestAddress(result.id)) } });
   });
   return (
     <PageFrame

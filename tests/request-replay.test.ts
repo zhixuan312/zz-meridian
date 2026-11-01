@@ -2,7 +2,8 @@
 import { describe, expect, it, vi } from 'vitest';
 
 const invalidated = vi.hoisted(() => [] as string[]);
-vi.mock('next/cache', () => ({ cacheTag: () => {}, cacheLife: () => {}, updateTag: (t: string) => { invalidated.push(t); }, revalidateTag: () => {} }));
+const cacheFailure = vi.hoisted(() => ({ enabled: false }));
+vi.mock('next/cache', () => ({ cacheTag: () => {}, cacheLife: () => {}, updateTag: (t: string) => { invalidated.push(t); if (cacheFailure.enabled) throw new Error('owned cache invalidation fault'); }, revalidateTag: () => {} }));
 
 import { replayRequest } from '../app/(dashboard)/requests/[id]/actions';
 import { collectionFor, resolveAccess } from '@/data/access';
@@ -39,4 +40,14 @@ describe('replaying a request', () => {
     expect(await replayRequest(ok.id)).toEqual({ ok: false, error: 'Only a request that failed for a while (a 5xx or a 429) can be replayed.' });
     expect((await c.query({})).total).toBe(before);
   });
+});
+
+it('keeps a committed replay successful when cache invalidation fails', async () => {
+  const c = collectionFor(await resolveAccess(), 'requests');
+  const before = (await c.query({})).total;
+  cacheFailure.enabled = true;
+  let result;
+  try { result = await replayRequest(failed.id); } finally { cacheFailure.enabled = false; }
+  expect((await c.query({})).total).toBe(before + 1);
+  expect(result).toMatchObject({ ok: true, warning: expect.stringContaining('was saved') });
 });
