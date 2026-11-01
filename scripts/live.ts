@@ -519,20 +519,31 @@ if (why) {
       try { await fn(); } catch (e) { report('FAIL', label, (e as Error).message); }
     };
     // Case order matters only in that each leaves the tabs usable; every case invites its own uniquely named members.
-    await openMembers(a, base);
-    await openMembers(b, base);
-    await step('two tabs', () => twoTabs(t));
-    await step('visibility', () => visibility(t));
-    await step('a disconnected write', () => offline(t));
-    await step('a sustained burst', () => burst(t));
-    try { await cleanup(t); } catch (e) { report('FAIL', 'cleanup', `a member this check invited was not removed: ${(e as Error).message}`); }
-    if (dropBase) {
-      await step('suppressed hints', async () => { await suppressed(t, dropBase); });
-      try { await cleanup(t); } catch (e) { report('FAIL', 'cleanup', `a member this check invited on ${dropBase} was not removed: ${(e as Error).message}`); }
-    } else {
-      report('not run', 'suppressed hints', asked('suppressed hints') ? 'no --drop-base: the server started with LIVE_DROP_HINTS=1 was not given' : 'not asked for (--only)');
+    // Opening the page is where a slow machine or a cold build shows first, so it is guarded like the cases: its failure
+    // is a line of its own, and every case says it did not run and why, instead of the tier ending in a stack trace.
+    let opened = false;
+    try {
+      await openMembers(a, base);
+      await openMembers(b, base);
+      opened = true;
+    } catch (e) {
+      report('FAIL', 'open the members page', (e as Error).message);
+      skipAll('the members page did not open in both tabs');
     }
-    await step('a server restart', () => restart(t));
+    if (opened) {
+      await step('two tabs', () => twoTabs(t));
+      await step('visibility', () => visibility(t));
+      await step('a disconnected write', () => offline(t));
+      await step('a sustained burst', () => burst(t));
+      try { await cleanup(t); } catch (e) { report('FAIL', 'cleanup', `a member this check invited was not removed: ${(e as Error).message}`); }
+      if (dropBase) {
+        await step('suppressed hints', async () => { await suppressed(t, dropBase); });
+        try { await cleanup(t); } catch (e) { report('FAIL', 'cleanup', `a member this check invited on ${dropBase} was not removed: ${(e as Error).message}`); }
+      } else {
+        report('not run', 'suppressed hints', asked('suppressed hints') ? 'no --drop-base: the server started with LIVE_DROP_HINTS=1 was not given' : 'not asked for (--only)');
+      }
+      await step('a server restart', () => restart(t));
+    }
   }
   a?.close();
   b?.close();
