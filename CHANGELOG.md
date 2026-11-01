@@ -2,6 +2,12 @@
 
 Every release of ZZ Meridian, newest first. Versions follow semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Each entry says what breaks and what to do instead.
 
+## [Unreleased]
+
+### Fixed
+
+- **Adoption checks both skill destinations before changing the project.** A skill file or folder linked elsewhere, including a dangling link, is refused before copying or branding files. Previously adoption could modify the project and then fail when the skill installer rejected the same link.
+
 ## [0.37.1] · 2026-11-01
 
 ### Fixed

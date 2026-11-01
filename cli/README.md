@@ -60,6 +60,8 @@ newer versions are kept. Custom specifications are kept with a note to confirm c
 
 It refuses, and writes nothing, when the git tree has uncommitted changes (so its change is one reviewable diff), when
 the project is not Next.js with the App Router, or when a file it would copy already exists with other content.
+Both agent skill destinations are checked before adoption writes anything; skill files and folders that are symbolic
+links, including dangling links, are refused even when their targets hold identical packaged content.
 
 **create** copies the template into a new folder, branded as your product, with the Design Atlas and the design
 system's own documents left out.

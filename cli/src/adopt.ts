@@ -10,7 +10,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {
-  VERSION, brandArgs, effectiveBrand, inside, installArgs, installSkill, jsoncExtras, packageManager, payloadBytes, payloadFiles, readJsonc, readPayload, relativeImports, skillPaths,
+  VERSION, brandArgs, checkSkill, effectiveBrand, inside, installArgs, installSkill, jsoncExtras, packageManager, payloadBytes, payloadFiles, readJsonc, readPayload, relativeImports,
   run, runTool, sha256, writeIn, writeManifest,
 } from './files.js';
 import { BRIEF_TEMPLATE, managedBlock, upsertManagedBlock } from './context.js';
@@ -275,10 +275,7 @@ https://github.com/zhixuan312/zz-meridian/blob/master/skills/zz-meridian/referen
   // The agent skill is copied in at the end, after every other write. Checking it here is what stops `adopt` replacing a
   // team's own edited copy of it: the skill was written unconditionally, so an edited `SKILL.md` in the project was lost
   // without a word and the command still exited 0. It is checked against the same rule as every other file.
-  for (const { rel, payload } of skillPaths()) {
-    const abs = path.join(root, rel);
-    if (fs.existsSync(abs) && !fs.readFileSync(abs).equals(Buffer.from(payloadBytes(payload)))) conflicts.push(rel);
-  }
+  try { checkSkill(root); } catch (e) { return fail((e as Error).message); }
 
   if (conflicts.length) {
     return fail(`these files already exist with other content, so nothing was written:\n${conflicts.map((c) => `  ${c}`).join('\n')}

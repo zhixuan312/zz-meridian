@@ -184,10 +184,10 @@ export function skillPaths(): { rel: string; payload: string }[] {
     files.map((f) => ({ rel: `${base}/${f.slice('skills/zz-meridian/'.length)}`, payload: f })));
 }
 
-/** Refuse a different existing skill before writing either agent's copy. Identical copies need no write. */
-export function installSkill(root: string, record?: Record<string, string>) {
+/** Plan both agent copies without writing, using the same checks for adoption and standalone installation. */
+function skillPlan(root: string) {
   const contents = new Map<string, Buffer>();
-  const plan = skillPaths().map(({ rel, payload }) => {
+  return skillPaths().map(({ rel, payload }) => {
     const abs = inside(root, rel);
     let content = contents.get(payload);
     if (!content) {
@@ -200,7 +200,16 @@ export function installSkill(root: string, record?: Record<string, string>) {
     }
     return { rel, content, exists: Boolean(existing) };
   });
-  for (const { rel, content, exists } of plan) {
+}
+
+/** Refuse every skill conflict before adoption changes any other project files. */
+export function checkSkill(root: string): void {
+  skillPlan(root);
+}
+
+/** Refuse a different existing skill before writing either agent's copy. Identical copies need no write. */
+export function installSkill(root: string, record?: Record<string, string>) {
+  for (const { rel, content, exists } of skillPlan(root)) {
     if (!exists) writeIn(root, rel, content);
     if (record) record[rel] = sha256(content);
   }
