@@ -42,6 +42,7 @@ Every page has an `h1`, `lang="en"`, a `main`, an opaque ground and controls of 
 | `/deep-ringless` | A control inside a root with no focus ring anywhere. `-fixed` rings the control itself |
 | `/deep-ring-ancestor` | A control whose ring is drawn on its frame inside the root (`:focus-within`). Correct, so it has no broken twin |
 | `/deep-decorative-border` | A control in the light DOM with a coloured box shadow that is always there and does not change on focus. `-fixed` adds an outline on `:focus-visible` |
+| `/presses-observer-delay` | A dead control while observer registration is delayed; `-fixed` changes its status immediately. Both delay the observer timer so a real response cannot be missed by pressing too early |
 | `/deep-dead-control` | A button inside a root that does nothing when pressed. `-fixed` writes a status line inside the root |
 | `/deep-shift-tab` | A button inside a root that a forward Tab skips (the first button sends focus to the last) and only Shift+Tab reaches |
 | `/deep-closed` | A defined custom element whose root is closed. `-fixed` opens it |

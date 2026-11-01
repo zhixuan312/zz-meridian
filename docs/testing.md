@@ -87,6 +87,7 @@ The audit preserves each requested query key's complete ordered value list, incl
 ## Rules
 
 - **Behavior, not pins**: assert user-visible meaning, transitions, boundaries and errors, not source snippets, prose, utility classes, incidental defaults, wiring or byte copies. Remove incidental pins rather than repinning them; retain meaningful behavior, accessibility, security, architecture and planted-validator cases. A removed pin never clears an observable failure: prove the running behavior and generated artifacts.
+- **Observer readiness**: the interaction check waits for its mutation observer to attach before sending input. Elapsed timer delays are not proof that a busy renderer has armed it. Delayed-observer working/dead fixture twins protect both outcomes.
 - **Asynchronous state**: wait for the state under assertion. Clipboard feedback can commit before the selection effect; a neighboring live-region message is not proof that selection has finished.
 - **Standalone gates**: preserve the Node-built-in-only dependency boundary, not byte equality between authored and generated modules.
 - **Isolated effects**: reset observed state between tests and settle the callback created by that test, not a stale callback left by an earlier case.

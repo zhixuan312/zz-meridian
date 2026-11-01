@@ -125,6 +125,9 @@ const SLOT = '<span data-assistant-slot aria-hidden="true" style="display: inlin
 const arrive = (ms: number, html: string, then = '') =>
   `setTimeout(() => { const slot = document.querySelector('[data-assistant-slot]'); slot.removeAttribute('aria-hidden'); slot.innerHTML = ${JSON.stringify(html)}; ${then} }, ${ms});`;
 
+// Hold the checker's deferred observer registration beyond the press; a working button must still be measured.
+const DELAY_OBSERVER = `const nativeTimeout = window.setTimeout.bind(window); window.setTimeout = (callback, delay, ...args) => nativeTimeout(callback, delay === 40 ? 1200 : delay, ...args);`;
+
 export const PAGES: Record<string, string> = {
   '/deep-clipped': deep('Clipped label', { body: '<x-outer></x-outer>', script: nested(LABEL, CLIP) }),
   // Corrected means cut on purpose and kept whole: an ellipsis, and the whole label in its title (the audit asks for both).
@@ -277,6 +280,9 @@ ${chart(`${RULE(50)}${CAPTION}`)}
   // one, as ShellTools reads when its alerts answer after the settle on one load and before it on the next (#66).
   '/presses-live-name': deep('Control whose name carries a count', { body: '<div class="tools"></div><p class="status" aria-live="polite"></p>', script: `const first = !sessionStorage.getItem('counted'); sessionStorage.setItem('counted', '1'); const tools = document.querySelector('.tools'); const add = (label, act) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = label; b.addEventListener('click', act); tools.append(b); }; add('Reload', () => location.reload()); add(first ? 'Alerts' : 'Alerts, 3 new', () => { document.querySelector('.status').textContent = 'Alerts open'; });` }),
   // A control whose answer comes about 1.5 s after the press, past the presses' first look at 600 ms: it is slow, not dead.
+  '/presses-observer-delay': deep('Delayed observer, dead control', { body: '<button type="button">Change</button><p class="status" aria-live="polite">Initial</p>', script: DELAY_OBSERVER }),
+  '/presses-observer-delay-fixed': deep('Delayed observer, working control', { body: '<button type="button">Change</button><p class="status" aria-live="polite">Initial</p>', script: `${DELAY_OBSERVER} document.querySelector('button').addEventListener('click', () => { document.querySelector('.status').textContent = 'Updated'; });` }),
+
   '/late-answer': deep('Late answer', { body: '<button type="button" id="ask">Ask</button><p class="status" aria-live="polite"></p>', script: `document.getElementById('ask').addEventListener('click', () => { setTimeout(() => { document.querySelector('.status').textContent = 'Answered'; }, 1500); });` }),
 
   // ---- the rules of the standard that no page had ever made fire ----

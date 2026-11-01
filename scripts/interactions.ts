@@ -101,8 +101,12 @@ const ARM = (name: string, nth: number, key: string, keyNth: number) => `(() => 
     if (m.type === 'attributes' && m.target === el && ['data-state', 'class', 'style', 'aria-describedby'].includes(m.attributeName)) continue;
     window.__changes++;
   } });
-  setTimeout(() => roots().forEach((r) => window.__mo.observe(r, { subtree: true, childList: true, attributes: true, characterData: true })), 40);
-  return { x, y };
+  // A timer's nominal delay does not prove it ran. Input starts only after the observer is actually attached,
+  // otherwise a busy renderer can respond to a press before the check starts watching and be called dead.
+  return new Promise((resolve) => setTimeout(() => {
+    roots().forEach((r) => window.__mo.observe(r, { subtree: true, childList: true, attributes: true, characterData: true }));
+    resolve({ x, y });
+  }, 40));
 })()`;
 
 async function press(page: Page, x: number, y: number, touch: boolean) {

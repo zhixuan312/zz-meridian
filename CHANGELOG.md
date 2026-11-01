@@ -12,6 +12,8 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 
 ### Fixed
 
+- **Interaction checks observe before pressing.** A delayed observer timer can no longer lose an immediate response and report a working control as dead; genuinely unresponsive controls still fail.
+
 - **Committed replays stay successful when cache refresh fails.** The action returns the new request with a refresh warning, shown with its Open action, instead of falsely reporting Not replayed and inviting another write.
 
 - **Customization guidance respects data and surface boundaries.** Server pages or logic read the data seam and pass values into views; views import only types or the documented vocabulary. Product summaries belong to logic, shared formatters to lib, and fullscreen customer controls open through the host.

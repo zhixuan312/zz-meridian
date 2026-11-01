@@ -550,5 +550,7 @@
   { "page": "/nav-dead-control", "suite": "navigate", "outcome": "fail", "line": "interactive control-dead: pressing main button#toggle (toggle) changed nothing on main button#toggle in 5000 ms" },
   { "page": "/nav-retake", "suite": "navigate", "outcome": "pass" },
   { "page": "/nav-retake", "suite": "navigate-timing-off", "outcome": "pass" },
-  { "page": "/nav-retake", "suite": "navigate-timing-on", "outcome": "fail", "line": "data never-ready on a retake: main table tbody tr did not appear in 10000 ms" }
+  { "page": "/nav-retake", "suite": "navigate-timing-on", "outcome": "fail", "line": "data never-ready on a retake: main table tbody tr did not appear in 10000 ms" },
+  { "page": "/presses-observer-delay", "suite": "presses", "outcome": "fail", "line": "does nothing when" },
+  { "page": "/presses-observer-delay-fixed", "suite": "presses", "outcome": "pass" }
 ]
