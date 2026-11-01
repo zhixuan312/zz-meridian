@@ -2,6 +2,23 @@ import { describe, expect, it } from 'vitest';
 import { aliasesOf, importTarget } from '../scripts/lib/aliases.ts';
 
 describe('the import aliases the checks resolve', () => {
+  it('ignores commented paths and resolves live paths against baseUrl', () => {
+    const a = aliasesOf(`{
+      "compilerOptions": {
+        "baseUrl": "./app-code",
+        // "paths": { "@/*": ["./retired/*"] },
+        "paths": { "@/*": ["./live/*"], "@meridian/*": ["../src/*"], },
+      },
+    }`);
+    expect(importTarget('app/page.tsx', '@/orders', a)).toBe('app-code/live/orders');
+    expect(importTarget('app/page.tsx', '@meridian/lib/format', a)).toBe('src/lib/format');
+  });
+
+  it('does not turn a commented-out alias into a live path', () => {
+    const a = aliasesOf('{ "compilerOptions": { /* "paths": { "@/*": ["./old/*"] } */ } }');
+    expect(importTarget('app/page.tsx', '@/orders', a)).toBe('src/orders');
+  });
+
   it("are the template's: @/ is src/", () => {
     const a = aliasesOf('{ "compilerOptions": { "paths": {\n  "@/*": [\n    "./src/*"\n  ]\n} } }');
     expect(importTarget('app/page.tsx', '@/data/orders', a)).toBe('src/data/orders');
