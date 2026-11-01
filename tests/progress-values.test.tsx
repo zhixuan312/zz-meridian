@@ -27,6 +27,12 @@ describe('Progress reads what it was given, and nothing it was not', () => {
     expect(screen.getByText('—')).toBeTruthy();
     expect(bar().getAttribute('aria-valuenow')).toBeNull();
   });
+  it('does not announce an infinite maximum as a measured range or a zero share', () => {
+    render(<Progress value={3} max={Infinity} label="Seats" />);
+    expect(bar()).not.toHaveAttribute('aria-valuemax');
+    expect(bar()).not.toHaveAttribute('aria-valuenow');
+    expect(screen.getByText('—')).toBeInTheDocument();
+  });
   it('a meter holds its current value inside its range', () => {
     render(<Meter value={1.4} label="Plan used" />);
     expect(screen.getByRole('meter').getAttribute('aria-valuenow')).toBe('1');

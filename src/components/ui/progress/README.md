@@ -39,7 +39,7 @@ Label row 8px above the track.
 |---|---|
 | Rest | as above |
 | Changing | the fill grows from the left on arrival (`grow-x`, `dur-grow`, `ease-out`); later changes move its width over `dur-enter` |
-| Unknown value | a value that is missing, or a whole of zero, reads "—" with no fill and no current value |
+| Unknown share | A missing or nonfinite value, or a nonpositive or nonfinite whole, reads "—" with no fill and no current value |
 | Past its whole | the bar and its current value are held to the whole; the default figure says the share it is: 23 of 20 reads "115%" |
 | Unknown total | not this card: use a Spinner or a Skeleton |
 | Reduced motion | the final width at once |
