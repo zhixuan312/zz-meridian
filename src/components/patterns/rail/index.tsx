@@ -4,7 +4,7 @@ import Link, { useLinkStatus } from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useLeave } from '@/components/base/shell';
 import { useEffect, useId, useRef, useState } from 'react';
-import { Check, ChevronDown, ChevronRight, ChevronsUpDown, LogOut, Settings } from 'lucide-react';
+import { Check, ChevronDown, ChevronsUpDown, LogOut, Settings } from 'lucide-react';
 import { app, type NavGroup } from '@/app.config';
 import { cn } from '@/lib/cn';
 import { AppMark } from '@/components/base/app-mark';
@@ -263,8 +263,10 @@ export function Rail({
                           onClick={() => toggle(it.href)}
                           className="relative col-start-1 row-start-1 mr-1 grid size-7 place-items-center self-center justify-self-end rounded-md text-ink-3 transition-colors duration-(--dur-hover) hover:bg-fill-hover hover:text-ink pointer-coarse:size-11"
                         >
-                          {/* One chevron that turns, never swapped: the same element keeps the button's focus ring and the turn animates. */}
-                          <ChevronRight className={cn('size-4 transition-transform duration-(--dur-hover)', isOpen && 'rotate-90')} strokeWidth={1.75} />
+                          {/* One chevron that turns, never swapped: the same element keeps the button's focus ring and the turn animates.
+                              It is the shell's own ChevronDown turned a quarter: a ChevronRight of its own split the menu icons into
+                              a first-load chunk of their own on every route of an adopted project (issue 122). */}
+                          <ChevronDown className={cn('size-4 transition-transform duration-(--dur-hover)', !isOpen && '-rotate-90')} strokeWidth={1.75} />
                         </button>
                       </div>
                       {isOpen ? (
