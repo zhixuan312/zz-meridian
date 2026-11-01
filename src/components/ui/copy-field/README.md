@@ -36,6 +36,8 @@ One size, `control-md`; it takes its container's width.
 ## Behaviour
 
 - Copy writes the real value to the clipboard whether or not it is revealed.
+- Feedback belongs to the latest Copy attempt: starting another attempt clears the previous result, and only the latest completion may confirm a copy or offer manual selection. Each success has its own 1.6s confirmation interval.
+- Replacing the value resets confirmation, refusal and Reveal before the new value is drawn. Changing between public/secret or console/embed modes also starts fresh; a newly secret value never inherits a public field's visibility.
 - The value itself is selectable text.
 
 ## Surfaces
