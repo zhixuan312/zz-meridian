@@ -560,6 +560,16 @@ describe('the 0.36.0 navigation migration', () => {
     expect(m.applies(project({ 'src/app.config.ts': 'export const app = {} as const;\n' }), '0.35.0')).toBeNull();
     expect(m.applies(path.resolve(import.meta.dirname, '..'), '0.35.0')).toBeNull();
   });
+  it('reads a NavItem type the module keeps to itself, as the exported NavGroup still types its items with it (#103)', () => {
+    const m = byId('nav-item-fields');
+    const local = (fields: string) => project({ 'src/app.config.ts': `type NavItem = { href: string; label: string; icon: LucideIcon; feature: FeatureId; needs: Need${fields} };\nexport type NavGroup = { label?: string; items: NavItem[] };\n` });
+    expect(m.applies(local(''), '0.35.0')).toEqual(['src/app.config.ts']);
+    expect(m.applies(local('; prefetch?: true; under?: string'), '0.35.0')).toBeNull();
+    expect(m.applies(project({ 'src/app.config.ts': 'interface NavItem {\n  href: string;\n  needs: Need;\n}\n' }), '0.35.0')).toEqual(['src/app.config.ts']);
+    expect(releaseMigrations(local(''), '0.28.0', '0.36.0').map((x) => x.id)).toContain('nav-item-fields');
+    // nav-needs reads the same type, so a local one without `needs` is reported there too.
+    expect(byId('nav-needs').applies(project({ 'src/app.config.ts': "type NavItem = { href: string };\nexport const nav: NavGroup[] = [\n  { items: [{ href: '/', needs: 'public' }] },\n];\n" }), '0.35.0')).toEqual(['src/app.config.ts']);
+  });
 });
 
 describe('the 0.36.0 migration', () => {
