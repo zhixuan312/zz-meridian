@@ -6,7 +6,11 @@ import { Providers } from '@/components/base/providers';
 import './globals.css';
 
 /* The faces ship with the template (src/styles/fonts, Geist and Geist Mono from geist@1.8.2, under their licence there),
-   so a build fetches nothing; next/font hands them to the tokens as --font-face-sans and --font-face-mono. */
+   so a build fetches nothing; next/font hands them to the tokens as --font-face-sans and --font-face-mono. Each file is
+   the variable face cut to Latin and Latin Extended plus the arrows, minus and command key the product draws, with every
+   axis and feature kept: the whole face is twice the size, and the preloaded file competes with a phone's first bytes.
+   Another script falls back to the system face. The cut: fontTools' pyftsubset with --layout-features='*' and those
+   ranges, as the 0.37.0 changelog lists them. */
 const sans = localFont({ src: '../src/styles/fonts/Geist-Variable.woff2', weight: '100 900', variable: '--font-face-sans', display: 'swap' });
 const mono = localFont({ src: '../src/styles/fonts/GeistMono-Variable.woff2', weight: '100 900', variable: '--font-face-mono', display: 'swap' });
 
