@@ -417,6 +417,17 @@ function summaryOf<T>(out: string, tag: string): T | null {
   try { return JSON.parse(last.slice(tag.length + 2)) as T; } catch { return null; }
 }
 
+/**
+ * A failed suite's output without the audit's design-metrics table: one line per route, printed last, so on a product of
+ * fifty routes the lines kept beneath a failure were nearly all metrics and the FAIL blocks above them were cut off.
+ */
+function withoutMetrics(out: string[]): string[] {
+  const start = out.findIndex((l) => /^Design metrics at \d+:$/.test(l));
+  if (start < 0) return out;
+  const end = out.findIndex((l, i) => i > start && l.trim() === '');
+  return [...out.slice(0, start), ...(end < 0 ? [] : out.slice(end))];
+}
+
 /** A suite's line. One that left a case unrun is `not run`, stays in the coverage line's not-run list, and fails nothing. */
 function reportSuite(name: string, label: string, r: { status: number | null; out: string; took: number }): void {
   const outcome = suiteOutcome(r.status, r.out);
@@ -425,7 +436,7 @@ function reportSuite(name: string, label: string, r: { status: number | null; ou
   phase(outcome, label, r.took);
   const out = r.out.trim().split('\n');
   const phone = phoneLines(out);
-  if (outcome === 'FAIL') beneath([...phone, ...out.filter((l) => !phone.includes(l)).slice(-60)]);
+  if (outcome === 'FAIL') beneath([...phone, ...withoutMetrics(out).filter((l) => !phone.includes(l)).slice(-60)]);
   else if (outcome === 'not run') beneath([...phone, ...out.filter((l) => l.startsWith('not run')), out.at(-1) ?? '']);
   else beneath([...phone, ...out.filter((l, i) => /^(n\/a|warn)\b/.test(l) || (/^warn\b/.test(out[i - 1] ?? '') && l.startsWith('  '))), out.at(-1) ?? '']);
 }
