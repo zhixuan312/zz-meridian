@@ -2,6 +2,12 @@
 
 Every release of ZZ Meridian, newest first. Versions follow semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Each entry says what breaks and what to do instead.
 
+## [0.37.1] · 2026-11-01
+
+### Fixed
+
+- **The rail adds no first-load script to every route** (#122). A branch's toggle drew a `ChevronRight` of its own, and in an adopted project's module graph that one icon split the menu icons into a first-load chunk of their own: one more request on every route, about 0.3 s more LCP on a page that paints its text on hydration. The toggle is now the `ChevronDown` the rail already draws, turned a quarter while the branch is closed.
+
 ## [0.37.0] · 2026-11-01
 
 ### Breaking
