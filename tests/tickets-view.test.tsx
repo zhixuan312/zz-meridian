@@ -1,10 +1,15 @@
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { Tooltip } from 'radix-ui';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('next/navigation', () => ({ usePathname: () => '/operations-tickets', useSearchParams: () => new URLSearchParams(), useRouter: () => ({ refresh() {}, push() {}, replace() {} }) }));
+const navigation = vi.hoisted(() => ({ refresh: vi.fn() }));
+vi.mock('next/navigation', () => ({ usePathname: () => '/operations-tickets', useSearchParams: () => new URLSearchParams(), useRouter: () => ({ refresh: navigation.refresh, push() {}, replace() {} }) }));
+vi.mock('@/components/ui/toast', () => ({ toast: vi.fn() }));
 
 import { TicketsView } from '@/views/tickets';
+import { toast } from '@/components/ui/toast';
+
+beforeEach(() => vi.clearAllMocks());
 
 type Answer = { ok: true } | { ok: false; error: string };
 const NOW = '2026-10-03T09:00:00.000Z';
@@ -94,5 +99,50 @@ describe('the tickets page, for someone who may', () => {
     fireEvent.click(screen.getByRole('button', { name: 'New ticket' }));
     const form = await screen.findByRole('dialog');
     expect(within(form).getByRole('button', { name: 'Create ticket' }).getAttribute('aria-busy')).toBeNull();
+  });
+});
+
+describe('ticket creation without services', () => {
+  it.each([true, false])('explains recovery at every available entrypoint, with an empty list: %s', (empty) => {
+    const createTicket = vi.fn(fine);
+    view({ rows: empty ? [] : rows, services: [], createTicket });
+    const buttons = screen.getAllByRole('button', { name: 'New ticket' });
+    expect(buttons).toHaveLength(empty ? 2 : 1);
+    for (const button of buttons) {
+      expect(button.getAttribute('aria-haspopup')).toBeNull();
+      fireEvent.click(button);
+      expect(screen.queryByRole('dialog')).toBeNull();
+    }
+    expect(createTicket).not.toHaveBeenCalled();
+    expect(toast).toHaveBeenCalledWith(expect.objectContaining({
+      title: 'No services available',
+      description: expect.stringMatching(/service.*administrator.*refresh/i),
+      action: expect.objectContaining({ label: 'Refresh' }),
+    }));
+    const notice = vi.mocked(toast).mock.calls.at(-1)![0];
+    notice.action!.onClick();
+    expect(navigation.refresh).toHaveBeenCalledTimes(1);
+  });
+
+  it('withholds both controls and recovery details from someone who may not create', () => {
+    view({ rows: [], services: [], may: { create: false, update: false } });
+    expect(screen.queryByRole('button', { name: 'New ticket' })).toBeNull();
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(toast).not.toHaveBeenCalled();
+  });
+
+  it('can create against a service that arrives after the first render', async () => {
+    const createTicket = vi.fn(fine);
+    const props = { rows: [], now: NOW, services: [] as string[], assignees: [], createTicket, updateTicket: fine };
+    const { rerender } = render(<TicketsView {...props} />);
+    fireEvent.click(screen.getAllByRole('button', { name: 'New ticket' })[0]);
+    expect(screen.queryByRole('dialog')).toBeNull();
+    rerender(<TicketsView {...props} services={['New gateway']} />);
+    fireEvent.click(screen.getAllByRole('button', { name: 'New ticket' })[0]);
+    const form = await screen.findByRole('dialog');
+    fireEvent.change(within(form).getByLabelText(/^Title/), { target: { value: 'Check the new gateway' } });
+    await act(async () => { fireEvent.click(within(form).getByRole('button', { name: 'Create ticket' })); });
+    expect(createTicket.mock.calls).toEqual([[expect.objectContaining({ title: 'Check the new gateway', service: 'New gateway' })]]);
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
   });
 });

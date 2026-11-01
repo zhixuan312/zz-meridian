@@ -24,6 +24,7 @@ The body (rows 1 and 2, under the masthead) is the records template, `Records` f
 | Filtered | Only the tickets that match, and "n of m" in the Filter bar; the tiles keep counting every ticket |
 | No matches | The table's filtered-empty state with Clear filters |
 | No tickets | The first-run empty state with New ticket, for someone who may create |
+| No services | Both New ticket entrypoints explain that a service must exist first, ask the workspace administrator to add one, and offer Refresh. No impossible form opens. Once services arrive, opening the form selects an available service; a person who may not create sees neither control nor recovery details |
 | Not created | A critical Banner at the top of the open dialog with the server's sentence; the dialog keeps what was typed and can be submitted again |
 | Creating | The Create ticket button is busy and cannot be pressed twice |
 | Created | The dialog closes, a toast "Ticket created", and the new ticket and the three tiles show on the refreshed page |

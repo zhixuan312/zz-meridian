@@ -84,7 +84,21 @@ export function TicketsView({ rows, now, revisions, may = { create: true, update
   /** Why the server did not create the ticket: said inside the open form, which keeps what was typed. */
   const [refusal, setRefusal] = useState<string | null>(null);
 
-  const open = () => { setRefusal(null); setCreating(true); };
+  const open = () => {
+    if (!may.create) return;
+    if (!services.length) {
+      toast({
+        tone: 'neutral',
+        title: 'No services available',
+        description: 'A ticket needs a service. Ask your workspace administrator to add one, then refresh.',
+        action: { label: 'Refresh', onClick: () => router.refresh() },
+      });
+      return;
+    }
+    setDraft((current) => services.includes(current.service) ? current : { ...current, service: services[0] });
+    setRefusal(null);
+    setCreating(true);
+  };
   const create = () => {
     if (sending.current) return;
     sending.current = true;
@@ -177,7 +191,7 @@ export function TicketsView({ rows, now, revisions, may = { create: true, update
   ];
 
   const M = TICKET_METRICS;
-  const newTicket = may.create ? <Button variant="primary" icon={<Plus />} aria-haspopup="dialog" onClick={open}>New ticket</Button> : undefined;
+  const newTicket = may.create ? <Button variant="primary" icon={<Plus />} aria-haspopup={services.length ? 'dialog' : undefined} onClick={open}>New ticket</Button> : undefined;
   return (
     <PageFrame
       kicker={<>{app.name} · {app.workspace}</>}
@@ -205,7 +219,7 @@ export function TicketsView({ rows, now, revisions, may = { create: true, update
               rows={matching}
               columns={columns}
               rowKey={(t) => t.id}
-              empty={{ title: 'No tickets yet', body: 'Open one when there is work to track against a service.', action: may.create ? <Button variant="primary" size="sm" icon={<Plus />} aria-haspopup="dialog" onClick={open}>New ticket</Button> : undefined }}
+              empty={{ title: 'No tickets yet', body: 'Open one when there is work to track against a service.', action: may.create ? <Button variant="primary" size="sm" icon={<Plus />} aria-haspopup={services.length ? 'dialog' : undefined} onClick={open}>New ticket</Button> : undefined }}
               state={{ sort: f.sort, dir: f.dir, page: f.page }}
               onStateChange={set}
               filtered={isFiltered}
