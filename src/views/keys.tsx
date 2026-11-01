@@ -79,7 +79,7 @@ export function KeysView({ rows, now, revisions, createKey, revokeKey, may = { c
         setFresh(k);
         setCreating(false);
         setName(''); setScopes(['messages']); setError(null);
-        toast({ tone: 'positive', title: 'Key created', description: `${k.name} can call ${k.scopes.join(', ')}.` });
+        toast({ tone: r.warning ? 'neutral' : 'positive', title: 'Key created', description: r.warning ?? `${k.name} can call ${k.scopes.join(', ')}.` });
         router.refresh();
       } catch (e) {
         setCreateError(e instanceof Error ? e.message : 'The key could not be created. Try again.');
@@ -213,7 +213,7 @@ export function KeysView({ rows, now, revisions, createKey, revokeKey, may = { c
                     revokingIds.current.delete(k.id);
                   }
                   if (!r.ok) throw new Error(r.error);
-                  toast({ tone: 'neutral', title: 'Key revoked', description: `${k.name} no longer works.` });
+                  toast({ tone: 'neutral', title: 'Key revoked', description: r.warning ?? `${k.name} no longer works.` });
                 }, 'Could not revoke the key');
               }}>Revoke key</Button>
             </>

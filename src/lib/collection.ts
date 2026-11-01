@@ -110,9 +110,10 @@ export type AnyCollection = Collection<any, any>;
 
 /**
  * What a server action answers: done, with whatever it hands back, or the sentence that says why not. A thrown error's
- * message does not reach the browser in a production build; a result does.
+ * message does not reach the browser in a production build; a result does. A postcommit warning accompanies success;
+ * it never invites repeating the committed write.
  */
-export type ActionResult<T = object> = ({ ok: true } & T) | { ok: false; error: string };
+export type ActionResult<T = object> = ({ ok: true; warning?: string } & T) | { ok: false; error: string };
 
 /**
  * One store per tenant and name per process, on globalThis, so a route handler, a server action and a page share it.

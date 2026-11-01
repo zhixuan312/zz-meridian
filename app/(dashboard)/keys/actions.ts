@@ -1,11 +1,11 @@
 'use server';
 
 import { createHash, randomBytes } from 'node:crypto';
-import { updateTag } from 'next/cache';
 import { z } from 'zod';
 import { clock } from '@/data/collections';
 import { Unauthenticated, can, collectionFor, nameOf, resolveAccess } from '@/data/access';
 import { collectionTag } from '@/data/read';
+import { invalidate } from '@/data/write-boundary';
 import { projectKey, type PublicKey } from '@/data/projections';
 import { SCOPES } from '@/logic/key-scopes';
 import type { ActionResult } from '@/lib/collection';
@@ -18,6 +18,17 @@ const draft = z.object({
 
 /** The sentence for a failure this action did not write itself: a store's own words are not the person's to read. */
 const said = (e: unknown, what: string) => (e instanceof Unauthenticated ? `Sign in again to ${what}.` : `Could not ${what}. Try again.`);
+
+/** The write has committed: cache failure is a warning, never a reason to lose a new secret or repeat the write. */
+function refreshKeys(tenantId: string): { warning?: string } {
+  try {
+    invalidate(collectionTag(tenantId, 'keys'));
+    return {};
+  } catch (error) {
+    console.error('keys: the change applied but cached reads could not be refreshed', error);
+    return { warning: 'The change applied, but the key list could not be refreshed. Keep any new key safe and reload the list. Do not repeat this change.' };
+  }
+}
 
 /**
  * Creates a key and returns it with its full secret: the only moment the secret exists outside the caller's own copy.
@@ -37,8 +48,7 @@ export async function createKey(input: z.input<typeof draft>): Promise<ActionRes
     const secretHash = createHash('sha256').update(secret).digest('hex');
     const owner = (await nameOf(scope)) ?? scope.subjectId;
     const key = await collectionFor(scope, 'keys').create!({ name, env, scopes, owner, created: clock().toISOString(), lastUsed: null, hint, secretHash });
-    updateTag(collectionTag(scope.tenantId, 'keys'));
-    return { ok: true, key: { ...projectKey(key), secret } };
+    return { ok: true, key: { ...projectKey(key), secret }, ...refreshKeys(scope.tenantId) };
   } catch (e) {
     return { ok: false, error: said(e, 'create the key') };
   }
@@ -49,8 +59,7 @@ export async function revokeKey(id: string): Promise<ActionResult> {
     const scope = await resolveAccess();
     if (!(await can(scope, 'keys', 'remove', [id]))) return { ok: false, error: 'You do not have permission to revoke this key.' };
     await collectionFor(scope, 'keys').remove!([id]);
-    updateTag(collectionTag(scope.tenantId, 'keys'));
-    return { ok: true };
+    return { ok: true, ...refreshKeys(scope.tenantId) };
   } catch (e) {
     return { ok: false, error: said(e, 'revoke the key') };
   }

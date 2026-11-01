@@ -69,3 +69,5 @@ API keys' prepared query (`keysExplore` in `src/logic/keys-explore.ts`, set as `
 
 - "Create key", "Revoke key", "Key created", "Key revoked": one verb through the flow.
 - The revoke dialog says the consequence in plain words: "Requests that use it fail at once with 401."
+
+A committed create or revoke remains successful if refreshing cached reads fails. The action returns `ok: true` with an optional `warning`; the view shows that warning and still reveals the newly created secret once. The user must not repeat a committed write to refresh the list. The server logs the refresh failure.
