@@ -323,5 +323,5 @@ async function main(): Promise<number> {
   return failed ? 1 : 0;
 }
 
-// perf.ts imports the journey and must not run this main.
+// Run only as the command: a test or a script of the project's own that imports this file must not start a run.
 if (process.argv[1] === fileURLToPath(import.meta.url)) process.exit(await main());

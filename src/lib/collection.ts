@@ -280,7 +280,6 @@ function bucketOf(v: unknown, bucket: string): string | null {
   throw new Error(`Unsupported bucket ${JSON.stringify(bucket)}`);
 }
 
-/** One measure over `rows`: a count of those that meet its own conditions, or a figure over the numbers of its field, null when there is none. */
 /**
  * The 95th percentile by nearest rank, the value at ceil(0.95 × n) of the values in order, or null for none: the one
  * rule for a p95 a tile draws and a prepared query answers, so the two agree on the same rows.
@@ -289,6 +288,7 @@ export function p95(xs: readonly number[]): number | null {
   return xs.length ? [...xs].sort((a, b) => a - b)[Math.ceil(0.95 * xs.length) - 1] : null;
 }
 
+/** One measure over `rows`: a count of those that meet its own conditions, or a figure over the numbers of its field, null when there is none. */
 function measure(rows: Record<string, unknown>[], m: AggregateQuery['measures'][number]): number | null {
   const own = m.where?.length ? rows.filter((r) => m.where!.every((w) => matches(r, w))) : rows;
   if (m.agg === 'count') return own.length;
