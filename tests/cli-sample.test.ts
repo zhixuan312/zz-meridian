@@ -78,11 +78,26 @@ describe('the sample agrees with itself', () => {
       if (r.status === 404) expect(r.route.endsWith(':id')).toBe(true);
     }
   });
-  it('every trace ends at or after the request’s latency, never before it', () => {
+  it('every sample route has a trace ending exactly at the request’s latency', () => {
     for (const r of REQUESTS) {
       const t = traceOf(r);
       const end = t[t.length - 1];
-      expect(end.start + end.duration).toBeGreaterThanOrEqual(r.latency);
+      expect(end.start + end.duration).toBe(r.latency);
+    }
+  });
+  it('short and zero-latency traces never spend more time than the request took', () => {
+    for (const status of [200, 400, 404, 429, 500]) {
+      for (const latency of [0, 1, 2, 3, 4, 5, 6, 10]) {
+        const spans = traceOf({ ...REQUESTS[0], status, latency });
+        let end = 0;
+        for (const span of spans) {
+          expect(span.start).toBe(end);
+          expect(span.duration).toBeGreaterThanOrEqual(0);
+          end = span.start + span.duration;
+          expect(end).toBeLessThanOrEqual(latency);
+        }
+        expect(end).toBe(latency);
+      }
     }
   });
 });

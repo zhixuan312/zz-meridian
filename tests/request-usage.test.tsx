@@ -31,7 +31,7 @@ describe("a request's tokens and cost say why there are none", () => {
 describe('the trace of a request that took no time', () => {
   test('draws its phases at the start, never at NaN%', () => {
     const r = { ...REQUESTS.find((x) => x.status < 400)!, latency: 0 };
-    const { container } = show(r, traceOf(r).map((s) => ({ ...s, start: 0, duration: 0 })));
+    const { container } = show(r);
     const bars = [...container.querySelectorAll<HTMLElement>('figure[aria-label="Request phases"] span[style]')];
     expect(bars.length).toBeGreaterThan(0);
     // A browser drops a NaN length, so the bar loses its place and its width: both must be there, at the start.

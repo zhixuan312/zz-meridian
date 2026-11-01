@@ -34,8 +34,8 @@ export function traceOf(r: RequestRow): Span[] {
   const L = r.latency;
   const failed = r.status >= 500;
   const limited = r.status === 429;
-  const gateway = Math.max(3, Math.round(L * 0.04));
-  const auth = Math.max(2, Math.round(L * 0.03));
+  const gateway = Math.min(L, Math.max(3, Math.round(L * 0.04)));
+  const auth = Math.min(L - gateway, Math.max(2, Math.round(L * 0.03)));
   if (limited || r.status === 404 || r.status === 400) {
     return [
       { name: 'Gateway', detail: `TLS and routing in ${r.region}`, start: 0, duration: gateway, tone: 'neutral' },
@@ -43,14 +43,14 @@ export function traceOf(r: RequestRow): Span[] {
       {
         name: limited ? 'Rate limit' : r.status === 404 ? 'Lookup' : 'Validation',
         detail: limited ? 'Over 1,200 requests a minute' : r.status === 404 ? 'No record with that ID' : 'Rejected before any work',
-        start: gateway + auth, duration: Math.max(1, L - gateway - auth), tone: 'critical',
+        start: gateway + auth, duration: L - gateway - auth, tone: 'critical',
       },
     ];
   }
   const work = WORK[r.route];
-  const queue = Math.round(L * 0.08);
-  const main = Math.round(L * (failed ? 0.7 : 0.55));
-  const last = Math.max(1, L - gateway - auth - queue - main);
+  const queue = Math.min(L - gateway - auth, Math.round(L * 0.08));
+  const main = Math.min(L - gateway - auth - queue, Math.round(L * (failed ? 0.7 : 0.55)));
+  const last = L - gateway - auth - queue - main;
   return [
     { name: 'Gateway', detail: `TLS and routing in ${r.region}`, start: 0, duration: gateway, tone: 'neutral' },
     { name: 'Auth', detail: 'Key and scope check', start: gateway, duration: auth, tone: 'neutral' },
