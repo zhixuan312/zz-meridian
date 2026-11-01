@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
 
 /**
  * The Meridian: one time cursor shared by every chart and tile on a page. Point at a day in any time chart (or move
@@ -15,8 +15,20 @@ const MeridianCtx = createContext<Ctx | null>(null);
  * reproduces what an agent or a person was looking at. The person's own pointer takes over from there.
  */
 export function Meridian({ dates, day, children }: { dates: string[]; day?: string | null; children: ReactNode }) {
-  const [index, setIndex] = useState<number | null>(() => (day && dates.includes(day) ? dates.indexOf(day) : null));
-  const value = useMemo(() => ({ dates, index, setIndex, shared: true }), [dates, index]);
+  const addressDay = day ?? null;
+  const [cursor, setCursor] = useState(() => ({ day: addressDay, selected: addressDay }));
+  // A new address takes over once. Otherwise keep the person's date, not its position in a frame that can change.
+  const selected = cursor.day !== addressDay ? addressDay : cursor.selected;
+  const position = selected === null ? -1 : dates.indexOf(selected);
+  const index = position < 0 ? null : position;
+  if (cursor.day !== addressDay || (cursor.selected !== null && index === null)) {
+    setCursor({ day: addressDay, selected: index === null ? null : selected });
+  }
+  const setIndex = useCallback((i: number | null) => {
+    const selected = i === null ? null : dates[i];
+    setCursor((current) => current.selected === selected ? current : { ...current, selected });
+  }, [dates]);
+  const value = useMemo(() => ({ dates, index, setIndex, shared: true }), [dates, index, setIndex]);
   return <MeridianCtx.Provider value={value}>{children}</MeridianCtx.Provider>;
 }
 

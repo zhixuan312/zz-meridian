@@ -8,8 +8,8 @@ function Pointer() {
   return <button onClick={() => setIndex(1)}>point</button>;
 }
 function Readout({ name }: { name: string }) {
-  const { index } = useMeridianIndex();
-  return <p data-testid={name}>{index === null ? 'none' : dates[index]}</p>;
+  const { index, dates: held } = useMeridianIndex();
+  return <p data-testid={name}>{index === null ? 'none' : held[index]}</p>;
 }
 
 describe('the Meridian', () => {
@@ -24,5 +24,28 @@ describe('the Meridian', () => {
     render(<><Pointer /><Readout name="c" /></>);
     act(() => screen.getByText('point').click());
     expect(screen.getByTestId('c').textContent).toBe('none');
+  });
+  it('takes a new address day without making the unchanged address control the local cursor', () => {
+    const view = render(<Meridian dates={dates} day={dates[0]}><Pointer /><Readout name="day" /></Meridian>);
+    expect(screen.getByTestId('day').textContent).toBe(dates[0]);
+    act(() => screen.getByText('point').click());
+    expect(screen.getByTestId('day').textContent).toBe(dates[1]);
+    view.rerender(<Meridian dates={[...dates]} day={dates[0]}><Pointer /><Readout name="day" /></Meridian>);
+    expect(screen.getByTestId('day').textContent).toBe(dates[1]);
+    view.rerender(<Meridian dates={dates} day={dates[2]}><Pointer /><Readout name="day" /></Meridian>);
+    expect(screen.getByTestId('day').textContent).toBe(dates[2]);
+    view.rerender(<Meridian dates={dates}><Pointer /><Readout name="day" /></Meridian>);
+    expect(screen.getByTestId('day').textContent).toBe('none');
+  });
+
+  it('keeps the selected date when its position changes, and clears it when the frame loses it', () => {
+    const view = render(<Meridian dates={dates} day={dates[0]}><Pointer /><Readout name="day" /></Meridian>);
+    act(() => screen.getByText('point').click());
+    view.rerender(<Meridian dates={['2026-09-30', ...dates]} day={dates[0]}><Readout name="day" /></Meridian>);
+    expect(screen.getByTestId('day').textContent).toBe(dates[1]);
+    view.rerender(<Meridian dates={[dates[0]]} day={dates[0]}><Readout name="day" /></Meridian>);
+    expect(screen.getByTestId('day').textContent).toBe('none');
+    view.rerender(<Meridian dates={dates} day={dates[0]}><Readout name="day" /></Meridian>);
+    expect(screen.getByTestId('day').textContent).toBe('none');
   });
 });
