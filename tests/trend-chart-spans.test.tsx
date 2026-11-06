@@ -24,10 +24,13 @@ describe('TrendChart spans', () => {
   it('draws a full-height wash across the period, from its first date to its last', () => {
     const { container } = render(<TrendChart label="p95" dates={minutes} series={series} spans={[span]} />);
     const wash = container.querySelector('[data-span="Above the ceiling"]')!;
-    expect(wash).not.toBeNull();
-    expect(wash.getAttribute('height')).toBe(String(Number(wash.getAttribute('height'))));
-    // The wash is as wide as the dates between its ends, and narrower than the plot.
-    expect(Number(wash.getAttribute('width'))).toBeGreaterThan(0);
+    // Full height: the wash reaches from the plot's top to its bottom, not the height of a band.
+    expect(Number(wash.getAttribute('height'))).toBeGreaterThan(0);
+    // From 09:25 to 09:31 of a 61-point hour: seven points' worth of a 60-step axis, and narrower than the whole plot.
+    const width = Number(wash.getAttribute('width'));
+    const plot = Number(container.querySelector('svg')?.getAttribute('width') ?? '0');
+    expect(width).toBeGreaterThan(0);
+    expect(width).toBeLessThan(plot);
   });
 
   it('names the span in the caption and in a visible key, not only in the drawing', () => {

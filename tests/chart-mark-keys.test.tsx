@@ -27,7 +27,8 @@ describe('a key a reader can see', () => {
     const { container } = render(<ColumnChart columns={columns} label="Requests a day" highlight="b" highlightLabel="the day of the incident" />);
     expect(container.querySelector('[data-key]')?.textContent).toContain('the day of the incident');
     // The accent is what marks it on a plain chart; a stack or a group wears a ring instead, and the key says which.
-    expect(container.querySelector('[data-key]')?.textContent).toMatch(/Accented|Ringed/);
+    // A plain chart marks its subject with the accent; only a stack or a group spends the accent on its parts and rings it.
+    expect(container.querySelector('[data-key]')?.textContent).toBe('Accented: the day of the incident');
   });
 
   it('draws no key when nothing is highlighted, and none for a label with no highlight to explain', () => {

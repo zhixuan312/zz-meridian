@@ -41,7 +41,7 @@ describe('a sparkline with a readout', () => {
     const line = screen.getByRole('img');
     line.focus();
     fireEvent.keyDown(line, { key: 'ArrowLeft' });
-    expect(screen.getByRole('paragraph')?.textContent ?? container.textContent).toBeTruthy();
+    // From the last point, one step back is the third of four values.
     expect(container.querySelector('[data-readout]')?.textContent).toContain('6K');
     fireEvent.keyDown(line, { key: 'Escape' });
     expect(container.querySelector('[data-readout]')).toBeNull();

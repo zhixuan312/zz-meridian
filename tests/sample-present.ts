@@ -14,6 +14,3 @@ const ROOT = path.resolve(import.meta.dirname, '..');
  * every case reads the sample take this guard, and it is never a way to keep a broken test green.
  */
 export const hasSample = (): boolean => fs.existsSync(path.join(ROOT, 'src/system/fixtures/sample.ts'));
-
-/** A case's name with the reason it did not run, for a suite that skips the sample's own subjects. */
-export const sampleAbsent = 'the sample is absent from this product';
