@@ -22,6 +22,8 @@ const uptime = current.map((_, i) => (DOWN.has(i) ? 5 / 6 : 1));
 const seats = current.map((_, i) => (i < 6 ? 12 : i < 14 ? 15 : i < 22 ? 14 : 20));
 /** Five weekly readings over the month. */
 const weekly = [0, 7, 14, 21, current.length - 1];
+/** An hour of the sample's clock, minute by minute: what a monitoring chart is read against. */
+const MINUTES = Array.from({ length: 61 }, (_, i) => `2026-10-${String(DEMO_NOW.getUTCDate()).padStart(2, '0')}T${String(9 + Math.floor(i / 60)).padStart(2, '0')}:${String(i % 60).padStart(2, '0')}`);
 
 /** A day's requests less the day before's: rises and falls about zero. */
 const change = current.slice(1).map((d, i) => d.requests - current[i].requests);
@@ -186,6 +188,19 @@ export default function TrendChartPreview() {
       <Specimen label="Short" note="Under 200px the chart draws three gridlines instead of four, and three or four date labels; drawn here at 150px. A chart told to `fill` takes the height its card gives it, never under 220px.">
         <Plane on="surface" className="max-w-md">
           <TrendChart label="Revenue per day" dates={dates} height={150} format="cost" series={[{ key: 's', label: 'Revenue', values: current.map((d) => d.revenue), kind: 'line', color: 'accent' }]} />
+        </Plane>
+      </Specimen>
+      <Specimen label="An axis with a rhythm" note="tickAt: the dates that carry a label are named, so an hour of minutes reads its quarter hours — 09:00 · 09:15 · 09:30 · 09:45 · 10:00 — and a year of days reads its month starts. By default labels count back from the last date, which lands on 09:04 and 09:11. The width rule thins the named dates so they never collide, and the first and the last stay labelled; the readout and the table keep every date.">
+        <Plane on="surface">
+          <TrendChart
+            label="p95 latency, 09:00 to 10:00"
+            dates={MINUTES}
+            height={180}
+            curve="linear"
+            tick={(d) => d.slice(11)}
+            tickAt={(_d, i) => i % 15 === 0}
+            series={[{ key: 'p95', label: 'p95', values: MINUTES.map((_, i) => Math.round(240 + Math.sin(i / 6) * 40 + (i % 5) * 6)), kind: 'line' }]}
+          />
         </Plane>
       </Specimen>
       <Specimen label="Gaps" note="A day with no measurement is a gap, never a zero. Stacked, a day no part was measured on breaks every band and the total there; a day some parts were measured on keeps its stack, the missing part standing on the ones below it." stack>

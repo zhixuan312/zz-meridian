@@ -86,6 +86,8 @@ Colour: `accent` for the series the page is about; categorical slots 1 to 6 in o
 
 Points are days by default: the axis reads "03 Oct" and the readout the full date. For points that are not days, pass `tick` (`(date) => string`), used by both: hours for a 24-hour period ("14:00"), weeks for a long one ("Week of 3 Mar").
 
+The axis labels itself by counting back from the last date, as many as fit, so an hour of minutes reads 09:04 · 09:11 · 09:19 and a year of days can skip the first of a month. Pass `tickAt` (`(date, index) => boolean`) to name the dates that carry a label: quarter hours read 09:00 · 09:15 · 09:30 · 09:45 · 10:00, a year of days reads its month starts. The width rule still thins the named dates, counted back from the last, so they never collide, and the first named date and the last stay labelled, since they anchor the range. The readout and the table are unaffected: every date still reads.
+
 Pointer, touch and keys as in Meridian. The chart redraws in real pixels when its container resizes, so strokes are never stretched.
 
 ## Surfaces
@@ -140,7 +142,7 @@ import { TrendChart } from '@/components/charts/trend-chart';
 />
 ```
 
-Props: `dates`, `series` (`key`, `label`, `values`, `color`, `kind`), `format` (`count` | `compact` | `cost` | `cost-compact` | `duration` | `percent`, or a function from a client component), `axisFormat` (with a function `format`), `height` (number or `fill`), `label`, `legend` (defaults to two or more series), `tick`, `stacked`, `whole` (the values are counts: whole levels only), `baseline`, `band`, `floor` or `domain` (a held scale, never both), `marks`, `running` (the last point is still in progress), `curve` (`monotone`, `linear` or `step`), `points`.
+Props: `dates`, `series` (`key`, `label`, `values`, `color`, `kind`), `format` (`count` | `compact` | `cost` | `cost-compact` | `duration` | `percent`, or a function from a client component), `axisFormat` (with a function `format`), `height` (number or `fill`), `label`, `legend` (defaults to two or more series), `tick`, `tickAt` (which dates carry an x-axis label), `stacked`, `whole` (the values are counts: whole levels only), `baseline`, `band`, `floor` or `domain` (a held scale, never both), `marks`, `running` (the last point is still in progress), `curve` (`monotone`, `linear` or `step`), `points`.
 
 The colour of a stacked part is `stackPart(place, parts)` from `@/components/charts/scale`, the one mix every one-hue stack takes: the accent into the surface, by the part's place from the bottom.
 

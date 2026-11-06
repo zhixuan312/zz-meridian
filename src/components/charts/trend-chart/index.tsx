@@ -121,6 +121,7 @@ export function TrendChart({
   label,
   legend,
   tick,
+  tickAt,
   stacked = false,
   whole = false,
   baseline,
@@ -154,6 +155,11 @@ export function TrendChart({
   legend?: boolean;
   /** How a point's instant reads, on the axis and in the readout, when the points are not days: "14:00", "Week of 3 Mar". */
   tick?: (date: string) => string;
+  /** Which dates carry an x-axis label: quarter hours on an hour of minutes, month starts on a year of days. By default
+   *  labels count back from the last date, as many as fit. The width rule still thins the chosen ones so they never
+   *  collide, and the first and last are always labelled. The readout and the table are unaffected: every date reads
+   *  there (#135). */
+  tickAt?: (date: string, index: number) => boolean;
   /** The series are parts of one whole: bands stacked in order, the first at the bottom, each in its categorical slot. */
   stacked?: boolean;
   /** The values are counts, a stack of counts too: every level is a whole number, so a top of 10 draws none at 2.5 or 7.5 (#73). */
@@ -327,8 +333,18 @@ export function TrendChart({
     ...(baseline ? [{ value: baseline.value, label: baseline.label, edge: false }] : []),
   ].map((r) => ({ ...r, at: placeLabel(r.label, y(r.value), { left: pad.l, right: pad.l + W, top: pad.t - 14, bottom: pad.t + H }, dates.map((_, i) => x(i)), drawn) }));
 
-  const labelEvery = Math.max(1, Math.ceil(n / Math.max(2, Math.floor(W / 92))));
-  const xLabels = dates.map((d, i) => ({ d, i })).filter(({ i }) => (n - 1 - i) % labelEvery === 0);
+  // How many labels the plot holds, and so which of them it draws: every nth from the last, so the spacing is even.
+  const slots = Math.max(2, Math.floor(W / 92));
+  const labelEvery = Math.max(1, Math.ceil(n / slots));
+  // A caller may name the dates that carry a label — quarter hours, month starts — where counting back from the last one
+  // lands on 09:04 and 09:11. The chosen dates are then thinned to the same number of slots, counted back from the last,
+  // so they never collide; the first chosen one and the last are always labelled, since they anchor the range (#135).
+  const xLabels = (() => {
+    if (!tickAt) return dates.map((d, i) => ({ d, i })).filter(({ i }) => (n - 1 - i) % labelEvery === 0);
+    const chosen = dates.map((d, i) => ({ d, i })).filter(({ d, i }) => tickAt(d, i));
+    const every = Math.max(1, Math.ceil(chosen.length / slots));
+    return chosen.filter((_, k) => chosen.length - 1 - k === 0 || k === 0 || (chosen.length - 1 - k) % every === 0);
+  })();
 
   const pick = (e: PointerEvent<SVGSVGElement>) => {
     const r = e.currentTarget.getBoundingClientRect();
@@ -431,7 +447,7 @@ export function TrendChart({
             </g>
           ))}
           {xLabels.map(({ d, i }) => (
-            <text key={d} x={x(i)} y={h - 6} textAnchor={i === 0 ? 'start' : i === n - 1 ? 'end' : 'middle'} className="fill-ink-3 text-2xs">
+            <text key={d} data-x-label x={x(i)} y={h - 6} textAnchor={i === 0 ? 'start' : i === n - 1 ? 'end' : 'middle'} className="fill-ink-3 text-2xs">
               {tick ? tick(d) : formatDate(d).replace(/,? \d{4}$/, '')}
             </text>
           ))}
