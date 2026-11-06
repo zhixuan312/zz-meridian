@@ -15,6 +15,7 @@ import { app } from '@/app.config';
 import type { AggregateQuery, AggregateResult, AggregateValues, Condition, Query } from '@/lib/collection';
 import { formatCost, plural } from '@/lib/format';
 import { shiftDay } from '@/lib/format-date';
+import { PERIODS as PERIOD_KEYS, PERIOD_DAYS, type Period } from '@/lib/period';
 
 export type ExploreOp = 'eq' | 'ne' | 'in' | 'lt' | 'gt';
 type ExploreBucket = 'day' | 'week' | 'month' | 'weekday';
@@ -83,7 +84,6 @@ export type ExploreIO = {
 };
 
 type Scalar = string | number | boolean | null;
-type Period = '7d' | '30d' | '90d' | 'all';
 /** One call, as the schema parses it. A detail view's own input sits beside these. */
 type ExploreCall = {
   source: string;
@@ -96,8 +96,10 @@ type ExploreCall = {
   rows?: number;
 };
 
-const PERIODS: Period[] = ['7d', '30d', '90d', 'all'];
-const DAYS: Record<Exclude<Period, 'all'>, number> = { '7d': 7, '30d': 30, '90d': 90 };
+// The periods and their day counts are `@/lib/period`'s, declared once for the product: a second copy here would let the
+// prepared query's window and a page's period drift apart without either failing.
+const PERIODS: readonly Period[] = PERIOD_KEYS;
+const DAYS = PERIOD_DAYS;
 const MAX_ANSWER = 3000;
 const GROUPS = 8;
 
@@ -313,7 +315,7 @@ export async function runExplore<I>(query: PreparedQuery<I>, input: unknown, rig
     const field = q.sources[src].date;
     if (field === undefined || period === undefined) return undefined;
     if (period === 'all') return { field, from: '0001-01-01', to: shiftDay(today, -1) };
-    const n = DAYS[period];
+    const n = DAYS[period]!;
     return before ? { field, from: shiftDay(today, -2 * n), to: shiftDay(today, -n - 1) } : { field, from: shiftDay(today, -n), to: shiftDay(today, -1) };
   };
   const ask = (src: string, before: boolean): AggregateQuery => {
