@@ -21,7 +21,11 @@
  * One line per check, and a JSON summary on the last line:
  *
  *   ok|FAIL|warn|not run <what> ...
- *   sizes: {"status","firstLoad":{"status","routes","largest","growth","problems"},"html":{"status","sizes","growth","reason","problems"}}
+ *   sizes: {"status","firstLoad":{"status","routes","largest","growth","overCap","overAllowance","problems"},"html":{"status","sizes","growth","overCap","overAllowance","reason","problems"}}
+ *
+ * `overCap` and `overAllowance` are separate verdicts, one per kind of check: a route can be over its cap and inside its
+ * growth allowance, or the other way round, and a summary that folded them said "within its allowance" of a page that
+ * had grown past it (#132).
  *
  * The exit code is non-zero on a FAIL and on a build or baseline that cannot be read.
  */
@@ -119,7 +123,9 @@ async function main(): Promise<number> {
   const lines: string[] = [];
   const firstStatus: Status = size.problems.length ? 'FAIL' : size.growth === 'not-configured' ? 'warn' : 'ok';
   lines.push(`${firstStatus === 'FAIL' ? 'FAIL   ' : firstStatus === 'warn' ? 'warn   ' : 'ok     '} first-load ${routes.length} routes, largest ${largest.route} ${kib(largest.bytes)} KiB · cap ${capKiB} KiB${budgets.firstLoadKb === null ? ' for a route the baseline does not hold' : ''}`
-    + ` · growth ${size.growth === 'checked' ? `within ${budgets.firstLoadGrowthPct}% of the baseline` : 'not-configured (no scripts/verify.baseline.json)'}`);
+    // Two verdicts, never one word for both: a route may be over its cap and inside its allowance, or the reverse.
+    + ` · growth ${size.growth === 'checked' ? (size.overAllowance ? `over ${budgets.firstLoadGrowthPct}% of the baseline` : `within ${budgets.firstLoadGrowthPct}% of the baseline`) : 'not-configured (no scripts/verify.baseline.json)'}`
+    + ` · cap ${size.overCap ? 'exceeded' : 'held'}`);
   for (const p of size.problems) lines.push(`FAIL    ${p}`);
 
   const capped = Object.keys(budgets.htmlKb);
@@ -127,19 +133,21 @@ async function main(): Promise<number> {
   const built = new Set(routes.map((r) => r.route));
   const held = Object.keys(baseline?.html ?? {}).filter((r) => built.has(r));
   const pages = [...new Set([...held, ...capped])].sort();
-  let html: { status: Status; sizes: Record<string, number>; growth?: 'checked' | 'not-configured'; reason?: string; problems: string[] };
+  let html: { status: Status; sizes: Record<string, number>; growth?: 'checked' | 'not-configured'; overCap?: boolean; overAllowance?: boolean; reason?: string; problems: string[] };
   if (!base) html = { status: 'not run', sizes: {}, reason: 'no app is running to measure', problems: [] };
   else {
     const got = await htmlSizes(pages, 'its HTML is held');
     const grown = htmlGrowthProblems(got.sizes, { growthPct: budgets.htmlGrowthPct, baseline: baseline?.html ?? null });
-    const problems = [...got.problems, ...grown.problems, ...htmlProblems(got.sizes, budgets.htmlKb)];
-    html = { status: problems.length ? 'FAIL' : grown.growth === 'not-configured' ? 'warn' : 'ok', sizes: got.sizes, growth: grown.growth, problems };
+    const caps = htmlProblems(got.sizes, budgets.htmlKb);
+    const problems = [...got.problems, ...grown.problems, ...caps];
+    html = { status: problems.length ? 'FAIL' : grown.growth === 'not-configured' ? 'warn' : 'ok', sizes: got.sizes, growth: grown.growth, overCap: caps.length > 0, overAllowance: grown.overAllowance, problems };
   }
   const largestPage = Object.entries(html.sizes).sort((a, b) => b[1] - a[1])[0];
   lines.push(html.status === 'not run'
     ? `not run html ${html.reason}`
     : `${html.status === 'FAIL' ? 'FAIL   ' : html.status === 'warn' ? 'warn   ' : 'ok     '} html ${Object.keys(html.sizes).length} pages gzipped${largestPage ? `, largest ${largestPage[0]} ${(largestPage[1] / KIB).toFixed(1)} KiB` : ''}`
-      + ` · growth ${html.growth === 'checked' ? `within ${budgets.htmlGrowthPct}% of the baseline` : 'not-configured (no html in scripts/verify.baseline.json: node scripts/sizes.ts --write-baseline --base <url>)'}`
+      + ` · growth ${html.growth === 'checked' ? (html.overAllowance ? `over ${budgets.htmlGrowthPct}% of the baseline` : `within ${budgets.htmlGrowthPct}% of the baseline`) : 'not-configured (no html in scripts/verify.baseline.json: node scripts/sizes.ts --write-baseline --base <url>)'}`
+      + ` · cap ${html.overCap ? 'exceeded' : 'held'}`
       + (capped.length ? ` · caps ${capped.map((r) => `${r} ${html.sizes[r] === undefined ? 'unmeasured' : `${(html.sizes[r] / KIB).toFixed(1)} KiB`} of ${budgets.htmlKb[r]}`).join(', ')}` : ''));
   for (const p of html.problems) lines.push(`FAIL    ${p}`);
   lines.forEach((l) => console.log(l));
@@ -147,7 +155,7 @@ async function main(): Promise<number> {
   const failed = firstStatus === 'FAIL' || html.status === 'FAIL';
   summary({
     status: failed ? 'FAIL' : firstStatus === 'warn' || html.status === 'warn' ? 'warn' : 'ok',
-    firstLoad: { status: firstStatus, routes: routes.length, largest: { route: largest.route, kib: kib(largest.bytes) }, growth: size.growth, problems: size.problems },
+    firstLoad: { status: firstStatus, routes: routes.length, largest: { route: largest.route, kib: kib(largest.bytes) }, growth: size.growth, overCap: size.overCap, overAllowance: size.overAllowance, problems: size.problems },
     html,
   });
   return failed ? 1 : 0;

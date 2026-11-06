@@ -21,23 +21,37 @@ export function firstLoad(
 }
 
 /**
+ * What a size check found, kept apart so a summary cannot say one thing twice: `overCap` is a route past its absolute
+ * cap, `overAllowance` is a page that grew past its allowance over the baseline, and `growth` says whether growth could
+ * be judged at all. A route can be over its cap and inside its allowance, or the other way round (#132).
+ */
+export type SizeVerdict = { problems: string[]; growth: 'checked' | 'not-configured'; overCap: boolean; overAllowance: boolean };
+
+/**
  * Routes over the cap or past their growth allowance over a baseline; without a baseline growth is not configured.
  * `capUnheldOnly` holds a route the baseline holds to its baseline alone, so the cap binds only a route it does not.
  */
 export function firstLoadProblems(
   routes: { route: string; bytes: number }[],
   { capKiB, growthPct, baseline, capUnheldOnly = false }: { capKiB: number; growthPct: number; baseline: Record<string, number> | null; capUnheldOnly?: boolean },
-): { problems: string[]; growth: 'checked' | 'not-configured' } {
+): SizeVerdict {
   const problems: string[] = [];
+  let overCap = false, overAllowance = false;
   for (const { route, bytes } of routes) {
     const base = baseline?.[route];
     const held = base !== undefined && base > 0;
-    if (!(capUnheldOnly && held) && bytes > capKiB * KIB) problems.push(`${route}: first-load JS ${kib(bytes)} KiB over the ${capKiB} KiB cap`);
+    if (!(capUnheldOnly && held) && bytes > capKiB * KIB) {
+      overCap = true;
+      problems.push(`${route}: first-load JS ${kib(bytes)} KiB over the ${capKiB} KiB cap`);
+    }
     if (!held) continue;
     const grew = ((bytes - base) / base) * 100;
-    if (grew > growthPct) problems.push(`${route}: first-load JS grew ${grew.toFixed(1)}% over its baseline (cap ${growthPct}%)`);
+    if (grew > growthPct) {
+      overAllowance = true;
+      problems.push(`${route}: first-load JS grew ${grew.toFixed(1)}% over its baseline (cap ${growthPct}%)`);
+    }
   }
-  return { problems, growth: baseline ? 'checked' : 'not-configured' };
+  return { problems, growth: baseline ? 'checked' : 'not-configured', overCap, overAllowance };
 }
 
 /**
@@ -52,15 +66,19 @@ export function htmlRoutes(routes: string[]): string[] {
 export function htmlGrowthProblems(
   sizes: Record<string, number>,
   { growthPct, baseline }: { growthPct: number; baseline: Record<string, number> | null },
-): { problems: string[]; growth: 'checked' | 'not-configured' } {
+): { problems: string[]; growth: 'checked' | 'not-configured'; overAllowance: boolean } {
   const problems: string[] = [];
+  let overAllowance = false;
   for (const [route, base] of Object.entries(baseline ?? {})) {
     const bytes = sizes[route];
     if (bytes === undefined || !(base > 0)) continue;
     const grew = ((bytes - base) / base) * 100;
-    if (grew > growthPct) problems.push(`${route}: HTML grew ${grew.toFixed(1)}% over its baseline (cap ${growthPct}%)`);
+    if (grew > growthPct) {
+      overAllowance = true;
+      problems.push(`${route}: HTML grew ${grew.toFixed(1)}% over its baseline (cap ${growthPct}%)`);
+    }
   }
-  return { problems, growth: baseline ? 'checked' : 'not-configured' };
+  return { problems, growth: baseline ? 'checked' : 'not-configured', overAllowance };
 }
 
 /** Pages over an absolute HTML cap, a route a project pins on top of its baseline. */
