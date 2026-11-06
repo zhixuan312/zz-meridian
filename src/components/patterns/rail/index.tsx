@@ -104,8 +104,10 @@ export function Rail({
   // A sub page names its parent with `under` (`parentOf`, shared with the palette and the trail). `nav` holds only what the
   // person may open, so a parent they may not open leaves its sub pages at the top level, with their icons.
   const subsOf = (g: NavGroup, href: string) => g.items.filter((s) => parentOf(g, s)?.href === href);
-  // The branch that holds the current page: the parent whose own page it is, or whose sub page it is.
-  const branchHere = nav.flatMap((g) => g.items.filter((p) => !parentOf(g, p) && subsOf(g, p.href).length > 0)).find((p) => p.href === here || subsOf(nav.find((g) => g.items.includes(p))!, p.href).some((s) => s.href === here))?.href;
+  // The branch that holds the current page: the parent whose own page it is, or whose sub page it is. One pass over the
+  // groups, each parent kept beside the group it came from, so no second search nor an assertion that its group exists.
+  const branchHere = nav.flatMap((g) => g.items.filter((p) => !parentOf(g, p) && subsOf(g, p.href).length > 0).map((p) => ({ p, g })))
+    .find(({ p, g }) => p.href === here || subsOf(g, p.href).some((s) => s.href === here))?.p.href;
   // Open branches, by parent href. The branch holding the page opens on arrival and on each change of page; the person's
   // own toggles stand across navigations, and a branch closed from inside stays closed until a page inside it is reached.
   const [open, setOpen] = useState<Set<string>>(() => new Set(branchHere ? [branchHere] : []));

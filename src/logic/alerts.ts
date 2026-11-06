@@ -20,7 +20,6 @@ import { readTickets } from '@/data/tickets';
 import type { Alert } from '@/components/patterns/shell-tools';
 import { customerAddress } from '@/logic/customer-context';
 import { customerFigures, customersAddress } from '@/logic/customers-context';
-import { operationOf } from '@/logic/main-summary';
 import { testFigures, testsAddress } from '@/logic/tests-context';
 import { ticketsAddress, unownedTickets } from '@/logic/tickets-context';
 import { plural } from '@/lib/format';
@@ -34,8 +33,9 @@ const later = (a: string, b: string) => (a > b ? a : b);
 async function incidentAlerts(): Promise<{ alerts: Alert[]; observedAt: string }> {
   const { rows, observedAt } = await readAll('incidents');
   const all = [...(rows as Incident[])].sort((a, b) => (a.started < b.started ? 1 : a.started > b.started ? -1 : 0));
-  const open = new Set(operationOf([], all).incidents.map((i) => i.id));
-  const alerts = all.filter((i) => open.has(i.id)).map((i): Alert => ({
+  // The same predicate `operationOf` applies (`state !== 'resolved'`), said here rather than through a call that builds
+  // a service summary this module never reads.
+  const alerts = all.filter((i) => i.state !== 'resolved').map((i): Alert => ({
     id: `incident:${i.id}`,
     title: i.title,
     detail: `${i.service} · ${i.state === 'investigating' ? 'Investigating' : 'Monitoring'}`,

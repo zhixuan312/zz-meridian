@@ -13,8 +13,14 @@ const text = (v: unknown) => (v === null || v === undefined ? '—' : Array.isAr
 /**
  * The mutations that have run in this process. An approval is signed, but the same approved call sent again would
  * run again; each call id runs once. Reserve it while running and retain it as soon as the mutation resolves.
+ *
+ * A bounded history, not the whole process: a replay arrives within a conversation, and an id from thousands of changes
+ * ago can no longer be sent by anything. Keeping every id for the life of the server grew without limit, and holding a
+ * `pending` entry after a crash would refuse that id for ever.
  */
 const OUTCOMES = Symbol.for('zz-meridian.assistant.change-outcomes');
+/** How many settled call ids are retained: far more than one conversation, far fewer than a day of traffic. */
+const OUTCOME_HISTORY = 512;
 async function once<R>(toolCallId: string, run: () => Promise<R>): Promise<R> {
   const changes = ((globalThis as Record<symbol, unknown>)[OUTCOMES] ??= new Map<string, 'pending' | 'applied'>()) as Map<string, 'pending' | 'applied'>;
   const previous = changes.get(toolCallId);
@@ -23,6 +29,12 @@ async function once<R>(toolCallId: string, run: () => Promise<R>): Promise<R> {
   try {
     const result = await run();
     changes.set(toolCallId, 'applied');
+    // Forget the oldest settled ids once the history is longer than a conversation could replay: a Map iterates in
+    // insertion order, so the first keys are the oldest.
+    for (const id of changes.keys()) {
+      if (changes.size <= OUTCOME_HISTORY) break;
+      if (changes.get(id) === 'applied') changes.delete(id);
+    }
     return result;
   } catch (e) {
     // Only authorization and the mutation run here. A precommit refusal releases the approval for another attempt;

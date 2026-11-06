@@ -10,13 +10,12 @@ import { Fragment } from 'react';
 import { Badge } from '@/components/ui/badge';
 import type { Column } from '@/components/patterns/data-table';
 import { cn } from '@/lib/cn';
-import { formatDuration } from '@/lib/format';
+import { formatDuration, formatBytes } from '@/lib/format';
 import { formatDateTime, formatRelative } from '@/lib/format-date';
 import type { LoggedRequest } from '@/data/requests';
 import { DEMO_NOW, STATUS_TEXT, statusTone } from '@/data/sample';
 import { customerAddress } from '@/logic/customer-context';
 
-export const formatBytes = (b: number) => (b >= 1_000_000 ? `${(b / 1_000_000).toFixed(1)} MB` : b >= 1000 ? `${Math.round(b / 1000)} KB` : `${b} B`);
 
 export function StatusBadge({ status }: { status: number }) {
   return (

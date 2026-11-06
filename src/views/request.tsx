@@ -14,10 +14,10 @@ import { toast } from '@/components/ui/toast';
 import { AskAbout } from '@/components/patterns/ask-about';
 import { detailHead } from '@/components/patterns/detail-head';
 import { cn } from '@/lib/cn';
-import { formatCost, formatDuration } from '@/lib/format';
+import { formatBytes, formatCost, formatDuration } from '@/lib/format';
 import { formatDateTime, formatRelative } from '@/lib/format-date';
 import { type RequestRow, STATUS_TEXT, statusTone, usageOf, type Span } from '@/data/sample';
-import { formatBytes } from '@/system/sample-cells';
+
 import { domain } from '@/app.config';
 import type { ActionResult } from '@/lib/collection';
 

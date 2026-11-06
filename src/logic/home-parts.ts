@@ -201,7 +201,8 @@ function worthKnowing({ incidents, customers, releases, now }: { incidents: Inci
     lines.push({ text: `${named}: ${i.state}, open for ${formatDuration(Date.parse(now) - Date.parse(i.started))}${i.owner ? `, with ${i.owner}` : ''}${more ? `; ${more} more ${plural(more, 'incident is', 'incidents are')} open` : ''}`, href: '/engineering' });
   }
   const counted = kept(customers ?? []);
-  const { revenue } = customerFigures(counted);
+  // Once for both lines that read it: the concentration line and the past-due line are about the same customers.
+  const { revenue, pastDue } = customerFigures(counted);
   // The share that counts is the configuration's, read now: a product that changes it changes what is worth knowing.
   const at = rules.concentrationAt;
   const over = revenue ? [...counted].sort((a, b) => b.revenue - a.revenue).filter((c) => c.revenue / revenue >= at) : [];
@@ -214,7 +215,6 @@ function worthKnowing({ incidents, customers, releases, now }: { incidents: Inci
     const named = `${ready[0].service} ${ready[0].version}`;
     lines.push({ text: ready.length === 1 ? `${named} passed every required check and has not gone out` : `${ready.length} releases have passed every required check and not gone out, the newest ${named}`, href: releasesAddress({ q: '', state: 'ready', environment: 'all' }) });
   }
-  const { pastDue } = customerFigures(counted);
   if (pastDue.length) {
     lines.push({ text: `${pastDue.length} ${plural(pastDue.length, 'customer is', 'customers are')} past due, billed ${formatCost(cents(sum(pastDue.map((c) => c.revenue))))} in the last 30 days`, href: customersAddress({ q: '', plan: 'all', status: 'past due', sort: 'revenue', dir: 'desc', page: '1' }) });
   }
