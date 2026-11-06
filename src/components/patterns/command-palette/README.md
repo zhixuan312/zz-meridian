@@ -40,7 +40,7 @@ The dialog enters with `dialog-in` (rise and fade over `dur-enter`) and leaves f
 ## Surfaces
 
 - **Console**: centred, 600px.
-- **Mobile**: the same, `100vw − 24px` wide; the ⌘K hint hides on phones.
+- **Mobile**: a sheet from the bottom of the screen, `rounded-t-xl`, as every other dialog is under 640px; the ⌘K hint hides. Its result rows answer 44px under a finger (`pointer-coarse:h-11`) and stay 40px with a pointer.
 - **Embed**: absent; a view in a host has no global navigation.
 
 ## Agents

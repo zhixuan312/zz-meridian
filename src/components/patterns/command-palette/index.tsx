@@ -88,7 +88,9 @@ export function CommandPalette({ nav }: { /** Every destination the rail offers,
         <D.Overlay className="scrim-in fixed inset-0 z-(--layer-overlay) bg-scrim" />
         <D.Content
           aria-describedby={undefined}
-          className="dialog-in fixed top-[14vh] left-1/2 z-(--layer-overlay) w-[min(600px,calc(100vw-24px))] -translate-x-1/2 overflow-hidden rounded-xl bg-surface-raised shadow-overlay"
+          // A sheet on a phone, as every other dialog is: a panel floating at 14vh on a 390px screen puts its list under
+          // the thumb's reach and leaves a strip of page that does nothing. Above 640px it stays the floating palette.
+          className="dialog-in fixed inset-x-0 bottom-0 z-(--layer-overlay) overflow-hidden rounded-t-xl bg-surface-raised pb-[env(safe-area-inset-bottom)] shadow-overlay sm:inset-x-auto sm:bottom-auto sm:top-[14vh] sm:left-1/2 sm:w-[min(600px,calc(100vw-24px))] sm:-translate-x-1/2 sm:rounded-xl sm:pb-0"
           // An input method composing (Chinese, Japanese, Korean) owns Enter, Escape and the arrows until it is done.
           onEscapeKeyDown={(e) => { if (e.isComposing) e.preventDefault(); }}
           onKeyDown={(e) => {
@@ -169,7 +171,7 @@ export function CommandPanel({
                   onPointerMove={() => onAt(i)}
                   onClick={() => onRun(c)}
                   className={cn(
-                    'flex h-10 cursor-default items-center gap-3 rounded-md px-3 text-sm [&_svg]:size-4 [&_svg]:text-ink-3',
+                    'flex h-10 cursor-default items-center gap-3 rounded-md px-3 text-sm pointer-coarse:h-11 [&_svg]:size-4 [&_svg]:text-ink-3',
                     i === at && 'bg-fill-hover [&_svg]:text-ink-2',
                   )}
                 >
