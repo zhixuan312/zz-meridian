@@ -75,6 +75,7 @@ export const CARDS: Card[] = [
   { id: 'composition-bar', layer: 3, section: 'patterns', dir: 'src/components/charts/composition-bar', Preview: dynamic(() => import('@/components/charts/composition-bar/preview')) },
   { id: 'diverging-bars', layer: 3, section: 'patterns', dir: 'src/components/charts/diverging-bars', Preview: dynamic(() => import('@/components/charts/diverging-bars/preview')) },
   { id: 'heatmap', layer: 3, section: 'patterns', dir: 'src/components/charts/heatmap', Preview: dynamic(() => import('@/components/charts/heatmap/preview')) },
+  { id: 'interval-timeline', layer: 3, section: 'patterns', dir: 'src/components/charts/interval-timeline', Preview: dynamic(() => import('@/components/charts/interval-timeline/preview')) },
   { id: 'meridian', layer: 3, section: 'patterns', dir: 'src/components/charts/meridian', Preview: dynamic(() => import('@/components/charts/meridian/preview')) },
   { id: 'range-strip', layer: 3, section: 'patterns', dir: 'src/components/charts/range-strip', Preview: dynamic(() => import('@/components/charts/range-strip/preview')) },
   { id: 'sparkline', layer: 3, section: 'patterns', dir: 'src/components/charts/sparkline', Preview: dynamic(() => import('@/components/charts/sparkline/preview')) },

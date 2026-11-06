@@ -75,6 +75,7 @@ export const PREVIEW_LOADERS: Record<string, () => Promise<{ default: ComponentT
   'patterns/composition-bar': () => import('@/components/charts/composition-bar/preview'),
   'patterns/diverging-bars': () => import('@/components/charts/diverging-bars/preview'),
   'patterns/heatmap': () => import('@/components/charts/heatmap/preview'),
+  'patterns/interval-timeline': () => import('@/components/charts/interval-timeline/preview'),
   'patterns/meridian': () => import('@/components/charts/meridian/preview'),
   'patterns/range-strip': () => import('@/components/charts/range-strip/preview'),
   'patterns/sparkline': () => import('@/components/charts/sparkline/preview'),

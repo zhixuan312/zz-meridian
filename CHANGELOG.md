@@ -6,6 +6,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 
 ### Added
 
+- **Interval timeline.** A catalogue chart that draws what ran and when on one time axis: each row a series of runs from start to end, told apart by tone and, in every place it is read, by word. A run's length stays proportional — a two-second job beside a two-hour one is a marker at its start, never a widened bar — and an open run reaches the now line. Pointing at a run or stepping through them with the arrow keys reads its name, its times and its length (refs #127).
 - **Range strip.** A catalogue chart that draws each row's own range from one value to the other on one shared scale, with both ends marked and one or two reference levels drawn across every row: each endpoint's lowest and median latency against the ceiling. A missing end is drawn open and said in words, never from zero. `domain` holds the scale for charts read side by side and widens rather than clipping, naming the range it drew (refs #126).
 
 ### Fixed
