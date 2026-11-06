@@ -253,7 +253,10 @@ export function TrendChart({
   // The words take a line of their own over the legend and the plot, or two on a phone card; unmeasured, one line.
   const lift = widened ? (widenedSize.height ? widenedSize.height + 1 : 18) : 0;
   const left = Math.max(...ticks.map((t) => axis(t).length)) * 6.4 + 12;
-  const showLegend = legend ?? series.length > 1;
+  // The legend names the series; the key under it names the marks, which would otherwise be a dot, a dash and a stem a
+  // reader has to guess at. Either one alone is enough to draw the row, and the plot keeps its room for it (#129).
+  const marksKey = Boolean(marks || running);
+  const showLegend = legend ?? (series.length > 1 || marksKey);
   const pad = { t: (showLegend ? Math.max(34, legendSize.height + 16) : 14) + lift, r: 4, b: 26, l: left };
   const W = Math.max(0, width - pad.l - pad.r), H = h - pad.t - pad.b;
   const n = dates.length;
@@ -543,6 +546,10 @@ export function TrendChart({
               {s.label}
             </li>
           ))}
+          {/* A marked day's dot-and-stem, and the running stretch's dash, say what they mean in words here: the caption says
+              them too, but a screen reader reads that and the pointer only finds a title. */}
+          {marks ? <li data-key-mark className="flex items-center gap-1.5"><svg width="8" height="10" className="shrink-0 overflow-visible"><line x1="4" x2="4" y1="1" y2="9" stroke={marks.tone === 'warning' ? 'var(--warning)' : 'var(--ink-2)'} strokeOpacity={0.45} /><circle cx="4" cy="1" r="2.5" fill={marks.tone === 'warning' ? 'var(--warning)' : 'var(--ink-2)'} stroke="var(--surface)" strokeWidth="1.5" /></svg>{marks.label}</li> : null}
+          {running ? <li data-key-running className="flex items-center gap-1.5"><svg width="14" height="4" className="shrink-0 overflow-visible"><line x1="1" x2="13" y1="2" y2="2" stroke="currentColor" strokeWidth={1.5} strokeDasharray="3 4" strokeLinecap="round" /></svg>{SO_FAR}</li> : null}
         </ul>
       ) : null}
       {active !== null && width > 0 ? (

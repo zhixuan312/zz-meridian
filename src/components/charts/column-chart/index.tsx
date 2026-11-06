@@ -174,6 +174,14 @@ function Columns({
           {drawn.map((p) => <li key={p.key} className="flex items-center gap-1.5"><Swatch color={p.color} />{p.label}</li>)}
         </ul>
       ) : null}
+      {/* The accent or the ring is an encoding of its own: what makes that column the one the card is about, in a key a
+          reader can see, rather than a title only a pointer finds and a caption only a screen reader hears. */}
+      {highlight && highlightLabel ? (
+        <p data-key className="mb-2 flex items-center gap-1.5 text-xs text-ink-2" style={{ paddingLeft: left }}>
+          <span className={cn('size-2.5 shrink-0 rounded-[3px]', drawn ? 'ring-2 ring-ink' : 'bg-accent')} />
+          {drawn ? 'Ringed' : 'Accented'}: {highlightLabel}
+        </p>
+      ) : null}
       {/* A held scale that had to widen says so, as the Trend chart does: the levels are no longer the ones asked for. */}
       {widened ? <p data-widened className="mb-1 text-2xs text-ink-3" style={{ paddingLeft: left }}>{widened}</p> : null}
       <div
