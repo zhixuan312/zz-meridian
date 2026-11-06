@@ -7,7 +7,7 @@ const merge = extendTailwindMerge({
     theme: {
       text: ['2xs', 'xs', 'sm', 'base', 'md', 'lg', 'xl', '2xl', 'page', 'hero', 'display'],
       radius: ['xs', 'sm', 'md', 'lg', 'xl', 'full'],
-      shadow: ['card', 'raise', 'overlay', 'control', 'accent', 'feature'],
+      shadow: ['card', 'raise', 'overlay', 'control', 'accent', 'halo'],
     },
   },
 });
