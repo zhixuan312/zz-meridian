@@ -3,7 +3,7 @@
 import { useState, type KeyboardEvent } from 'react';
 import { cn } from '@/lib/cn';
 import { useMeridian } from '@/components/charts/meridian';
-import { niceTicks, ticksBetween, type SeriesSlot } from '@/components/charts/scale';
+import { heldTicks, niceTicks, ticksBetween, type SeriesSlot } from '@/components/charts/scale';
 
 // What every form of the Column chart shares: its data, its measures, its cursor, its axis and its labels. The grouped
 // form loads on demand (`./grouped`), so what it shares with the others lives here and neither imports the other.
@@ -41,6 +41,10 @@ export type Shared = {
   /** How a tick reads: an axis formatter, true at every tick (`AXIS_FORMATTERS` in `@/lib/format`). Without one the axis
    * reads as `format` does, which is right only while `format` is exact: one that rounds prints a tick it does not stand at. */
   axisFormat?: (n: number) => string;
+  /** A held scale, as the Trend chart's: the plot ends at this range, so charts read side by side share their levels. A
+   *  column is read by its height, so the plot is drawn from zero, or from `min` when it is under zero. A value outside
+   *  the range is never cropped: the scale widens to take it and the chart says so (#136). */
+  domain?: [number, number];
   /** Pixels for the plot, or `fill` to take the height its card gives it (never under 220px). */
   height?: number | 'fill';
   label: string;
@@ -76,16 +80,29 @@ export const placed = (i: number, n: number) => (i === n - 1 ? 'right-0 flex min
 
 /**
  * The scale over the values read, and the gutter its labels take. A value under zero, where `signed` allows one, takes
- * the scale under zero for it, so a column hangs from the zero line (#78).
+ * the scale under zero for it, so a column hangs from the zero line (#78). A `domain` holds the scale to a stated range,
+ * as the Trend chart's does: the levels end at both ends while every value is inside, and widen to take one outside,
+ * which the caller announces from `widened`.
  */
-export function scaleOf(read: number[], signed: boolean, whole: boolean, af: (n: number) => string) {
-  const hi = Math.max(0, ...read), lo = Math.min(0, ...read);
-  const under = signed && lo < 0;
-  const ticks = under ? ticksBetween(lo, hi, 3, whole) : niceTicks(hi > 0 ? hi : 1, 3, whole);
+export function scaleOf(read: number[], signed: boolean, whole: boolean, af: (n: number) => string, domain?: [number, number]) {
+  const data = read.length ? read : [0];
+  const top0 = Math.max(0, ...data), bottom0 = Math.min(0, ...data);
+  const held = domain && domain[1] > domain[0] ? domain : null;
+  // A column is read by its height, so a held scale is drawn from zero, as the Trend chart draws an area or a stack; a
+  // range under zero is drawn from its own floor, since a fall hangs from the zero line.
+  const end = held ? Math.min(held[0], 0) : 0;
+  const inside = held ? bottom0 >= end && top0 <= held[1] : false;
+  const count = 3;
+  const levels = held && inside ? heldTicks(end, held[1], count) : null;
+  const ticks = levels
+    ? (whole ? levels.filter((t, i, all) => Number.isInteger(t) || !i || i === all.length - 1) : levels)
+    : held ? ticksBetween(Math.min(end, bottom0), Math.max(held[1], top0), count, whole)
+      : signed && bottom0 < 0 ? ticksBetween(bottom0, top0, count, whole) : niceTicks(top0 > 0 ? top0 : 1, count, whole);
   const low = ticks[0], top = ticks[ticks.length - 1];
   /** A level's height in the scale, as a share of it from the bottom. */
   const at100 = (v: number) => ((v - low) / (top - low)) * 100;
-  return { ticks, low, top, at100, signed: under, left: Math.max(...ticks.map((t) => af(t).length)) * 6.4 + 10 };
+  const widened = held && !inside ? `Scale widened from ${af(end)}\u2013${af(held[1])} to ${af(low)}\u2013${af(top)}` : '';
+  return { ticks, low, top, at100, signed: low < 0, left: Math.max(...ticks.map((t) => af(t).length)) * 6.4 + 10, widened };
 }
 
 /**

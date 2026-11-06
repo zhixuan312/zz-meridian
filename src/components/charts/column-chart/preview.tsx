@@ -10,6 +10,7 @@ import { TrendChart } from '@/components/charts/trend-chart';
 import { ColumnChart, type ColumnPart, type GroupedPart, type StackedColumn } from '.';
 
 const week = demoSeries('7d').current;
+const previousWeek = demoSeries('30d').current.slice(-14, -7);
 const fortnight = demoSeries('30d').current.slice(-14);
 const month = demoSeries('30d').current;
 const quarter = demoSeries('90d').current;
@@ -97,6 +98,16 @@ export default function ColumnChartPreview() {
             columns={ENDPOINTS.map((e) => ({ key: e.route, label: e.route.replace('/v1/', ''), value: e.requests }))}
           />
         </Plane>
+      </Specimen>
+      <Specimen label="A held scale" note="domain: the plot ends at a stated range, so charts read side by side share their levels and compare by height. Both charts below are held to 0–40,000, so the shorter day's request count stands at the same level in each. A value outside the range is never cropped: the scale widens to take it and the chart says which range it drew.">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Plane on="surface">
+            <ColumnChart label="Requests a day, this week" format={formatCompact} axisFormat={axis} dates={dates(week)} domain={[0, 40000]} columns={week.map((d) => ({ key: d.date, label: formatShortDate(d.date), value: Math.round(d.requests / 3) }))} />
+          </Plane>
+          <Plane on="surface">
+            <ColumnChart label="Requests a day, last week" format={formatCompact} axisFormat={axis} dates={dates(previousWeek)} domain={[0, 40000]} columns={previousWeek.map((d) => ({ key: d.date, label: formatShortDate(d.date), value: Math.round(d.requests / 4) }))} />
+          </Plane>
+        </div>
       </Specimen>
       <Specimen label="Days" note="Seven days of errors; today highlighted. The columns are periods, so the chart is given their dates: the labels thin as dates do and are never cut.">
         <Plane on="surface" className="max-w-lg">

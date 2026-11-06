@@ -83,6 +83,7 @@ The readout is at least 144px wide and never wider than the chart, with `space-3
 | More columns than room | The gap closes from 2px to 1px to none as the plot runs out of room for it, in the columns and in the labels under them alike, and the chart keeps its box. A running column narrower than the 4px its outline needs keeps the outline: it ends with the column and stands over the columns before it, never past the plot. |
 | Zero | A column at zero draws nothing and reads zero; stacked, a column whose parts are all zero draws no part and reads a total of zero. Stacked, a part that is missing or below zero counts as zero. A plain column below zero is a fall (Rises and falls). |
 | No data | A `null` period keeps its slot, draws no column but a dashed hairline on the baseline, and reads "No data" (or `noData`) at rest, pointed at, in the announcement and in the table. The scale leaves it out. Stacked, a column of `null` parts is the same; a `null` part among parts read draws nothing, reads "No data" and adds nothing to the total. Grouped, a `null` part keeps its slot with the hairline and reads "No data". Running, it reads "No data so far". |
+| Held scale | With a `domain` and every value inside it, the levels end at both ends of the range and nothing else is drawn. With a value outside it, the levels widen to take it and `Scale widened from {min}–{max} to {low}–{top}` stands above the plot in `text-2xs` `ink-3`, and in the table's caption. |
 | Empty | Render the card's Empty state. |
 
 ## Behaviour
@@ -136,6 +137,7 @@ The view shares the highlighted column and the day pointed at through `useShareV
 - Do use a Trend chart for a long run of days. A Column chart keeps its box with any number of columns, but once its gaps have closed nobody reads one column from the next.
 - Do set a period still in progress as running. Do not leave a part-day drawn solid: it reads as a fall.
 - Do pass `null` for a period with no data. Do not pass 0, which is drawn and read as a real zero, and do not leave the period out, which closes the gap and puts its neighbours side by side.
+- Do hold a `domain` on charts compared side by side: three small multiples of the same measure share their levels and compare by height. Do not hold one tighter than the data to make a change look larger: the chart widens and says so.
 - Do not colour columns by value; their height already shows it.
 - Do not give a tone to parts of one kind, and do not put the accent beside a tone.
 - Do not draw two usual outcomes in one neutral, or teams as shades of the accent: give each a `color` slot, in order. Do not put a `warning` or `critical` part beside categorical slots.

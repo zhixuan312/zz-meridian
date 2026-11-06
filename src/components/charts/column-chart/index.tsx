@@ -102,6 +102,7 @@ function Columns({
   noData = 'No data',
   whole = false,
   axisFormat,
+  domain,
   height = 200,
   label,
   labelEvery: every,
@@ -125,7 +126,7 @@ function Columns({
   // A period with no data has no height, so the scale is the periods that have one. Plain, a value under zero is a
   // fall: the scale goes under zero for it and the column hangs from the zero line (#78). Stacked, parts make a whole.
   const af = axisFormat ?? format;
-  const { ticks, low, top, at100, signed, left } = scaleOf(bars.filter((b) => !b.none).map((b) => b.total), !form.parts, whole, af);
+  const { ticks, low, top, at100, signed, left, widened } = scaleOf(bars.filter((b) => !b.none).map((b) => b.total), !form.parts, whole, af, domain);
   // The gap in pixels at this width, as the rows' own expression resolves it: all of GAP wherever there is room.
   const gap = opens(n).filter((w) => width - left > w).length;
   // A column wide enough for a figure keeps its value above it at rest; a narrower one shows it when pointed at.
@@ -136,7 +137,7 @@ function Columns({
   const value = useCallback((v: number | null, running = false) => (v === null ? (running ? `${noData} so far` : noData) : format(v)), [format, noData]);
   const totalOf = useCallback((b: Bar, i: number) => value(b.none ? null : b.total, i === soFar), [value, soFar]);
   // Moving the cursor re-renders the chart, and no row of its table changes with it, so the rows are built once per data.
-  const caption = `${label}${highlight && highlightLabel ? `. ${drawn ? 'Ringed' : 'Accented'}: ${highlightLabel}` : ''}`;
+  const caption = `${label}${highlight && highlightLabel ? `. ${drawn ? 'Ringed' : 'Accented'}: ${highlightLabel}` : ''}${widened ? `. ${widened}` : ''}`;
   const table = useMemo(
     () => (settled ? <table className="sr-only">
       <caption>{caption}</caption>
@@ -173,6 +174,8 @@ function Columns({
           {drawn.map((p) => <li key={p.key} className="flex items-center gap-1.5"><Swatch color={p.color} />{p.label}</li>)}
         </ul>
       ) : null}
+      {/* A held scale that had to widen says so, as the Trend chart does: the levels are no longer the ones asked for. */}
+      {widened ? <p data-widened className="mb-1 text-2xs text-ink-3" style={{ paddingLeft: left }}>{widened}</p> : null}
       <div
         data-plot
         role="group"
