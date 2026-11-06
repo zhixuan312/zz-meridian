@@ -78,7 +78,7 @@ Not applicable: navigation is how a person moves. An agent opens a view by its a
 - `nav` with the name "Main"; the current item carries `aria-current="page"`.
 - A parent's button has the accessible name `<label> pages` ("Usage pages") and `aria-expanded` set to `true` or `false`. While open, `aria-controls` names the branch's mounted list; while closed, it is omitted because that list is unmounted. It is a separate control from the parent's link, so the parent's page stays reachable from the rail. The parent of a closed branch that holds the current page carries `aria-current="true"`.
 - Contrast (dark, indigo): inactive label `ink-2` on the rail 8.7:1, group label `ink-3` 7.0:1, current label on the marker 9.2:1; light 6.6, 4.9 and 5.7:1.
-- The count badge repeats a number the page states in words; it is never the only signal.
+- The count badge repeats a number the page states in words; it is never the only signal. Its own name says what it counts — "API keys: 3 new" — so a clipped or isolated count still reads.
 
 ## Content
 
@@ -92,6 +92,7 @@ Not applicable: navigation is how a person moves. An agent opens a view by its a
 - Do use `under` for sub pages that are destinations of their own, each with its own page and access. Use Tabs in the page for the views of one record, under one header.
 - Do not put actions in the rail; it holds places only.
 - Do not use the count badge for anything but something that needs attention now.
+- Do not leave a badge to the number alone: it names its destination and count ("Services: 1 new"), which is its accessible name and its title.
 
 ## Session
 

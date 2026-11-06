@@ -135,7 +135,16 @@ export function Rail({
       >
         {sub ? null : <LinkIcon icon={<Icon strokeWidth={1.75} />} label={it.label} />}
         <span title={it.label} className="flex-1 truncate">{it.label}</span>
-        {it.badge ? <span className="t-num grid h-5 min-w-5 place-items-center rounded-full bg-warning-tint px-1.5 text-2xs font-semibold text-warning-ink">{it.badge}</span> : null}
+        {/* A count alone says nothing about what it counts: the badge names its destination, so a "3" read on its own
+            still says "API keys: 3 new", and so does its pointer's title. */}
+        {it.badge ? (
+          <span
+            role="img"
+            aria-label={`${it.label}: ${it.badge} new`}
+            title={`${it.label}: ${it.badge} new`}
+            className="t-num grid h-5 min-w-5 place-items-center rounded-full bg-warning-tint px-1.5 text-2xs font-semibold text-warning-ink"
+          >{it.badge}</span>
+        ) : null}
         {state.reserve ? <span aria-hidden className="w-4 shrink-0 pointer-coarse:w-8" /> : null}
       </Link>
     );
