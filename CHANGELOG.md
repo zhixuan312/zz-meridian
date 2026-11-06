@@ -6,6 +6,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 
 ### Fixed
 
+- **A disabled or busy Button renders in a server component.** A server-rendered `<Button disabled>` or `<Button busy>` no longer hands React an injected press handler, which made Next fail the whole view ("Event handlers cannot be passed to Client Component props", React error #441). The press is dropped with `disabled` on a native button and with `pointer-events-none` on an `asChild` child, and the injected handler appears only where a function may exist: on the client, or beside a handler the caller passed. Refs #134.
 - **Alias resolution no longer imports the compiler package.** The checks and CLI share one Node-only JSONC reader through the existing generated-companion pipeline; BOMs, comments and trailing commas remain supported, while incomplete comments and tokens split by comments are refused. This removes a compiler-package dependency introduced during maintenance.
 - **Consumer smoke is classified as a performance check.** Its update-all finalize comparison judges a 30-second overhead budget, so the documented protocol now requires a quiet machine instead of allowing competing builds to invalidate that measurement. This includes the release case; its former quiet-machine exception is removed. The budget and test remain unchanged.
 - **Unavailable searches preserve their query.** Disabled and read-only inputs no longer offer an active clear button; Escape preserves a read-only query, and a disabled search leaves its global shortcut alone.

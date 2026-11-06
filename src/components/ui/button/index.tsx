@@ -45,11 +45,20 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
 ) {
   const Comp = asChild ? Slot.Root : 'button';
   const blocked = disabled || busy;
+  // A server component renders this tree with no client runtime, and React refuses a function anywhere in its props
+  // there ("Event handlers cannot be passed to Client Component props", #134): one function among them fails the whole
+  // view. So the injected handler appears only where a function may exist — on the client, which knows it is, or
+  // beside a handler the caller passed, which only a client component can. A server render drops a press with the
+  // platform instead: `disabled` on the native button, `pointer-events-none` on an `asChild` child, which is a class and
+  // so renders the same on both sides of hydration.
+  const hasHandler = Boolean(onClick || onClickCapture);
+  const attach = blocked && (hasHandler || typeof document !== 'undefined');
   const content = asChild ? (
     blocked && isValidElement<HTMLAttributes<HTMLElement>>(children)
       ? cloneElement(children, {
           // Slot composes the child's handler first, so replace its capture handler while unavailable.
-          onClickCapture: ignorePress,
+          ...(attach ? { onClickCapture: ignorePress } : {}),
+          // A blocked child with no handler of its own is kept off by `pointer-events-none` below, on the slot itself.
           'aria-disabled': true,
           'aria-busy': busy || children.props['aria-busy'] || rest['aria-busy'],
           tabIndex: disabled ? -1 : (children.props.tabIndex ?? rest.tabIndex),
@@ -72,11 +81,14 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       disabled={disabled}
       aria-disabled={blocked || rest['aria-disabled'] || undefined}
       aria-busy={busy || rest['aria-busy'] || undefined}
-      onClick={blocked ? ignorePress : onClick}
-      onClickCapture={blocked ? ignorePress : onClickCapture}
+      onClick={attach ? ignorePress : onClick}
+      onClickCapture={attach ? ignorePress : onClickCapture}
       className={cn(
         // The frame is `.btn` (src/styles/base.css): the same on every button, so it is not repeated in each class list.
         'group/btn press hit btn',
+        // An `asChild` child a server render blocks has no native `disabled`: this class keeps a mouse off it there,
+        // and it is derived from props alone, so hydration sees the same class list.
+        blocked && asChild && !hasHandler && 'pointer-events-none',
         // A busy button is working, not unavailable: it keeps its colour, its shadow and its place, and the spinner is
         // the answer. Only a button nobody may press greys out.
         !busy && 'disabled:opacity-45 disabled:shadow-none aria-disabled:opacity-45 aria-disabled:shadow-none',
