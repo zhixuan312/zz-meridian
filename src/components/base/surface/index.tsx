@@ -69,7 +69,10 @@ export function ConsoleSurface({ ask, children }: { ask?: (text: string) => void
  */
 export function SurfaceOverride({ surface, children }: { surface: Partial<Surface>; children: ReactNode }) {
   const base = useContext(Ctx);
-  return <Ctx.Provider value={{ ...base, share: () => {}, ...surface }}>{children}</Ctx.Provider>;
+  // Memoised on the parts that make it: an Atlas page mounts many specimens, and a fresh context value on every render
+  // re-rendered every consumer beneath this one.
+  const value = useMemo(() => ({ ...base, share: () => {}, ...surface }), [base, surface]);
+  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 
 /** The embed surface: starts the host bridge, applies the host's theme and style variables, and reports its height. */

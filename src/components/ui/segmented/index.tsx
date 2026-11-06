@@ -4,6 +4,9 @@ import { ToggleGroup } from 'radix-ui';
 import { useEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/cn';
 
+/** The track\'s own padding, in px (`p-0.5`): the thumb is inset by it at each end. */
+const PAD = 2;
+
 export type SegmentedOption<V extends string> = { value: V; label: React.ReactNode; title?: string };
 
 /**
@@ -48,6 +51,7 @@ export function Segmented<V extends string>({
       onValueChange={(v) => v && onChange(v as V)}
       aria-label={label}
       className={cn(
+        // The thumb's own inset is this padding: `PAD` below says the same 2px, so a change to one must change both.
         'scroll-fade-x relative inline-flex w-fit min-w-0 max-w-full items-center overflow-x-auto rounded-md bg-surface-sunk p-0.5 ring-1 ring-line ring-inset [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
         className,
       )}
@@ -56,7 +60,7 @@ export function Segmented<V extends string>({
         <span
           aria-hidden
           className="absolute top-0.5 bottom-0.5 rounded-sm bg-surface shadow-control ring-1 ring-line transition-[transform,width] duration-(--dur-enter) ease-out"
-          style={{ transform: `translateX(${thumb.x - 2}px)`, width: thumb.w, left: 2 }}
+          style={{ transform: `translateX(${thumb.x - PAD}px)`, width: thumb.w, left: PAD }}
         />
       ) : null}
       {options.map((o) => (
