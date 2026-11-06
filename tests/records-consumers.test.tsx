@@ -4,7 +4,15 @@ import { describe, expect, it } from 'vitest';
 import { Records } from '@/components/templates/records';
 import { Tooltip } from 'radix-ui';
 import { requestsQuery } from '@/data/requests';
-import { REQUESTS } from '@/system/fixtures/sample';
+import { hasSample } from './sample-present';
+
+// The records are the sample's own request log; a product that replaced the sample has none, so the cases over it are
+// not applicable there rather than failing on an absent module (#131).
+type Sample = typeof import('@/system/fixtures/sample');
+const sample = hasSample()
+  ? (await import(/* @vite-ignore */ new URL('../src/system/fixtures/sample.ts', import.meta.url).pathname)) as Sample
+  : null;
+const REQUESTS = sample?.REQUESTS ?? [];
 import { RequestsView } from '@/views/requests';
 import type { RequestsData } from '@/logic/requests-context';
 
@@ -24,7 +32,7 @@ describe('the summary a page hands the records template', () => {
   });
 });
 
-it('draws the request summary and each supplied record', () => {
+it.skipIf(!sample)('draws the request summary and each supplied record', () => {
   const { state } = requestsQuery({});
   const summary: RequestsData['summary'] = { count: 0, errorShare: 0, p95: 0, buckets: { count: [], errors: [], p95: [] }, deltas: { count: null, errors: null, p95: null }, halves: { before: 0, after: 0 }, span: null, common: { all: { count: 0, route: null, customer: null, region: null }, errors: { count: 0, route: null, customer: null, region: null } }, rows: 0, partial: false };
   const { container } = render(<Tooltip.Provider><RequestsView rows={REQUESTS.slice(0, 5)} total={REQUESTS.length} summary={summary} state={state} pageSize={5} updatedAt="2026-10-05T08:56:00.000Z" now="2026-10-05T09:00:00.000Z" /></Tooltip.Provider>);

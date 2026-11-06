@@ -10,8 +10,20 @@ import { MembersView, type MemberActions } from '@/views/members';
 import type { ActionResult } from '@/lib/collection';
 import type { MemberRowAccess } from '@/data/member-mutations';
 import { ADD_ONS, MAIN_ROLES } from '@/data/roles';
-import { API_KEYS } from '@/system/fixtures/sample-records';
-import { MEMBERS } from '@/system/fixtures/sample-members';
+import { hasSample } from './sample-present';
+
+// Every case mounts a view over the sample's own people and keys; a product that replaced the sample has none, so they
+// are not applicable there rather than failing on absent modules (#131).
+type Records = typeof import('@/system/fixtures/sample-records');
+type Roster = typeof import('@/system/fixtures/sample-members');
+const records = hasSample()
+  ? (await import(/* @vite-ignore */ new URL('../src/system/fixtures/sample-records.ts', import.meta.url).pathname)) as Records
+  : null;
+const roster = hasSample()
+  ? (await import(/* @vite-ignore */ new URL('../src/system/fixtures/sample-members.ts', import.meta.url).pathname)) as Roster
+  : null;
+const API_KEYS = records?.API_KEYS ?? [];
+const MEMBERS = roster?.MEMBERS ?? [];
 
 beforeEach(() => { toasts.length = 0; });
 
@@ -31,7 +43,7 @@ async function invite(name: string) {
   fireEvent.click(screen.getByRole('button', { name: 'Invite' }));
 }
 
-describe('members, optimistically', () => {
+describe.skipIf(!roster)('members, optimistically', () => {
   it('shows an invitation at once, and on a refusal rolls it back and says why inside the reopened sheet, not in a toast', async () => {
     const d = deferred();
     render(view(withActions({ invite: () => d.promise })));
@@ -69,7 +81,7 @@ describe('members, optimistically', () => {
   });
 });
 
-describe('the invitation sheet', () => {
+describe.skipIf(!roster)('the invitation sheet', () => {
   it('names the workspace by the name its record holds, when the page could read it', async () => {
     render(<MembersView rows={MEMBERS} now="2026-10-05T09:00:00.000Z" actions={withActions({})} access={ACCESS} roles={MAIN_ROLES} workspace="Acme Staging" />);
     fireEvent.click(screen.getAllByRole('button', { name: 'Invite member' })[0]);
@@ -95,7 +107,7 @@ async function openMenu(name: string) {
 }
 const rowOf = (name: string) => screen.getByText(name).closest('tr, [role="row"], li, article') as HTMLElement;
 
-describe('members, status and removal', () => {
+describe.skipIf(!roster)('members, status and removal', () => {
   // The page reads the members newest-joined first (`readAll('members', { sort: { field: 'joined', dir: 'desc' } })`),
   // and the table states that order and pages it, so the first active member it shows is the newest of them. The
   // fixture's own first active row joined in August 2025 and is the 24th of 24.
@@ -192,7 +204,7 @@ describe('members, status and removal', () => {
   });
 });
 
-describe('keys, optimistically', () => {
+describe.skipIf(!roster)('keys, optimistically', () => {
   it('takes a revoked key away at once and brings it back with the reason when revoking fails', async () => {
     let fail!: (r: { ok: false; error: string }) => void;
     const revokeKey = () => new Promise<{ ok: false; error: string }>((resolve) => { fail = resolve; });

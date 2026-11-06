@@ -1,13 +1,21 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest';
 import { formatCost } from '@/lib/format';
-import { CUSTOMERS } from '@/system/fixtures/company';
+import { hasSample } from './sample-present';
 import { CUSTOMER_METRICS, customerFigures, customersContext, pastDueNote, under } from '@/logic/customers-context';
+
+// Every case here counts the sample's own customers, which a product that replaced the sample does not have: they are
+// not applicable there rather than failing on absent modules (#131).
+type Sample = typeof import('@/system/fixtures/company');
+const sample = hasSample()
+  ? (await import(/* @vite-ignore */ new URL('../src/system/fixtures/company.ts', import.meta.url).pathname)) as Sample
+  : null;
+const CUSTOMERS = sample?.CUSTOMERS ?? [];
 
 const STATE = { q: '', plan: 'all', status: 'all', sort: 'revenue', dir: 'desc', page: '1' };
 const fact = (label: string) => customersContext(CUSTOMERS, under(CUSTOMERS, 'all'), STATE).facts.find((f) => f.label === label)?.value ?? '';
 
-describe("the customers' figures", () => {
+describe.skipIf(!sample)("the customers' figures", () => {
   it('are worked out in one place, from every customer that has not left', () => {
     const figures = customerFigures(CUSTOMERS);
     const kept = CUSTOMERS.filter((c) => c.status !== 'left');
@@ -55,7 +63,7 @@ describe("the customers' figures", () => {
 
 });
 
-describe('the order the Customers context lists them in', () => {
+describe.skipIf(!sample)('the order the Customers context lists them in', () => {
   it("is the table's: names by the collator, so a lower-case name sorts among the others", () => {
     const named = (name: string) => ({ ...CUSTOMERS[0]!, id: name, name });
     const rows = ['zeta labs', 'Acme', 'beta co', 'Delta'].map(named);
@@ -64,7 +72,7 @@ describe('the order the Customers context lists them in', () => {
   });
 });
 
-describe("the past-due tile's line", () => {
+describe.skipIf(!sample)("the past-due tile's line", () => {
   it('names the customers as a sentence does, the largest first, and counts the rest past two', () => {
     const owing = (name: string, revenue: number) => ({ name, revenue });
     expect(pastDueNote([owing('Acme', 10)])).toBe('Acme');

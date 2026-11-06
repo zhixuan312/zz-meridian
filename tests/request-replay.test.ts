@@ -7,12 +7,20 @@ vi.mock('next/cache', () => ({ cacheTag: () => {}, cacheLife: () => {}, updateTa
 
 import { replayRequest } from '../app/(dashboard)/requests/[id]/actions';
 import { collectionFor, resolveAccess } from '@/data/access';
-import { REQUESTS } from '@/system/fixtures/sample';
+import { hasSample } from './sample-present';
+
+// The records are the sample's own request log; a product that replaced the sample has none, so the cases over it are
+// not applicable there rather than failing on an absent module (#131).
+type Sample = typeof import('@/system/fixtures/sample');
+const sample = hasSample()
+  ? (await import(/* @vite-ignore */ new URL('../src/system/fixtures/sample.ts', import.meta.url).pathname)) as Sample
+  : null;
+const REQUESTS = sample?.REQUESTS ?? [];
 
 const failed = REQUESTS.find((r) => r.status >= 500)!;
 
 describe('replaying a request', () => {
-  it('sends the same request again: a new record, newest, that names the one it replays, and the list is refreshed', async () => {
+  it.skipIf(!sample)('sends the same request again: a new record, newest, that names the one it replays, and the list is refreshed', async () => {
     const r = await replayRequest(failed.id);
     expect(r.ok).toBe(true);
     if (!r.ok) return;
@@ -33,7 +41,7 @@ describe('replaying a request', () => {
     expect(await replayRequest('req_nope')).toEqual({ ok: false, error: 'No request with id req_nope.' });
     expect((await c.query({})).total).toBe(before);
   });
-  it('refuses a request that did not fail, as the page does, and writes nothing', async () => {
+  it.skipIf(!sample)('refuses a request that did not fail, as the page does, and writes nothing', async () => {
     const ok = REQUESTS.find((r) => r.status < 400)!;
     const c = collectionFor(await resolveAccess(), 'requests');
     const before = (await c.query({})).total;

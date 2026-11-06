@@ -5,13 +5,40 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { app } from '@/app.config';
 import { SurfaceOverride, sharedContextOn } from '@/components/base/surface';
 import { useShareView } from '@/components/base/use-share-view';
-import { DEMO_NOW, DEMO_UPDATED_AT, INCIDENTS as RECORDS, MODELS, REQUESTS, SERVICES, type IncidentRecord } from '@/system/fixtures/sample';
-import { COMPUTE, COSTS, CUSTOMERS, ENDPOINTS, REGIONS, STATUS_MIX, USAGE, WEEKDAY_HOURS, demoSeries, demoTotals } from '@/system/fixtures/company';
-import { MEMBERS } from '@/system/fixtures/sample-members';
-import { API_KEYS } from '@/system/fixtures/sample-records';
-import { RELEASES, RUNS, TICKETS } from '@/system/fixtures/sample-engineering';
-import { PAST_INCIDENTS as PAST_RECORDS } from '@/system/fixtures/sample-ops';
-import { traceOf, usageOf } from '@/data/sample';
+import { hasSample } from './sample-present';
+
+// Every case here reads the sample's own figures — its clock, its company, its records, its people and its keys. A
+// product that replaced the sample has none of them, and each case is then not applicable rather than failing on an
+// absent module (#131). The modules are loaded only where the sample is, so their absence is never an import error.
+type Sample = typeof import('@/system/fixtures/sample');
+type Company = typeof import('@/system/fixtures/company');
+type Roster = typeof import('@/system/fixtures/sample-members');
+type Records = typeof import('@/system/fixtures/sample-records');
+type Engineering = typeof import('@/system/fixtures/sample-engineering');
+type Ops = typeof import('@/system/fixtures/sample-ops');
+type DataSample = typeof import('@/data/sample');
+const at = (rel: string) => new URL(rel, import.meta.url).pathname;
+const present = hasSample();
+const load = async <T,>(rel: string): Promise<T | null> => (present ? (await import(/* @vite-ignore */ at(rel))) as T : null);
+const sample = await load<Sample>('../src/system/fixtures/sample.ts');
+const company = await load<Company>('../src/system/fixtures/company.ts');
+const roster = await load<Roster>('../src/system/fixtures/sample-members.ts');
+const records = await load<Records>('../src/system/fixtures/sample-records.ts');
+const engineering = await load<Engineering>('../src/system/fixtures/sample-engineering.ts');
+const ops = await load<Ops>('../src/system/fixtures/sample-ops.ts');
+const dataSample = await load<DataSample>('../src/data/sample.ts');
+const describeSample = describe.skipIf(!present);
+// Nothing below is reached without the sample: every suite that reads these is skipped, so a value stands in only to
+// keep the module's shape and is never a figure a case reports.
+const absent = undefined as never;
+const DEMO_NOW = sample?.DEMO_NOW ?? absent, DEMO_UPDATED_AT = sample?.DEMO_UPDATED_AT ?? absent, RECORDS = sample?.INCIDENTS ?? absent, MODELS = sample?.MODELS ?? absent, REQUESTS = sample?.REQUESTS ?? absent, SERVICES = sample?.SERVICES ?? absent;
+const COMPUTE = company?.COMPUTE ?? absent, COSTS = company?.COSTS ?? absent, CUSTOMERS = company?.CUSTOMERS ?? absent, ENDPOINTS = company?.ENDPOINTS ?? absent, REGIONS = company?.REGIONS ?? absent, STATUS_MIX = company?.STATUS_MIX ?? absent, USAGE = company?.USAGE ?? absent, WEEKDAY_HOURS = company?.WEEKDAY_HOURS ?? absent, demoSeries = company?.demoSeries ?? absent, demoTotals = company?.demoTotals ?? absent;
+const MEMBERS = roster?.MEMBERS ?? absent;
+const API_KEYS = records?.API_KEYS ?? absent;
+const RELEASES = engineering?.RELEASES ?? absent, RUNS = engineering?.RUNS ?? absent, TICKETS = engineering?.TICKETS ?? absent;
+const PAST_RECORDS = ops?.PAST_INCIDENTS ?? absent;
+const traceOf = dataSample?.traceOf ?? absent, usageOf = dataSample?.usageOf ?? absent;
+type IncidentRecord = NonNullable<Sample>['INCIDENTS'][number];
 import { verificationOf } from '@/data/verification';
 import { Meridian } from '@/components/charts/meridian';
 import type { Incident } from '@/components/patterns/incident-card';
@@ -55,14 +82,17 @@ const inMark = (line: string) => line.replace(/\$([\d,]+(?:\.\d+)?)/g, (_, n: st
 
 /** The sample's incidents as a page is handed them: the record without who has it and the id of its ticket. */
 const handed = ({ owner: _, ticketId: __, ...incident }: IncidentRecord): Incident => incident;
-const [INCIDENTS, PAST_INCIDENTS] = [RECORDS.map(handed), PAST_RECORDS.map(handed)];
+// Lazy: the sample's records are absent in a product that replaced it, and a skipped suite must never read them at module
+// load — only inside a case that is actually running (#131).
+let derived: { INCIDENTS: Incident[]; PAST_INCIDENTS: Incident[] } | undefined;
+const derivedRecords = () => (derived ??= { INCIDENTS: RECORDS.map(handed), PAST_INCIDENTS: PAST_RECORDS.map(handed) });
 
 /** What every view's text may take: the budget the console prompt and a host's context both afford. The Home's carries the company's figures, a year's facts and four lines worth knowing. */
 const BUDGET = 2600;
 /** Every complete day the sample keeps, oldest first: what the server reads to work out a title's record, a first and a total. */
-const HISTORY = demoSeries('all').current;
+const history = () => demoSeries('all').current;
 /** Every incident, newest first, as Home's read hands them. */
-const EVERY_INCIDENT = [...INCIDENTS, ...PAST_INCIDENTS].sort((a, b) => (a.started < b.started ? 1 : -1));
+const everyIncident = () => [...derivedRecords().INCIDENTS, ...derivedRecords().PAST_INCIDENTS].sort((a, b) => (a.started < b.started ? 1 : -1));
 /**
  * What Home's read reads, from the sample's records: as an Owner, who may read what compute cost, or (`costs: false`)
  * as anyone else. `home` builds Home's data from it with the function the read builds it with.
@@ -70,8 +100,8 @@ const EVERY_INCIDENT = [...INCIDENTS, ...PAST_INCIDENTS].sort((a, b) => (a.start
 const reads = (period: Period, { costs = true }: { costs?: boolean } = {}): HomeReads => ({
   period, day: null,
   days: { series: demoSeries(period).current, previous: demoSeries(period).previous, totals: demoTotals(period), running: demoSeries(period).running },
-  history: HISTORY, customers: CUSTOMERS, usage: USAGE, models: MODELS, compute: COMPUTE, ...(costs ? { costs: COSTS } : {}),
-  services: SERVICES, incidents: EVERY_INCIDENT, releases: RELEASES.map((r) => ({ ...r, verification: verificationOf(r, RUNS) })), tickets: TICKETS,
+  history: history(), customers: CUSTOMERS, usage: USAGE, models: MODELS, compute: COMPUTE, ...(costs ? { costs: COSTS } : {}),
+  services: SERVICES, incidents: everyIncident(), releases: RELEASES.map((r) => ({ ...r, verification: verificationOf(r, RUNS) })), tickets: TICKETS,
   updatedAt: DEMO_UPDATED_AT.toISOString(), now: DEMO_NOW.toISOString(),
 });
 const home = (period: Period, who?: { costs?: boolean }): HomeData => homeData(reads(period, who));
@@ -83,7 +113,7 @@ describe('the insight functions', () => {
   });
 });
 
-describe("the Home's shared context", () => {
+describeSample("the Home's shared context", () => {
   it('names each figure with its unit, its change and its definition', () => {
     const text = contextText(homeContext(home('30d')));
     expect(text).toContain('- Requests: 1,101,098,030, up 4.7% vs the previous 30 days. (Every call answered, at any status.)');
@@ -147,7 +177,7 @@ describe("the Home's shared context", () => {
         expect(contextText(homeContext(data, 0)).length, p).toBeLessThanOrEqual(BUDGET);
       }
     }
-    const services = servicesContext({ services: SERVICES, incidents: { open: INCIDENTS.filter((i) => i.state !== 'resolved'), resolved: PAST_INCIDENTS }, head: servicesHead({ services: SERVICES, history: HISTORY }), updatedAt: DEMO_UPDATED_AT.toISOString(), now: DEMO_NOW.toISOString() });
+    const services = servicesContext({ services: SERVICES, incidents: { open: derivedRecords().INCIDENTS.filter((i) => i.state !== 'resolved'), resolved: derivedRecords().PAST_INCIDENTS }, head: servicesHead({ services: SERVICES, history: history() }), updatedAt: DEMO_UPDATED_AT.toISOString(), now: DEMO_NOW.toISOString() });
     expect(contextText(services).length).toBeLessThanOrEqual(BUDGET);
   });
   it('counts the day in progress in nothing, and says so from the day handed over on its own', () => {
@@ -184,7 +214,7 @@ function Shares({ context }: { context: SharedContext }) {
   return null;
 }
 
-describe('one context, two consumers', () => {
+describeSample('one context, two consumers', () => {
   it('the MCP view shares the whole context, inline and in fullscreen', async () => {
     for (const mode of ['inline', 'fullscreen'] as const) {
       const share = vi.fn();
@@ -223,7 +253,7 @@ describe('one context, two consumers', () => {
   });
 });
 
-describe('a request\'s context', () => {
+describeSample('a request\'s context', () => {
   it('says what the request used and cost, as its page does: tokens at its model\'s price, a call at the price of a call, and nothing when it was refused or failed', () => {
     const band = (s: number) => (s >= 500 ? 'failed' : s >= 400 ? 'refused' : 'answered');
     const one = (model: string | null, outcome = 'answered') => REQUESTS.find((r) => r.model === model && band(r.status) === outcome)!;
@@ -241,14 +271,14 @@ describe('a request\'s context', () => {
   });
 });
 
-describe('every page shares a context within its budget, and nothing hidden', () => {
+describeSample('every page shares a context within its budget, and nothing hidden', () => {
   it('Usage, Customers, Members, API keys and a request', () => {
     const heat = Array.from({ length: 7 }, (_, d) => WEEKDAY_HOURS.filter((r) => r.weekday === d).map((r) => r.requests));
     const hours = Array.from({ length: 24 }, (_, h) => ({ key: String(h), label: `${String(h).padStart(2, '0')}:00`, value: heat.reduce((n, row) => n + row[h], 0) }));
     const now = DEMO_NOW.toISOString();
     const contexts = [
       usageContext(usageData({
-        period: '30d', day: null, days: { series: demoSeries('30d').current, totals: demoTotals('30d'), running: demoSeries('30d').running }, history: HISTORY,
+        period: '30d', day: null, days: { series: demoSeries('30d').current, totals: demoTotals('30d'), running: demoSeries('30d').running }, history: history(),
         figures: { heat, hours, regions: REGIONS }, endpoints: ENDPOINTS, responses: STATUS_MIX, updatedAt: DEMO_UPDATED_AT.toISOString(), now: DEMO_NOW.toISOString(),
       })),
       customersContext(CUSTOMERS, CUSTOMERS, { q: '', plan: 'all', status: 'all', sort: 'revenue', dir: 'desc', page: '1' }),
@@ -268,7 +298,7 @@ describe('every page shares a context within its budget, and nothing hidden', ()
     const heat = Array.from({ length: 7 }, () => Array.from({ length: 24 }, () => 0));
     const hours = Array.from({ length: 24 }, (_, h) => ({ key: String(h), label: `${String(h).padStart(2, '0')}:00`, value: 0 }));
     const text = contextText(usageContext(usageData({
-      period: '30d', day: null, days: { series: demoSeries('30d').current, totals: demoTotals('30d'), running: demoSeries('30d').running }, history: HISTORY,
+      period: '30d', day: null, days: { series: demoSeries('30d').current, totals: demoTotals('30d'), running: demoSeries('30d').running }, history: history(),
       figures: { heat, hours, regions: REGIONS }, endpoints: ENDPOINTS, responses: STATUS_MIX, updatedAt: DEMO_UPDATED_AT.toISOString(), now: DEMO_NOW.toISOString(),
     })));
     expect(text).not.toMatch(/busiest hour|busiest of the week/);
@@ -280,7 +310,7 @@ describe('every page shares a context within its budget, and nothing hidden', ()
   });
 });
 
-describe('all time on the Home, which has no period before it', () => {
+describeSample('all time on the Home, which has no period before it', () => {
   it('draws no change: each tile with a change says there is no earlier period, and the featured figure has no pill', () => {
     const all = render(<Tooltip.Provider><HomeBody {...home('all')} /></Tooltip.Provider>);
     expect(all.container.querySelector('[data-change]')).toBeNull();
@@ -311,7 +341,7 @@ describe('all time on the Home, which has no period before it', () => {
   });
 });
 
-describe('a tile that needs a look', () => {
+describeSample('a tile that needs a look', () => {
   it('names what it found and points the Meridian at its day', () => {
     const series = demoSeries('30d').current;
     const errorRate = series.map((d) => d.errors / d.requests);
@@ -335,7 +365,7 @@ function heading(doc: Document) {
   return { read: all[0].textContent, drawn: all[0].querySelector('[data-title]')?.textContent ?? '' };
 }
 
-describe('a page is headed by the sentence its context leads with', () => {
+describeSample('a page is headed by the sentence its context leads with', () => {
   // The heading is read from the page as it is served, and the line from the context the page's view tool returns.
   it('Home, for the period chosen', async () => {
     for (const period of ['30d', '90d'] as const) {
@@ -412,10 +442,10 @@ describe('a page is headed by the sentence its context leads with', () => {
   });
 });
 
-describe('what a context states beside its title', () => {
+describeSample('what a context states beside its title', () => {
   it('Home states the total of requests over every complete day kept, and Usage the first day requests passed a threshold', async () => {
-    const requests = HISTORY.reduce((sum, d) => sum + d.requests, 0);
-    const answered = (HISTORY.reduce((sum, d) => sum + d.requests - d.errors, 0) / requests * 100).toFixed(2);
+    const requests = history().reduce((sum, d) => sum + d.requests, 0);
+    const answered = (history().reduce((sum, d) => sum + d.requests - d.errors, 0) / requests * 100).toFixed(2);
     for (const period of ['7d', 'all'] as const) {
       const said = (await homeTool.read({ period })).context.insights.find((i) => i.text.startsWith('Total: ') && i.text.includes('requests answered'));
       expect(said, period).toEqual({ text: `Total: ${requests.toLocaleString('en-US')} requests answered in 360 days, from 08 Oct 2025 to 02 Oct 2026, ${answered}% of them without an error.` });
@@ -436,7 +466,7 @@ describe('what a context states beside its title', () => {
 
   it('Now and Services say what could not be read, and are headed by what they can state without it', () => {
     const operational = SERVICES.map((s) => ({ ...s, status: 'operational' as const }));
-    expect(nowHead({ services: SERVICES, testing: null, history: HISTORY })).toMatchObject({ title: 'Inference API is degraded', unknown: expect.stringMatching(/^The releases could not be read/) });
+    expect(nowHead({ services: SERVICES, testing: null, history: history() })).toMatchObject({ title: 'Inference API is degraded', unknown: expect.stringMatching(/^The releases could not be read/) });
     const unread = nowHead({ services: operational, testing: 1, history: null });
     expect(unread).toEqual({ title: 'All 6 services are operational, and 1 release is in testing', facts: [], unknown: expect.stringMatching(/^The days could not be read/) });
     const services = servicesHead({ services: SERVICES, history: null });
@@ -444,8 +474,8 @@ describe('what a context states beside its title', () => {
     expect(services).toMatchObject({ facts: [], unknown: expect.stringMatching(/^The days could not be read/) });
     expect(servicesContext({ services: SERVICES, incidents: null, head: services, updatedAt: DEMO_UPDATED_AT.toISOString(), now: DEMO_NOW.toISOString() }).unknowns).toContain(services.unknown);
     // A product with no service yet is headed by the page's name.
-    expect(nowHead({ services: [], testing: 0, history: HISTORY }).title).toBeNull();
-    expect(servicesHead({ services: [], history: HISTORY }).title).toBeNull();
+    expect(nowHead({ services: [], testing: 0, history: history() }).title).toBeNull();
+    expect(servicesHead({ services: [], history: history() }).title).toBeNull();
   });
 
   it('Services writes an uptime under one never as a whole one, and a whole one as 100%, and says when the incidents could not be read', () => {
@@ -453,7 +483,7 @@ describe('what a context states beside its title', () => {
     expect(servicesTitle({ uptime: 0.99995, days: 90, run: null })).toBe('99.99% uptime in 90 days');
     expect(servicesTitle({ uptime: 0.99994, days: 90, run: null })).toBe('99.99% uptime in 90 days');
     expect(servicesTitle({ uptime: 1, days: 90, run: null })).toBe('100% uptime in 90 days');
-    const context = servicesContext({ services: SERVICES, incidents: null, head: servicesHead({ services: SERVICES, history: HISTORY }), updatedAt: DEMO_UPDATED_AT.toISOString(), now: DEMO_NOW.toISOString() });
+    const context = servicesContext({ services: SERVICES, incidents: null, head: servicesHead({ services: SERVICES, history: history() }), updatedAt: DEMO_UPDATED_AT.toISOString(), now: DEMO_NOW.toISOString() });
     expect(context.unknowns).toContain('The incidents could not be read, so no incident is stated, open or resolved.');
     expect(context.insights.some((i) => /incident/i.test(i.text))).toBe(false);
   });
@@ -462,8 +492,8 @@ describe('what a context states beside its title', () => {
     expect(home('90d').head.title).toMatch(/^Revenue is up [\d.]+% on the 90 days before, and Inference API is degraded$/);
     expect(home('all').head.title).toBe(`${formatCost(demoTotals('all').current.revenue)} of revenue in 360 days, and Inference API is degraded`);
     // A title leaves the services out when they could not be read, and says every one is operational when it is.
-    expect(homeHead({ period: '90d', totals: demoTotals('90d'), history: HISTORY, services: null }).title).toMatch(/^Revenue is up [\d.]+% on the 90 days before$/);
-    expect(homeHead({ period: '90d', totals: demoTotals('90d'), history: HISTORY, services: SERVICES.map((s) => ({ ...s, status: 'operational' as const })) }).title).toMatch(/, and every service is operational$/);
+    expect(homeHead({ period: '90d', totals: demoTotals('90d'), history: history(), services: null }).title).toMatch(/^Revenue is up [\d.]+% on the 90 days before$/);
+    expect(homeHead({ period: '90d', totals: demoTotals('90d'), history: history(), services: SERVICES.map((s) => ({ ...s, status: 'operational' as const })) }).title).toMatch(/, and every service is operational$/);
   });
 
   it.each([true, false])('keeps unread period days distinct from zero while preserving the readable year (cost access: %s)', (costs) => {
@@ -530,7 +560,7 @@ describe('what a context states beside its title', () => {
   });
 });
 
-describe('a title and a fact follow the product\'s configuration', () => {
+describeSample('a title and a fact follow the product\'s configuration', () => {
   afterEach(() => {
     vi.doUnmock('@/app.config');
     vi.resetModules();
@@ -558,7 +588,7 @@ describe('a title and a fact follow the product\'s configuration', () => {
   });
 });
 
-describe('the days inside the band follow the product\'s configuration', () => {
+describeSample('the days inside the band follow the product\'s configuration', () => {
   afterEach(() => {
     vi.doUnmock('@/app.config');
     vi.resetModules();
@@ -579,16 +609,16 @@ describe('the days inside the band follow the product\'s configuration', () => {
   });
 });
 
-describe("a list a context states names its first, in the page's order, and counts the rest", () => {
+describeSample("a list a context states names its first, in the page's order, and counts the rest", () => {
   /** Each row `k` times, every copy a record of its own: a context read with more in it than the sample holds. */
   const times = <T extends object>(rows: readonly T[], k: number, copy: (row: T, i: number) => Partial<T>) =>
     rows.flatMap((row) => Array.from({ length: k }, (_, i) => (i ? { ...row, ...copy(row, i) } : row)));
 
   it('Services: the first six services, the first two open incidents with the first sentence of their latest update, and the newest three resolved', () => {
     const services = times(SERVICES, 4, (s, i) => ({ name: `${s.name} ${i + 1}` }));
-    const open = times(INCIDENTS, 6, (x, i) => ({ id: `${x.id}_${i}`, title: `${x.title} ${i + 1}` }));
-    const resolved = times(PAST_INCIDENTS, 6, (x, i) => ({ id: `${x.id}_${i}`, title: `${x.title} ${i + 1}` }));
-    const c = servicesContext({ services, incidents: { open, resolved }, head: servicesHead({ services, history: HISTORY }), updatedAt: DEMO_UPDATED_AT.toISOString(), now: DEMO_NOW.toISOString() });
+    const open = times(derivedRecords().INCIDENTS, 6, (x, i) => ({ id: `${x.id}_${i}`, title: `${x.title} ${i + 1}` }));
+    const resolved = times(derivedRecords().PAST_INCIDENTS, 6, (x, i) => ({ id: `${x.id}_${i}`, title: `${x.title} ${i + 1}` }));
+    const c = servicesContext({ services, incidents: { open, resolved }, head: servicesHead({ services, history: history() }), updatedAt: DEMO_UPDATED_AT.toISOString(), now: DEMO_NOW.toISOString() });
     const text = contextText(c);
     expect(c.facts[0]).toEqual({ label: 'Services now', value: '4 services degraded (Inference API degraded, and 3 more)' });
     expect(c.facts.slice(2, 8).map((f) => f.label)).toEqual(services.slice(0, 6).map((s) => s.name));
@@ -636,7 +666,7 @@ describe("a list a context states names its first, in the page's order, and coun
   });
 });
 
-describe('freshness in the reporting timezone', () => {
+describeSample('freshness in the reporting timezone', () => {
   afterEach(() => {
     vi.doUnmock('@/app.config');
     vi.resetModules();

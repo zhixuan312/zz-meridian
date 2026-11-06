@@ -2,7 +2,15 @@
 import { describe, expect, it } from 'vitest';
 import { facts } from '@/app.config';
 import { clock, collections } from '@/data/collections';
-import { usageOf, type RequestRow } from '@/data/sample';
+import type { RequestRow } from '@/data/sample';
+import { hasSample } from './sample-present';
+
+// The price a request is read at comes from the sample's own `usageOf`; a product that replaced the sample keeps no such
+// helper, and the case over it is not applicable there rather than failing on an absent export (#131).
+type Sample = typeof import('@/data/sample');
+const sample = hasSample()
+  ? (await import(/* @vite-ignore */ new URL('../src/data/sample.ts', import.meta.url).pathname)) as Sample
+  : null;
 
 /**
  * The records that name each other: an incident its owner and its ticket, a ticket its incident and when it was closed,
@@ -60,12 +68,12 @@ describe('a request', () => {
     }
   });
 
-  it('is priced at its model\'s price, or at the price of a call when it reached none', async () => {
+  it.skipIf(!sample)('is priced at its model\'s price, or at the price of a call when it reached none', async () => {
     const models = Object.fromEntries((await rows('models')).map((m) => [m.id, m]));
     const requests = (await rows('requests')) as RequestRow[];
     let priced = 0;
     for (const r of requests) {
-      const { tokens, cost } = usageOf(r);
+      const { tokens, cost } = sample!.usageOf(r);
       if (tokens) {
         const m = models[r.model!];
         expect(cost, `${r.id} on ${r.model}`).toBeCloseTo((tokens.input * m.inputPrice + tokens.output * (m.outputPrice ?? 0)) / 1e6, 12);

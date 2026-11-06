@@ -10,10 +10,17 @@ import { describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 
 import { readAll, readInScope } from '@/data/read';
-import { REQUESTS } from '@/system/fixtures/sample';
 import { arrayCollection } from '@/lib/collection';
+import { hasSample } from './sample-present';
 import type * as Access from '@/data/access';
 import { resolveAccess } from '@/data/access';
+
+// The sample's own request log is the fixture four of these cases read; a product that replaced the sample has none of
+// it, and the cases about it are then not applicable. The pagination rules below hold over this file's own collections
+// and are never skipped (#131).
+const sample = hasSample()
+  ? (await import(/* @vite-ignore */ new URL('../src/system/fixtures/sample.ts', import.meta.url).pathname)) as { REQUESTS: { id: string; method: string }[] }
+  : null;
 
 vi.mock('@/data/access', async (importOriginal) => {
   const real = await importOriginal<typeof Access>();
@@ -41,31 +48,31 @@ const large = arrayCollection({
 });
 
 describe('readAll with a question', () => {
-  it('answers with every row the collection holds when no condition is asked', async () => {
+  it.skipIf(!sample)('answers with every row the collection holds when no condition is asked', async () => {
     const { rows } = await readAll('requests');
-    expect(rows).toHaveLength(REQUESTS.length);
+    expect(rows).toHaveLength(sample!.REQUESTS.length);
   });
 
-  it('keeps the order it was asked for', async () => {
+  it.skipIf(!sample)('keeps the order it was asked for', async () => {
     const { rows } = await readAll('requests', { sort: { field: 'at', dir: 'desc' } });
-    expect(rows).toHaveLength(REQUESTS.length);
+    expect(rows).toHaveLength(sample!.REQUESTS.length);
     const at = rows.map((r) => String(r.at));
     // Every page holds the newest of what is left, so the whole run descends. A page read without the sort would come
     // back in the key's order instead, and the last row of one page would be newer than the first of the next.
     expect([...at].sort().reverse()).toEqual(at);
   });
 
-  it('answers with every row a condition keeps, not the first page of a wider one', async () => {
+  it.skipIf(!sample)('answers with every row a condition keeps, not the first page of a wider one', async () => {
     const { rows } = await readAll('requests', { where: [{ field: 'method', op: 'eq', value: 'POST' }], sort: { field: 'at', dir: 'desc' } });
-    expect(rows.map((r) => r.id).sort()).toEqual(REQUESTS.filter((r) => r.method === 'POST').map((r) => r.id).sort());
+    expect(rows.map((r) => r.id).sort()).toEqual(sample!.REQUESTS.filter((r) => r.method === 'POST').map((r) => r.id).sort());
     expect(rows.every((r) => r.method === 'POST')).toBe(true);
     const at = rows.map((r) => String(r.at));
     expect([...at].sort().reverse()).toEqual(at);
   });
 
-  it.each([{ limit: 10 }, { offset: 25 }, { offset: 1000 }])('means every matching row despite pagination %j', async (pagination) => {
+  it.skipIf(!sample).each([{ limit: 10 }, { offset: 25 }, { offset: 1000 }])('means every matching row despite pagination %j', async (pagination) => {
     const { rows } = await readAll('requests', pagination);
-    expect(rows).toHaveLength(REQUESTS.length);
+    expect(rows).toHaveLength(sample!.REQUESTS.length);
   });
 
   it('keeps filters and order across pages without duplicating or losing rows to a caller offset', async () => {

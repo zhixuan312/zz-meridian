@@ -12,7 +12,15 @@ vi.mock('next/headers', () => ({
 import CustomersPage from '../app/(dashboard)/customers/page';
 import ServicesPage from '../app/(dashboard)/services/page';
 import { CustomersView } from '@/views/customers';
-import { CUSTOMERS } from '@/system/fixtures/company';
+import { hasSample } from './sample-present';
+
+// The Customers tiles are drawn over the sample's own customers; a product that replaced the sample has none, so that
+// case is not applicable there rather than failing on an absent module (#131).
+type Sample = typeof import('@/system/fixtures/company');
+const sample = hasSample()
+  ? (await import(/* @vite-ignore */ new URL('../src/system/fixtures/company.ts', import.meta.url).pathname)) as Sample
+  : null;
+const CUSTOMERS = sample?.CUSTOMERS ?? [];
 import { Sparkline } from '@/components/charts/sparkline';
 import { served } from './served';
 
@@ -32,7 +40,7 @@ describe('a control that says it did something did it', () => {
     expect(buttons(html).filter((b) => /subscribe/i.test(b))).toEqual([]);
   });
 
-  it('Customers offers no invitation: nothing would write one, and nobody would receive it', async () => {
+  it.skipIf(!sample)('Customers offers no invitation: nothing would write one, and nobody would receive it', async () => {
     const html = renderToStaticMarkup(await CustomersPage());
     expect(html).toMatch(/<h1[^>]*>[^<]*Customers/);
     expect(buttons(html).filter((b) => /invite/i.test(b))).toEqual([]);
@@ -43,7 +51,7 @@ describe('a control that says it did something did it', () => {
   });
 });
 
-describe('the Customers tiles', () => {
+describe.skipIf(!sample)('the Customers tiles', () => {
   it('draw a trend only for a figure a series stands behind: a count of customers and a sum of revenue have none', () => {
     const html = renderToStaticMarkup(<Tooltip.Provider><CustomersView rows={CUSTOMERS} /></Tooltip.Provider>);
     const tiles = html.slice(html.indexOf('data-split="tiles"'), html.indexOf('<table'));

@@ -6,9 +6,17 @@ const toasts = vi.hoisted(() => [] as { tone: string; title: string; description
 vi.mock('@/components/ui/toast', () => ({ toast: (t: { tone: string; title: string; description?: string }) => { toasts.push(t); } }));
 
 import { KeysView } from '@/views/keys';
-import { API_KEYS } from '@/system/fixtures/sample-records';
+import { hasSample } from './sample-present';
 
-describe('the key list', () => {
+// The key list is drawn over the sample's own keys; a product that replaced the sample has none, so these cases are not
+// applicable there rather than failing on an absent module (#131).
+type Sample = typeof import('@/system/fixtures/sample-records');
+const sample = hasSample()
+  ? (await import(/* @vite-ignore */ new URL('../src/system/fixtures/sample-records.ts', import.meta.url).pathname)) as Sample
+  : null;
+const API_KEYS = sample?.API_KEYS ?? [];
+
+describe.skipIf(!sample)('the key list', () => {
   it('shows each key by its hint and never carries or reveals a full secret', () => {
     const { container } = render(<KeysView rows={API_KEYS} now="2026-10-05T09:00:00.000Z" createKey={async () => ({ ok: false, error: 'unused' })} revokeKey={async () => ({ ok: true })} />);
     expect(screen.getAllByText('zzm_live_…f601').length).toBeGreaterThan(0);
@@ -18,7 +26,7 @@ describe('the key list', () => {
   });
 });
 
-describe('creating a key', () => {
+describe.skipIf(!sample)('creating a key', () => {
   it('still hands over the one-time key and shows a committed-write warning', async () => {
     const warning = 'The change applied, but the key list could not be refreshed.';
     const create = vi.fn(async () => ({ ok: true as const, key: { ...API_KEYS[0], name: 'Warning probe', secret: 'synthetic-one-time-key' }, warning }));
