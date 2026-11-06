@@ -43,7 +43,9 @@ Height 24px in a table cell, 28px in a compact Metric tile, 32 to 44px in a tile
 
 ## Behaviour
 
-None: a sparkline is not interactive. It follows the page's Meridian but never sets it.
+None by default: a sparkline is not interactive. It follows the page's Meridian but never sets it.
+
+With `readout` it is one Tab stop: the pointer picks a point, the arrow keys step through them from the last, Home and End go to the first and the last, and Escape or blur lets go. A readout panel names the day (when its values are the page's dates) and the value, "01 Oct" over "Requests 6K", and an `aria-live` line says the same words. A point with no value reads "No data", never zero. Without the prop every one of those states stays exactly as it was.
 
 It follows only when its values are the page's: one for each of the Meridian's dates, which is the rule a chart joins the Meridian by. The cursor is a position in the page's list of dates, so on a line of any other length it would mark a different day: a customer's 14 days on a page of 30 draw no cursor. Outside a Meridian there is no cursor to draw.
 
@@ -57,7 +59,7 @@ Not applicable: it repeats a series the view already shares.
 
 ## Accessibility
 
-Decorative (`aria-hidden`): the figure beside it and the page's charts carry the numbers. The neutral line holds 3.96:1 dark and 3.52:1 light on `surface`.
+Without `readout`, decorative (`aria-hidden`): the figure beside it and the page's charts carry the numbers, and the title names the range for the pointer. With `readout`, an image named by that range and how to use it ("4K to 10K. Use the arrow keys to read a point."), one Tab stop, and each point announced. The neutral line holds 3.96:1 dark and 3.52:1 light on `surface`.
 
 ## Content
 
