@@ -67,6 +67,20 @@ describe('DataTable', () => {
     ]);
   });
 
+  it('keeps every measure a table marks as a fact on the phone card, however many there are (#137)', () => {
+    type Wide = { id: string; name: string } & Record<string, string>;
+    const wide: Wide[] = [{ id: 'a', name: 'Orbit Retail', one: '391ms', two: '6 min ago', three: '$1,204', four: '99.95%' }];
+    const cols: Column<Wide>[] = [
+      { key: 'name', header: 'Endpoint', mobile: 'title', cell: (r) => r.name },
+      ...(['one', 'two', 'three', 'four'] as const).map((key) => ({ key, header: key, mobile: 'fact' as const, cell: (r: Wide) => r[key] })),
+    ];
+    const { container } = render(<DataTable caption="Endpoints" noun="endpoints" rows={wide} columns={cols} rowKey={(r) => r.id} />);
+    const card = [...container.querySelectorAll('tbody tr:first-child td')].filter((td) => td.getAttribute('data-mobile') === 'fact');
+    // A comparison table loses its fourth measure silently when the card keeps three; the reader sees no sign of it.
+    // The dot that separates two facts leads its own cell, so it is read off the fact it introduces.
+    expect(card.map((td) => td.textContent?.replace(/^·/, ''))).toEqual(['391ms', '6 min ago', '$1,204', '99.95%']);
+  });
+
   it('makes the title of a row that opens a record its link', () => {
     render(<DataTable caption="Customers" noun="customers" rows={rows} columns={columns} rowKey={(r) => r.id} rowHref={(r) => `/customers/${r.id}`} />);
     const link = screen.getAllByRole('link', { name: 'Northwind Labs' })[0];

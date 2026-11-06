@@ -236,8 +236,8 @@ export function MembersView({ rows, now, revisions, actions, access, roles, work
     { key: 'role', header: 'Role', hideBelow: 'sm', mobile: 'fact', sortValue: (m) => m.role, cell: (m) => roleLabel(m), mobileCell: (m) => roleLabel(m) },
     { key: 'team', header: 'Team', muted: true, hideBelow: 'xl', sortValue: (m) => m.team, cell: (m) => m.team },
     { key: 'status', header: 'Status', mobile: 'fact', sortValue: (m) => m.status, cell: (m) => <Badge tone={STATUS_TONE[m.status]} dot>{m.status}</Badge> },
-    // A card holds three facts, and adding the role spent one, so Joined leaves the phone card and stays in the table
-    // at every width that has columns: Last active is the fact the page's own headline and the shared context answer for.
+    // Joined stays out of the phone card: Last active is the fact the page's own headline and the shared context answer
+    // for, and a card is read at a glance (#137 removed the three-fact cap, so this is a choice and not a budget).
     { key: 'joined', header: 'Joined', numeric: true, muted: true, hideBelow: 'lg', mobile: 'hidden', sortValue: (m) => m.joined, cell: (m) => formatDate(m.joined) },
     {
       key: 'active', header: 'Last active', numeric: true, mobile: 'fact', sortValue: (m) => m.lastActive ?? '',

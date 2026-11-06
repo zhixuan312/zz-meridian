@@ -43,7 +43,9 @@ export type Column<R> = {
   width?: string;
   /**
    * Its place in the card a row becomes on phones: the `title` (one column, the record's name), a `status` at the end
-   * of the title line, a `fact` in the line under it (two or three at most), or `hidden`. Unset means hidden.
+   * of the title line, a `fact` in the line under it, or `hidden`. Unset means hidden. Every column declared a `fact`
+   * appears: a table whose four measures are read together keeps all four on a phone, and one that has more than the
+   * card should show says so with `hidden` on the columns it drops (#137).
    */
   mobile?: 'title' | 'status' | 'fact' | 'hidden';
   /** The cell as a phone card shows it, when the column's header is not there to explain it: "Used 1 min ago". */
@@ -62,8 +64,8 @@ export type TableState = { sort: string; dir: string; page: string };
  * a tree it could never show.
  *
  * `check` is the select-all column; `title`, `status` and `fact` are the roles a column declares (`Column.mobile`) and
- * anything else is hidden on a phone. The card is the title and its status on the first line and up to three facts,
- * in column order, flowing on the second.
+ * anything else is hidden on a phone. The card is the title and its status on the first line and every `fact`, in
+ * column order, flowing on the second.
  */
 type Mobile = 'check' | 'title' | 'status' | 'fact' | 'hidden';
 
@@ -102,8 +104,8 @@ const PHONE_CELLS = '@max-[640px]:[&_td:not([data-mobile=hidden])]:!p-0 @max-[64
 /** Where a role sits in the card, and how it reads there.
  *
  * `!block` (above) is load-bearing: `hideBelow` drops a column when the TABLE is narrow, and on a phone the table is always
- * narrow — but a card has room for three small facts, so a column the table dropped for width comes back here. The
- * card's own rule is the role, not the width. */
+ * narrow — but a card has room for the facts its columns declare, so a column the table dropped for width comes back
+ * here. The card's own rule is the role, not the width. */
 const PHONE_ROLES = [
   '@max-[640px]:[&_td[data-mobile=check]]:order-0 @max-[640px]:[&_td[data-mobile=check]]:mr-1.5',
   '@max-[640px]:[&_td[data-mobile=title]]:order-1 @max-[640px]:[&_td[data-mobile=title]]:flex-1 @max-[640px]:[&_td[data-mobile=title]]:font-medium @max-[640px]:[&_td[data-mobile=title]]:!text-left',
@@ -288,7 +290,7 @@ export function DataTable<R>({
 
   const titleColumn = columns.find((c) => c.mobile === 'title') ?? columns[0];
   const status = columns.find((c) => c.mobile === 'status');
-  const facts = columns.filter((c) => c.mobile === 'fact').slice(0, 3);
+  const facts = columns.filter((c) => c.mobile === 'fact');
 
   let body: ReactNode;
   if (error) {
