@@ -34,6 +34,8 @@ Status: beta
 
 Decorative (`aria-hidden`) beside its word: the word is the information. Where no word stands beside it (a list row, a finding), `label` makes it an image (`role="img"`) named by that word, with the same word as its title for the pointer.
 
+`TONE_WORD` is the one map from a tone to that word — "For information", "In progress", "Went well", "Needs attention", "Failed" — so the same state reads the same wherever a dot stands alone. Metric tile findings, alert rows and the Activity feed's system lines all take their words from it. A control whose own `aria-label` replaces its contents, such as a finding that points at a day, has to carry the tone's word in that name too.
+
 ## Surfaces
 
 Same on every surface. Status colours never bridge to the host.

@@ -8,11 +8,12 @@ import { cn } from '@/lib/cn';
 import { formatDateTime, formatRelative } from '@/lib/format-date';
 import { Kbd } from '@/components/ui/kbd';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { StatusDot } from '@/components/ui/status-dot';
+import { StatusDot, TONE_WORD } from '@/components/ui/status-dot';
 import { openCommand, usePaletteKey } from '@/components/patterns/command-palette/open';
 
 /** One thing that needs a person: what happened, where to act on it, and whether they have seen it. */
 export type Alert = { id: string; title: string; detail?: string; at: string; href: string; tone: 'critical' | 'warning' | 'positive' | 'neutral'; unread?: boolean };
+
 
 /** The alerts this tab has opened, kept for the session so a reload does not bring them back as new. */
 const READ_KEY = `${slug}.alerts-read`;
@@ -87,7 +88,7 @@ export function AlertsPanel({ alerts, now, read = new Set(), onOpen, onMarkAll }
             return (
               <li key={a.id}>
                 <Link href={a.href} onClick={() => onOpen?.(a.id)} className="grid grid-cols-[14px_minmax(0,1fr)] gap-x-3 rounded-md px-2.5 py-2.5 hover:bg-fill-hover">
-                  <span className="mt-1.5 grid size-3.5 place-items-center"><StatusDot tone={a.tone} live={isNew && a.tone !== 'neutral'} /></span>
+                  <span className="mt-1.5 grid size-3.5 place-items-center"><StatusDot tone={a.tone} label={TONE_WORD[a.tone]} live={isNew && a.tone !== 'neutral'} /></span>
                   <span className="min-w-0">
                     <span className={cn('block text-sm', isNew ? 'font-medium text-ink' : 'text-ink-2')}>{a.title}</span>
                     {a.detail ? <span className="t-caption mt-0.5 block">{a.detail}</span> : null}
