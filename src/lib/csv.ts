@@ -19,7 +19,9 @@ export const csvRow = (keys: string[], row: CsvRow): string => keys.map((k) => c
 
 export function toCsv(rows: CsvRow[]): string {
   if (!rows.length) return '';
-  const keys = Object.keys(rows[0]);
+  // Every key any row carries, not only the first row's: a column a later row is the only one to hold would otherwise be
+  // dropped from the file with nothing said — the export would be missing a value its source had.
+  const keys = [...new Set(rows.flatMap((r) => Object.keys(r)))];
   return [csvHeader(keys), ...rows.map((r) => csvRow(keys, r))].join('\r\n') + '\r\n';
 }
 
