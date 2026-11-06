@@ -10,7 +10,7 @@
  */
 import { load, resolver, tokensOf, cssValue, NS } from './tokens.ts';
 import { parse, over, ratio, simulate, deltaE, oklchOf, hex, rgbToOklab, oklchToRgb } from '../src/lib/color.ts';
-import { PAIRS, MIXES } from './lib/contrast-pairs.ts';
+import { PAIRS, MIXES } from '../src/lib/contrast-pairs.ts';
 
 /**
  * A token file, parsed once. Every theme x accent reads the same sets, so parsing them again for each of the eight was

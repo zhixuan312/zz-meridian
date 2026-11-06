@@ -326,7 +326,7 @@ const POLICY: Rule[] = [
 ];
 
 // ── scripts/contrast.ts ──────────────────────────────────────────────────────────────────────────────
-const CONTRAST_FILES = ['scripts/contrast.ts', 'scripts/tokens.ts', 'scripts/lib/contrast-pairs.ts', 'tokens'];
+const CONTRAST_FILES = ['scripts/contrast.ts', 'scripts/tokens.ts', 'src/lib/contrast-pairs.ts', 'tokens'];
 const NS = 'dev.zz.meridian';
 const ACCENTS = Object.keys(JSON.parse(fs.readFileSync(path.join(ROOT, 'tokens/zz-meridian.resolver.json'), 'utf8')).modifiers.accent.contexts);
 type Token = { $value?: unknown; $extensions?: Record<string, unknown> };

@@ -6,7 +6,7 @@ import { over, parse, ratio } from '@/lib/color';
 import { PANE, Scope, STAGE, StageBar, useStageLook, type Density } from '@/system/card-stage';
 import type { TokenGroup } from '@/system/tokens-data';
 import { app } from '@/app.config';
-import { PAIRS } from '../../scripts/lib/contrast-pairs';
+import { PAIRS } from '@/lib/contrast-pairs';
 
 type RGBA = ReturnType<typeof parse>;
 

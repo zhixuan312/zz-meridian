@@ -32,7 +32,8 @@ describe('the contrast gate and the part a stack stands on', () => {
   it('fails when a theme mixes too little accent into it', () => {
     for (const d of ['scripts', 'tokens']) fs.cpSync(path.join(ROOT, d), path.join(dir, d), { recursive: true });
     fs.mkdirSync(path.join(dir, 'src/lib'), { recursive: true });
-    fs.copyFileSync(path.join(ROOT, 'src/lib/color.ts'), path.join(dir, 'src/lib/color.ts'));
+    // The pair list and the colour maths both live under `src/lib` now: the scripts above import them from there.
+    for (const f of ['color.ts', 'contrast-pairs.ts']) fs.copyFileSync(path.join(ROOT, 'src/lib', f), path.join(dir, 'src/lib', f));
     const file = path.join(dir, 'tokens/theme.light.tokens.json');
     const light = fs.readFileSync(file, 'utf8');
     const lowered = light.replace(/("chart-stack-hi":\s*\{\s*"\$type":\s*"number",\s*"\$value":\s*)[\d.]+/, (_, head: string) => `${head}0.5`);
