@@ -61,8 +61,16 @@ export type Shared = {
  * narrowest column (a grouped part's bar) that keeps its value at rest.
  */
 export const GAP = 2, THIN = 1, REST = 36;
-/** About the width of one character of a value at rest (`text-2xs`), in px: enough to tell whether a label fits its column. */
+/**
+ * The width of one character, in px, at the three sizes this chart measures words at. They differ because the type does:
+ * a value at rest and a category label are set small and tight, an axis tick a little wider, and a tick's gutter carries
+ * its own padding. One number for all three would be wrong for two of them.
+ */
 export const CH = 6.5;
+/** One character of an axis tick, which the plot's left gutter is measured in. */
+const TICK_CH = 6.4;
+/** One character of a category label under the columns, which decides how many of them fit. */
+const LABEL_CH = 6.2;
 /**
  * The plot widths past which `n` columns stand another pixel apart, up to `GAP`: each is the width at which every
  * column still has `THIN` of its own. A chart with more columns than room closes its gaps before it outgrows its box,
@@ -102,7 +110,7 @@ export function scaleOf(read: number[], signed: boolean, whole: boolean, af: (n:
   /** A level's height in the scale, as a share of it from the bottom. */
   const at100 = (v: number) => ((v - low) / (top - low)) * 100;
   const widened = held && !inside ? `Scale widened from ${af(end)}\u2013${af(held[1])} to ${af(low)}\u2013${af(top)}` : '';
-  return { ticks, low, top, at100, signed: low < 0, left: Math.max(...ticks.map((t) => af(t).length)) * 6.4 + 10, widened };
+  return { ticks, low, top, at100, signed: low < 0, left: Math.max(...ticks.map((t) => af(t).length)) * TICK_CH + 10, widened };
 }
 
 /**
@@ -155,7 +163,7 @@ export function Labels({ bars, active, width, left, timed, every, settled, estim
 }) {
   const n = bars.length;
   const longest = Math.max(...bars.map((b) => b.label.length));
-  const fit = Math.max(1, Math.ceil(n / Math.max(2, Math.floor((width - left) / (longest * 6.2 + 16)))));
+  const fit = Math.max(1, Math.ceil(n / Math.max(2, Math.floor((width - left) / (longest * LABEL_CH + 16)))));
   const each = !timed && !every && (width - left) / n >= 36;
   return (
     <>

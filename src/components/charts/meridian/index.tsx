@@ -36,7 +36,11 @@ export function Meridian({ dates, day, children }: { dates: string[]; day?: stri
 export function useMeridian(dates: string[]): Ctx {
   const shared = useContext(MeridianCtx);
   const [index, setIndex] = useState<number | null>(null);
-  return shared && shared.dates.length === dates.length ? shared : { dates, index, setIndex, shared: false };
+  // The same days, not merely the same number of them: two charts of equal length over different windows (this week and
+  // last) would otherwise share one position, and pointing at the fifth day of one would light the fifth day of the other.
+  // The ends identify a window: a range that begins and ends on the same days is the range.
+  const same = Boolean(shared) && shared!.dates.length === dates.length && shared!.dates[0] === dates[0] && shared!.dates[shared!.dates.length - 1] === dates[dates.length - 1];
+  return same ? shared! : { dates, index, setIndex, shared: false };
 }
 
 /** For tiles and captions: the shared cursor if there is one, without creating a private one. */

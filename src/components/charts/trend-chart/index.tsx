@@ -344,15 +344,25 @@ export function TrendChart({
     [series, curve, width, h, low, top, running, n, pad.l, pad.t, W, H],
   );
 
-  // What the plot draws, as the label placer needs it: every line, and the top of every band of a stack.
-  const drawn = bases ? bases.map(({ upper }) => ({ ys: upper.map((v) => (v === null ? null : y(v))), filled: true })) : series.map((s) => ({ ys: s.values.map((v) => (v === null ? null : y(v))), filled: s.kind === 'area' }));
+  // What the plot draws, as the label placer needs it: every line, and the top of every band of a stack. Memoised on the
+  // geometry, not rebuilt on every cursor move: pointing at the chart re-renders it, and this walks every point of every
+  // series and then places each reference label against all of them.
+  const drawn = useMemo(
+    () => (bases ? bases.map(({ upper }) => ({ ys: upper.map((v) => (v === null ? null : y(v))), filled: true })) : series.map((s) => ({ ys: s.values.map((v) => (v === null ? null : y(v))), filled: s.kind === 'area' }))),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [bases, series, width, h, low, top, pad.l, pad.t, W, H],
+  );
   // The reference levels, in the order their labels are placed: the band's top edge first, then what is usual. Both are
   // placed against everything the plot draws. They may stand in the 14px the chart keeps clear over its top gridline,
   // and never under the axis.
-  const refs = [
-    ...(band ? [{ value: band.value, label: band.label, edge: true }] : []),
-    ...(baseline ? [{ value: baseline.value, label: baseline.label, edge: false }] : []),
-  ].map((r) => ({ ...r, at: placeLabel(r.label, y(r.value), { left: pad.l, right: pad.l + W, top: pad.t - 14, bottom: pad.t + H }, dates.map((_, i) => x(i)), drawn) }));
+  const refs = useMemo(
+    () => [
+      ...(band ? [{ value: band.value, label: band.label, edge: true }] : []),
+      ...(baseline ? [{ value: baseline.value, label: baseline.label, edge: false }] : []),
+    ].map((r) => ({ ...r, at: placeLabel(r.label, y(r.value), { left: pad.l, right: pad.l + W, top: pad.t - 14, bottom: pad.t + H }, dates.map((_, i) => x(i)), drawn) })),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [band, baseline, drawn, dates, width, h, low, top, pad.l, pad.t, W, H],
+  );
 
   // How many labels the plot holds, and so which of them it draws: every nth from the last, so the spacing is even.
   const slots = Math.max(2, Math.floor(W / 92));
