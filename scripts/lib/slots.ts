@@ -14,8 +14,13 @@ export function slots(ceiling: number) {
   let free = ceiling;
   const waiting: { want: number; go: () => void }[] = [];
   const next = () => {
-    while (waiting.length && waiting[0].want <= free) {
-      const w = waiting.shift()!;
+    // The smallest request that fits, rather than the one at the head of the queue: a job asking for the whole ceiling
+    // would otherwise hold back every small job queued behind it until it finished, when the two could run beside each
+    // other. A job that fits nowhere waits, and among equals the queue's own order decides (`findIndex` takes the first).
+    for (;;) {
+      const at = waiting.findIndex((w) => w.want <= free);
+      if (at < 0) return;
+      const [w] = waiting.splice(at, 1);
       free -= w.want;
       w.go();
     }

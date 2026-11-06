@@ -32,3 +32,22 @@ describe('the browser ceiling', () => {
     expect(await hold(1, async () => 'free again')).toBe('free again');
   });
 });
+
+describe('the browser slots', () => {
+  it('runs a job that fits the free slots, even when a larger one waits ahead of it', async () => {
+    const hold = slots(3);
+    let releaseHeld!: () => void;
+    // Two of three slots held by a long job leaves one free.
+    const held = hold(2, () => new Promise<void>((r): void => { releaseHeld = r; }));
+    // Queued in this order: one that needs all three (cannot start), then one that needs the single free slot.
+    let bigStarted = false, smallStarted = false;
+    const big = hold(3, async () => { bigStarted = true; });
+    const small = hold(1, async () => { smallStarted = true; });
+    await new Promise((r) => setTimeout(r, 20));
+    // The small job fits now; a queue that serves its head first would leave it stuck behind the job needing all three.
+    expect(smallStarted).toBe(true);
+    expect(bigStarted).toBe(false);
+    releaseHeld();
+    await small;
+    await big;
+  });});

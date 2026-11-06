@@ -87,15 +87,24 @@ function baselineOf(): Baseline | null {
 async function htmlSizes(routes: string[], why: string): Promise<{ sizes: Record<string, number>; problems: string[] }> {
   const sizes: Record<string, number> = {};
   const problems: string[] = [];
-  for (const route of routes) {
-    try {
-      const res = await fetch(base + route, { headers: { 'accept-encoding': 'identity' }, redirect: 'manual' });
-      const body = Buffer.from(await res.arrayBuffer());
-      if (res.status !== 200) problems.push(`${route}: ${why}, but the route answered ${res.status}`);
-      else sizes[route] = gzipSync(body).byteLength;
-    } catch (e) { problems.push(`${route}: could not be fetched from ${base} (${(e as Error).message})`); }
-  }
-  return { sizes, problems };
+  // Three at a time: a page's bytes are independent of every other page's, and awaiting each of twenty-one in turn made
+  // this the slowest step of the size check. Three is enough to overlap the round trips without loading the app it is
+  // measuring, which the time-based checks beside it would read as its own cost.
+  const queue = [...routes];
+  const worker = async () => {
+    for (let route = queue.shift(); route !== undefined; route = queue.shift()) {
+      try {
+        const res = await fetch(base + route, { headers: { 'accept-encoding': 'identity' }, redirect: 'manual' });
+        const body = Buffer.from(await res.arrayBuffer());
+        if (res.status !== 200) problems.push(`${route}: ${why}, but the route answered ${res.status}`);
+        else sizes[route] = gzipSync(body).byteLength;
+      } catch (e) { problems.push(`${route}: could not be fetched from ${base} (${(e as Error).message})`); }
+    }
+  };
+  await Promise.all([worker(), worker(), worker()]);
+  // In the order asked for, so the report reads the same however the fetches interleaved.
+  const ordered = Object.fromEntries(routes.filter((r) => r in sizes).map((r) => [r, sizes[r]]));
+  return { sizes: ordered, problems };
 }
 
 async function main(): Promise<number> {

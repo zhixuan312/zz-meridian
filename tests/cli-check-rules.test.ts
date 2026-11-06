@@ -365,3 +365,20 @@ describe('the client-import walk in a tree that has no sample', () => {
     expect(r.status).toBe(0);
   }, 120_000);
 });
+
+describe("the ownership guide is the rule's rendering", () => {
+  const guide = 'skills/zz-meridian/references/ownership.md';
+  it('is reported when the block no longer matches cli/src/ownership.ts, and is silent once it is put back', () => {
+    const original = fs.readFileSync(path.join(ROOT, guide), 'utf8');
+    try {
+      fs.writeFileSync(path.join(ROOT, guide), original.replace('- Kept: a path in the keep register', '- Kept: A PATH in the keep register'));
+      const r = spawnSync(process.execPath, ['scripts/check.ts'], { cwd: ROOT, encoding: 'utf8' });
+      expect(r.stdout).toContain(`${guide}: the ownership list differs from cli/src/ownership.ts`);
+      expect(r.status).toBe(1);
+    } finally {
+      fs.writeFileSync(path.join(ROOT, guide), original);
+    }
+    const clean = spawnSync(process.execPath, ['scripts/check.ts'], { cwd: ROOT, encoding: 'utf8' });
+    expect(clean.stdout).toMatch(/^0 problems/m);
+  }, 120_000);
+});

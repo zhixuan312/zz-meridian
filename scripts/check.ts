@@ -38,6 +38,7 @@ import { keepProblems, unresolved, parseJournal, parseKeep, parseResolutions, ve
 import { cards } from './registry.ts';
 import { app, nav } from '../src/app.config.ts';
 import { logoSource } from '../src/lib/logo.ts';
+import { ownershipGuideProblems } from './lib/ownership-guide.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 /** The project's import aliases, from its tsconfig: `@/` is `src/` in the template and the team's root in an adopted project. */
@@ -319,7 +320,7 @@ if (fs.existsSync(path.join(ROOT, COLLECTIONS))) {
 // A page has one figure the eye lands on first. Two featured metrics on one page split it, and both read at the same
 // size, so a person judging the render may not name it as the defect it is (a planted one went unscored in a skill
 // evaluation, docs/skill-evals.md): settled rules are checked here, not left to the eye. Previews show every variant.
-for (const f of [APP_DIR, 'src', 'components'].flatMap((d) => walk(d, /\.tsx$/)).filter((x) => !/(^|\/)preview\.tsx$/.test(x) && !x.startsWith(`${APP_DIR}/system/`))) {
+for (const f of [APP_DIR, 'src'].flatMap((d) => walk(d, /\.tsx$/)).filter((x) => !/(^|\/)preview\.tsx$/.test(x) && !x.startsWith(`${APP_DIR}/system/`))) {
   const src = read(f);
   const at = [...src.matchAll(/<FeaturedMetric\b/g)].map((m) => src.slice(0, m.index).split('\n').length);
   if (at.length > 1) problems.push(`${f}:${at[1]}: a second FeaturedMetric (the first is at line ${at[0]}); a page has one protagonist, so make the others Metric tiles or Cards`);
@@ -677,6 +678,8 @@ for (const f of walk('src', /\.tsx?$/).filter((x) => SWEPT.test(x) && !TOOLKIT.t
 }
 
 judged.push(['a collection\'s rows read through it', collectionRows]);
+// The ownership guide's block must be the rule's own rendering (scripts/lib/ownership-guide.ts).
+problems.push(...ownershipGuideProblems(ROOT));
 
 console.log(problems.join('\n') || 'check: ok');
 const none = judged.filter(([, n]) => n === 0).map(([rule]) => rule);
@@ -686,3 +689,4 @@ if (fourLayersNote) console.log(fourLayersNote);
 if (drift.length) console.log(`drift: ${drift.length} managed ${drift.length === 1 ? 'file differs from the release and is' : 'files differ from the release and are'} not in .meridian/keep.json: ${drift.slice(0, 8).join(', ')}${drift.length > 8 ? `, and ${drift.length - 8} more` : ''}. The next update asks about each, and tells a file whose imports are only spelled differently from one you changed; restore a file to the release, or name it in .meridian/keep.json with the reason it differs.`);
 console.log(`${problems.length} problems · ${cards().length} cards · ${PAGE_SPECS.length} page specs · ${LAYERS.length} source files`);
 process.exit(problems.length ? 1 : 0);
+

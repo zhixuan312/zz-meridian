@@ -37,7 +37,10 @@ export function fileCollection(file: string): Collection<Item, 'id'> {
     },
     async create(input) {
       const rows = read();
-      const row: Item = { id: `items_${rows.length + 1}`, name: String(input.name) };
+      // The next free number, not the row count: after a removal the count is one lower than the highest id, and
+      // `items_${rows.length + 1}` would hand out an id a row still holds.
+      const next = rows.reduce((highest, r) => Math.max(highest, Number(r.id.replace(/^items_/, '')) || 0), 0) + 1;
+      const row: Item = { id: `items_${next}`, name: String(input.name) };
       write([...rows, row]);
       for (const l of [...listeners]) l({ collection: 'items' });
       return row;

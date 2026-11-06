@@ -52,6 +52,8 @@ const RULES: Rule[] = [
   // Styles and components.
   { id: 'hand-written motion uses tokens', source: 'literal duration ${lit[0]}', batch: 'T', fails: [/src\/styles\/motion\.css:\d+: literal duration 300ms/] },
   { id: 'no literal colour', source: 'literal colour ${lit[0]}', pairedIn: { file: RULE_TESTS, needle: 'literal colour' } },
+  // The ownership guide's block is the rule's own rendering, checked in scripts/lib/ownership-guide.ts.
+  { id: 'the ownership guide is the rule\'s rendering', source: 'ownershipGuideProblems(ROOT)', pairedIn: { file: 'tests/cli-check-rules.test.ts', needle: 'ownership' } },
   { id: 'no Tailwind utility outside the reset scales', source: "outside Meridian's scale", batch: 'T', fails: [/planted-lint\.tsx:\d+: font-bold is outside Meridian's scale/] },
   { id: 'blur names a token', source: "Meridian's blur scale", batch: 'T', fails: [/planted-lint\.tsx:\d+: backdrop-blur-sm is outside Meridian's blur scale/], twin: /planted-lint\.tsx:\d+: blur is outside/ },
   { id: 'no literal duration or delay', source: 'is a literal duration (use duration-', batch: 'T', fails: [/planted-lint\.tsx:\d+: duration-300 is a literal duration/] },
