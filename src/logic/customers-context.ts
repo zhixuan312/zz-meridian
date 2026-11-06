@@ -110,8 +110,10 @@ export function customersContext(rows: CustomerRow[], filtered: CustomerRow[], f
     insights.push({ text: `Revenue is concentrated: ${byRevenue[0].name} brings ${formatPercent(byRevenue[0].revenue / revenue, 0)} of it, and the top three ${formatPercent(top3, 0)}.` });
   }
   // Who is moving against everyone else: the combined change first, then whoever departs from it by 10 points or more.
-  const all = counted[0]?.trend.map((_, d) => sum(counted.map((c) => c.trend[d] ?? 0))) ?? [];
-  const overall = week(all);
+  // Named for the trend it is, not `all`: `all` is this module's fact helper, used a few lines above, and a local of that
+  // name hides it for the rest of the function.
+  const combined = counted[0]?.trend.map((_, d) => sum(counted.map((c) => c.trend[d] ?? 0))) ?? [];
+  const overall = week(combined);
   if (overall !== null) {
     const apart = counted.map((c) => ({ c, w: week(c.trend) })).filter((x): x is { c: CustomerRow; w: number } => x.w !== null && Math.abs(x.w - overall) >= 0.1).sort((a, b) => Math.abs(b.w - overall) - Math.abs(a.w - overall));
     const pct = (w: number) => `${w >= 0 ? 'up' : 'down'} ${formatPercent(Math.abs(w), 0)}`;
