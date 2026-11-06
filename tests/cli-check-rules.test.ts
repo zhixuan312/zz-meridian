@@ -295,6 +295,15 @@ describe('the four-layer rules', () => {
     expect(r.status).toBe(1);
   }, 60_000);
 
+  it('refuses every direct query on a line, not only the first', () => {
+    // One line, two reads: the second must not slip through because the first was found.
+    put('src/lib/planted-two-queries.ts', ['const a = { query: (_: object) => [] };', 'const b = { query: (_: object) => [] };', 'void [a.query({}), b.query({})];'].join('\n') + '\n');
+    const r = runCheck();
+    expect(r.stdout).toContain('src/lib/planted-two-queries.ts:3: calls a.query( directly');
+    expect(r.stdout).toContain('src/lib/planted-two-queries.ts:3: calls b.query( directly');
+    expect(r.status).toBe(1);
+  }, 60_000);
+
   it('refuse a direct query in src/app while accepting an authorized read and comment-only mention', () => {
     const file = 'src/app/planted-query/page.tsx';
     put(file, 'const collection = { query: (_: object) => [] };\nexport default function Page() { return collection.query({}); }\n');

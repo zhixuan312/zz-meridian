@@ -115,9 +115,11 @@ export function noDirectQuery(tree: LayerTree): RuleProblem[] {
   const problems: RuleProblem[] = [];
   for (const file of ['app', 'src/app', 'src/logic', 'src/views', 'src/lib'].flatMap((dir) => walk(tree.root, dir, /\.tsx?$/))) {
     sourceOf(tree, file).split('\n').forEach((text, i) => {
-      const call = text.match(/([A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*)\.query\s*\(/);
-      if (!call) return;
-      problems.push({ file, line: i + 1, message: `calls ${call[1]}.query( directly; no direct query — read it through read(), readAll() or aggregate() from @/data/read, so the caller's access applies` });
+      // Every call on the line, not only its first: two direct reads written on one line must both be reported, or the
+      // rule a project turns on can be walked past by moving a second one beside the first.
+      for (const call of text.matchAll(/([A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*)\.query\s*\(/g)) {
+        problems.push({ file, line: i + 1, message: `calls ${call[1]}.query( directly; no direct query — read it through read(), readAll() or aggregate() from @/data/read, so the caller's access applies` });
+      }
     });
   }
   return problems;
