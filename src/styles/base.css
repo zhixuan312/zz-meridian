@@ -203,7 +203,7 @@
      A caller's utilities still win because this layer precedes utilities; disabled styling stays on the button. */
   .btn {
     display: inline-flex; flex-shrink: 0; align-items: center; justify-content: center;
-    font-weight: var(--font-weight-medium); white-space: nowrap; user-select: none;
+    font-weight: var(--weight-medium); white-space: nowrap; user-select: none;
     transition-property: background-color, border-color, color, box-shadow, filter, transform;
     transition-timing-function: var(--tw-ease, var(--default-transition-timing-function, ease));
     transition-duration: var(--dur-hover);

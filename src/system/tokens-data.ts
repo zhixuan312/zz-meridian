@@ -36,6 +36,11 @@ function groups(file: string): TokenGroup[] {
     });
 }
 
-export function tokenGroups() {
+/** The three files' groups, parsed once per process: they are static, and each Atlas page render read all three again. */
+let cached: ReturnType<typeof tokenGroupsUncached> | undefined;
+function tokenGroupsUncached() {
   return { core: groups('core.tokens.json'), theme: groups('theme.dark.tokens.json'), compact: groups('density.compact.tokens.json') };
+}
+export function tokenGroups() {
+  return (cached ??= tokenGroupsUncached());
 }

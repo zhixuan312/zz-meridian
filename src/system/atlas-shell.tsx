@@ -89,6 +89,10 @@ function Shelf({ nav }: { nav: AtlasNav }) {
       // The search pill is in the sheet below 1024px, so there is nothing here to focus: swallowing the key then
       // would leave `/` doing nothing at all, which is worse than leaving the character alone.
       if (e.key !== '/' || e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || !input.current) return;
+      // A ref outlives the element's visibility: below 1024px the pill is inside a `hidden` aside, and the input is still
+      // mounted, so its existence is not the question. Swallowing the key and focusing an element nobody can see would
+      // leave `/` doing nothing at all.
+      if (input.current.getClientRects().length === 0) return;
       e.preventDefault();
       input.current.focus();
     };

@@ -30,12 +30,12 @@ import type { TicketRow } from '@/data/tickets';
 import { matchingTickets, TICKET_METRICS, ticketCounts, ticketsContext } from '@/logic/tickets-context';
 import type { ActionResult } from '@/lib/collection';
 import { capitalise } from '@/lib/format';
+import { TICKET_STEPS as STEPS } from '@/lib/ticket-steps';
 
 type Draft = { title: string; service: string; priority: Ticket['priority']; assigneeId: string | null; summary: string };
 type Change = Partial<Pick<Ticket, 'state'>>;
 
 /** The steps a ticket may take from each state, in the order a row offers them: the boundary enforces the same five. */
-const STEPS: Record<Ticket['state'], Ticket['state'][]> = { open: ['waiting', 'closed'], waiting: ['open', 'closed'], closed: ['open'] };
 /** Colour only where a row needs a look: a high priority and a waiting ticket. Normal work stays quiet. */
 const PRIORITY_TONE: Record<Ticket['priority'], Tone> = { high: 'critical', normal: 'neutral', low: 'neutral' };
 const STATE_TONE: Record<Ticket['state'], Tone> = { open: 'accent', waiting: 'warning', closed: 'neutral' };

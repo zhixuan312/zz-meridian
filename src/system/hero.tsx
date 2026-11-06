@@ -97,6 +97,9 @@ function SurfaceCard({ label, className, children }: { label: string; className?
 
 function ConsoleMini({ series, routes }: { series: DailyPoint[]; routes: RouteShare[] }) {
   const day = useDay(series);
+  // Each bar is drawn against the largest route's share, not against the whole: a handful of routes each holding a
+  // tenth of the traffic would otherwise all read as slivers. The figure beside it still states the true share.
+  const widest = Math.max(...routes.map((r) => r.share), 0);
   const tiles = [
     { label: 'Requests', v: formatCompact(day.requests), s: series.map((d) => d.requests), hot: true },
     { label: 'Errors', v: formatPercent(day.errors / day.requests, 2), s: series.map((d) => d.errors / d.requests) },
@@ -115,7 +118,7 @@ function ConsoleMini({ series, routes }: { series: DailyPoint[]; routes: RouteSh
         {routes.map(({ route: r, share }, i) => (
           <div key={r}>
             <div className="flex justify-between gap-2 text-2xs"><span className="min-w-0 truncate font-mono text-ink-2">{r}</span><span className="t-num shrink-0 text-ink">{formatCompact(Math.round(day.requests * share))}</span></div>
-            <div className="mt-1 h-1 rounded-full bg-fill-track"><div className={cn('h-full rounded-full', i === 0 ? 'bg-accent' : 'bg-chart-neutral')} style={{ width: `${share * 200}%` }} /></div>
+            <div className="mt-1 h-1 rounded-full bg-fill-track"><div className={cn('h-full rounded-full', i === 0 ? 'bg-accent' : 'bg-chart-neutral')} style={{ width: `${widest > 0 ? (share / widest) * 100 : 0}%` }} /></div>
           </div>
         ))}
       </div>

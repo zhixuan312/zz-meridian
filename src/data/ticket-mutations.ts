@@ -21,6 +21,7 @@ import type { AnyCollection, Grant } from '@/lib/collection';
 import type { Ticket } from '@/data/sample';
 import type { AccessScope } from '@/data/access';
 import { invalidate, writeQueue } from '@/data/write-boundary';
+import { TICKET_STEPS } from '@/lib/ticket-steps';
 
 /** Every refusal the boundary produces. */
 const REFUSALS = {
@@ -37,8 +38,8 @@ const REFUSALS = {
 
 const PRIORITIES: readonly string[] = ['low', 'normal', 'high'];
 const STATES: readonly string[] = ['open', 'waiting', 'closed'];
-/** The five steps a ticket may take; a ticket asked for the state it has takes none. */
-const STEPS: Record<string, readonly string[]> = { open: ['waiting', 'closed'], waiting: ['open', 'closed'], closed: ['open'] };
+/** The five steps a ticket may take; a ticket asked for the state it has takes none. Shared with the page's own menu. */
+const STEPS = TICKET_STEPS as Record<string, readonly string[]>;
 /** What a change may set. */
 const SETTABLE = ['title', 'service', 'priority', 'assigneeId', 'summary', 'state'] as const;
 
