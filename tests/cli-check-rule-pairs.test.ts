@@ -68,7 +68,7 @@ function navigateRun(probe: Probe): { code: number | null; out: string } {
   }
 }
 
-describe('navigate: every rule printed before Chrome starts fails where it should and passes corrected', () => {
+describe('the prechecks navigate prints before Chrome starts, and the prefetch budgets beside them', () => {
   for (const c of PRECHECKS) {
     it(`"${c.line}"`, () => {
       for (const [which, probe] of [['fails', c.fails], ['passes', c.passes]] as const) {

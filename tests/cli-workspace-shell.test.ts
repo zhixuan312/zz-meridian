@@ -27,7 +27,7 @@ const linksOf = (html: string) => [...html.matchAll(/<a\b[^>]*\bhref="([^"]*)"[^
 
 beforeEach(() => { jar.value = 'members_12'; });
 
-describe('a page a person may not open', () => {
+describe('the refusal a page a person may not open shows, and the Atlas shelf beside it', () => {
   it('offers the first destination of its own workspace that they may: for a Viewer at API keys, Now', async () => {
     const html = renderToStaticMarkup(await NoAccess({ feature: 'keys', access: await chrome() }));
     expect(html).toContain('data-no-access');

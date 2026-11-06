@@ -116,7 +116,6 @@ if (args.includes('--adopt') || !sections.some((s) => args.includes(s))) {
   check(fs.existsSync(path.join(app, '.agents/skills/zz-meridian/SKILL.md')) && fs.existsSync(path.join(app, '.claude/skills/zz-meridian/SKILL.md')), 'the skill is in .agents and .claude');
   // Before the agent restyles, the only problems are the team's own Tailwind defaults, which Meridian's scales do not
   // render; Meridian's own files are clean. Then the restyle, at its smallest, and the gate passes.
-  const TEAM_PAGES = ['app/page.tsx', 'app/orders/page.tsx'];
   const first = sh('npm', ['run', 'gate'], app);
   const problems = (first.stdout + first.stderr).split('\n').filter((l) => /^(app|src|scripts|tokens)\/\S+:/.test(l));
   check(problems.every((l) => TEAM_PAGES.some((p) => l.startsWith(`${p}:`))), "before the restyle, the gate faults only the team's own pages", problems.join('\n'));

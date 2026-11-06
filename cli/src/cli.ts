@@ -77,14 +77,14 @@ function main(): number {
   }
   if (command === 'brand') return brandCommand({ root: process.cwd(), flags: brand, allowDirty: Boolean(flags['allow-dirty']) });
   if (command === 'skill') {
-    const roots = flags.global ? [os.homedir()] : [process.cwd()];
+    const root = flags.global ? os.homedir() : process.cwd();
     try {
-      for (const r of roots) installSkill(r);
+      installSkill(root);
     } catch (error) {
       console.error(`zz-meridian skill: ${error instanceof Error ? error.message : String(error)}`);
       return 1;
     }
-    const skill = path.join(roots[0], '.claude/skills/zz-meridian/SKILL.md');
+    const skill = path.join(root, '.claude/skills/zz-meridian/SKILL.md');
     console.log(`The zz-meridian skill is in ${flags.global ? path.join(os.homedir(), '.agents/skills') + ' and ' + path.join(os.homedir(), '.claude/skills') : '.agents/skills and .claude/skills'}. Codex may need a restart to list it.`);
     console.log(`To follow it now, read ${skill} and the references beside it: it says how to build what was asked and when it is done.`);
     return 0;

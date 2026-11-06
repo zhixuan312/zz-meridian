@@ -65,6 +65,12 @@ describe('a count opens the records it counts', () => {
   it('a ticket nobody owns: the bell\'s alert opens the list on that ticket, not every high-priority one', async () => {
     const title = `Unowned probe ${Math.random().toString(36).slice(2)}`;
     expect(await createTicket({ title, service: 'Edge gateway', priority: 'high', assigneeId: null, summary: '' })).toEqual({ ok: true });
+    // Removed after the case: the store is the worker's, and a row left behind is a second high-priority ticket every
+    // later case in this file — and in any file sharing the worker — counts.
+    afterEach(async () => {
+      const { rows } = await readTickets();
+      await collection('tickets').remove!([...rows.filter((t) => t.title === title).map((t) => String(t.id))]);
+    });
     const alert = (await readAlerts()).alerts.find((a) => a.title.includes(title))!;
     const q = asked(alert.href);
     const { rows } = await readTickets();

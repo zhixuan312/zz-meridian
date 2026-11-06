@@ -9,7 +9,7 @@ const ROOT = path.resolve(import.meta.dirname, '..');
 const walk = (dir: string) => walkTree(ROOT, dir, /./);
 const source = (rel: string) => fs.readFileSync(path.join(ROOT, rel), 'utf8');
 
-describe('the alerts module', () => {
+describe('the data layer', () => {
   it('leaves no data module importing the logic layer above it', () => {
     const reaching = walk('src/data')
       .filter((f) => f.endsWith('.ts'))

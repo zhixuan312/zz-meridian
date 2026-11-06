@@ -14,13 +14,16 @@ const v = process.argv[2] ?? '';
 if (!/^\d+\.\d+\.\d+$/.test(v)) throw new Error(`"${v}" is not a major.minor.patch version`);
 if (!fs.readFileSync(path.join(ROOT, 'CHANGELOG.md'), 'utf8').includes(`## [${v}]`)) throw new Error(`CHANGELOG.md has no "## [${v}]" section: write it first`);
 
-for (const f of ['cli/package.json', 'package.json']) {
+// Every file is read and checked before any is written: a failure partway through the two writes used to leave the
+// package and the template on different versions, which the release then publishes.
+const writes = ['cli/package.json', 'package.json'].map((f) => {
   const file = path.join(ROOT, f);
   const text = fs.readFileSync(file, 'utf8');
   const next = text.replace(/("version":\s*")[^"]+(")/, `$1${v}$2`);
   if (next === text && !text.includes(`"version": "${v}"`)) throw new Error(`${f} has no "version" field`);
-  fs.writeFileSync(file, next);
-}
+  return { file, next };
+});
+for (const { file, next } of writes) fs.writeFileSync(file, next);
 const got = ['cli/package.json', 'package.json'].map((f) => JSON.parse(fs.readFileSync(path.join(ROOT, f), 'utf8')).version);
 if (got.some((g) => g !== v)) throw new Error(`versions disagree after writing: ${got.join(', ')}`);
 console.log(`version ${v}: cli/package.json and package.json`);

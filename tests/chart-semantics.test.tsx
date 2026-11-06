@@ -1,6 +1,6 @@
 import { act, render } from '@testing-library/react';
 import type { ReactElement } from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 // jsdom measures nothing, so every chart is given the width a browser would.
 vi.mock('@/components/charts/use-size', async () => {
@@ -112,8 +112,12 @@ const said = (c: HTMLElement) => [c.textContent ?? '', ...[...c.querySelectorAll
  */
 const below: string[] = [];
 const styles = Object.getPrototypeOf(document.createElement('div').style);
-for (const prop of ['width', 'height', 'minWidth', 'minHeight']) {
-  const d = Object.getOwnPropertyDescriptor(styles, prop)!;
+/** The setters as this file found them, put back after every case: the prototype is the worker's, shared with every later file. */
+const original = Object.fromEntries(['width', 'height', 'minWidth', 'minHeight'].map((prop) => [prop, Object.getOwnPropertyDescriptor(styles, prop)!]));
+afterEach(() => {
+  for (const [prop, d] of Object.entries(original)) Object.defineProperty(styles, prop, d);
+});
+for (const [prop, d] of Object.entries(original)) {
   Object.defineProperty(styles, prop, { ...d, set(v: unknown) { if (/^\s*-\d/.test(String(v))) below.push(`${prop}: ${v}`); d.set!.call(this, v); } });
 }
 

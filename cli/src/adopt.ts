@@ -224,8 +224,12 @@ export function adopt(o: AdoptOptions): number {
     try { at = ` ${parseManifest(fs.readFileSync(manifestPath, 'utf8')).version}`; } catch { /* the version is only named */ }
     return fail(`this project is already on Meridian${at} (.meridian/manifest.json): run npx zz-meridian@latest update to move it to this release`);
   }
-  const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
-  const deps = { ...pkg.dependencies, ...pkg.devDependencies };
+  // A malformed package.json is the project's own file and its author's to fix: said as a refusal with the parse error's
+  // line, never a stack trace out of this command.
+  let pkg: Record<string, unknown>;
+  try { pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8')); }
+  catch (e) { return fail(`package.json is not valid JSON (${(e as Error).message}): fix it, then run adopt again`); }
+  const deps = { ...(pkg.dependencies as Record<string, string> | undefined), ...(pkg.devDependencies as Record<string, string> | undefined) };
   const dir = appDir(root);
   if (!deps.next || !dir) {
     return fail(`this is not a Next.js App Router project (no "next" dependency, or no app/layout or src/app/layout).
@@ -289,11 +293,11 @@ Rename or move them, then run adopt again.`);
   sources.set('src/app.config.ts', config);
   notes.push(...adoptDependencies(pkg, tpl, 'dependencies', needOf(tpl, sources).runtime));
   notes.push(...adoptDependencies(pkg, tpl, 'devDependencies', TOOLCHAIN));
-  pkg.scripts ??= {};
+  const scripts = (pkg.scripts ??= {}) as Record<string, string>;
   for (const s of MERIDIAN_SCRIPTS) {
     const want = tpl.scripts[s];
-    if (!pkg.scripts[s]) pkg.scripts[s] = want;
-    else if (pkg.scripts[s] !== want) notes.push(`kept your "${s}" script; Meridian's is "${want}"`);
+    if (!scripts[s]) scripts[s] = want;
+    else if (scripts[s] !== want) notes.push(`kept your "${s}" script; Meridian's is "${want}"`);
   }
   writes.set('package.json', JSON.stringify(pkg, null, 2) + '\n');
 
