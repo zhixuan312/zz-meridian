@@ -43,6 +43,7 @@ async function incidentAlerts(): Promise<{ alerts: Alert[]; observedAt: string }
     href: '/services',
     tone: 'warning',
     unread: true,
+    group: 'Incidents',
   }));
   return { alerts, observedAt };
 }
@@ -63,6 +64,7 @@ async function customerAlerts(): Promise<{ alerts: Alert[]; observedAt: string }
       at: since ? `${since}T00:00:00.000Z` : observedAt,
       href: one ? customerAddress(pastDue[0].id) : customersAddress({ q: '', plan: 'all', status: 'past due', sort: 'revenue', dir: 'desc', page: '1' }),
       tone: 'warning',
+      group: 'Billing',
     }],
     observedAt,
   };
@@ -81,6 +83,7 @@ async function verificationAlerts(): Promise<{ alerts: Alert[]; observedAt: stri
       at: failing.reduce((t, r) => later(t, r.startedAt), failing[0].startedAt),
       href: testsAddress({ q: '', state: 'failed', release: '', runs: 'latest' }),
       tone: 'critical',
+      group: 'Verifications',
     }],
     observedAt,
   };
@@ -99,6 +102,7 @@ async function ticketAlerts(): Promise<{ alerts: Alert[]; observedAt: string }> 
       // The list filtered to this ticket: its own title is what the search matches.
       href: ticketsAddress({ q: t.title, state: 'all', priority: 'high' }),
       tone: 'warning',
+      group: 'Tickets',
     }));
   return { alerts, observedAt };
 }
