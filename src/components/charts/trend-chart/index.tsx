@@ -129,6 +129,7 @@ export function TrendChart({
   floor,
   domain,
   marks,
+  spans,
   running = false,
   curve = 'monotone',
   points = false,
@@ -177,6 +178,13 @@ export function TrendChart({
    * among 360 points: the days a band's membership left out. Dates it does not draw are skipped.
    */
   marks?: { dates: readonly string[]; tone: 'warning' | 'neutral'; label: string };
+  /**
+   * Periods a fact names, drawn as a full-height wash behind the series from the first date to the last that is in
+   * `dates`: when p95 stayed over its ceiling, when an incident ran. `from` and `to` are dates of `dates`, either end
+   * optional when the period was still open at an edge of the plot. It is not a second band: a band is a level, a span is
+   * a period (#124).
+   */
+  spans?: { from: string; to: string; label: string }[];
   /** The last point is a period still in progress: the line into it is dashed and its readout says "so far". */
   running?: boolean;
   /**
@@ -253,9 +261,19 @@ export function TrendChart({
   // The words take a line of their own over the legend and the plot, or two on a phone card; unmeasured, one line.
   const lift = widened ? (widenedSize.height ? widenedSize.height + 1 : 18) : 0;
   const left = Math.max(...ticks.map((t) => axis(t).length)) * 6.4 + 12;
+  // Each span as the stretch of dates it covers, drawn from its first date to its last. A date the plot does not hold is
+  // skipped, so a period that began before the window is drawn from the window's first day, and one still open at the end
+  // reaches the last. The ends are inclusive, which is what a person reads: "09:25–09:31" covers both minutes.
+  const washes = (spans ?? []).flatMap((span) => {
+    const from = dates.indexOf(span.from), to = dates.indexOf(span.to);
+    if (from < 0 && to < 0) return [];
+    const start = from < 0 ? 0 : Math.min(from, to < 0 ? dates.length - 1 : to);
+    const end = to < 0 ? dates.length - 1 : Math.max(from < 0 ? 0 : from, to);
+    return [{ ...span, start, end }];
+  });
   // The legend names the series; the key under it names the marks, which would otherwise be a dot, a dash and a stem a
   // reader has to guess at. Either one alone is enough to draw the row, and the plot keeps its room for it (#129).
-  const marksKey = Boolean(marks || running);
+  const marksKey = Boolean(marks || running || washes.length);
   const showLegend = legend ?? (series.length > 1 || marksKey);
   const pad = { t: (showLegend ? Math.max(34, legendSize.height + 16) : 14) + lift, r: 4, b: 26, l: left };
   const W = Math.max(0, width - pad.l - pad.r), H = h - pad.t - pad.b;
@@ -265,7 +283,7 @@ export function TrendChart({
   // The table follows the line a frame later when the dates change (`useSettled`).
   const settled = useSettled(dates.join('\n'));
   // Moving the cursor re-renders the chart, and no row of its table changes with it, so the rows are built once per data.
-  const caption = `${label}${band ? `. ${band.label}` : ''}${marks ? `. Marked: ${marks.label}` : ''}${baseline ? `. ${baseline.label}` : ''}${running ? `. ${SO_FAR}` : ''}${widened ? `. ${widened}` : ''}`;
+  const caption = `${label}${band ? `. ${band.label}` : ''}${marks ? `. Marked: ${marks.label}` : ''}${washes.length ? `. ${washes.map((w) => `${w.label} (${w.from}–${w.to})`).join('. ')}` : ''}${baseline ? `. ${baseline.label}` : ''}${running ? `. ${SO_FAR}` : ''}${widened ? `. ${widened}` : ''}`;
   const table = useMemo(
     () => (settled ? <table className="sr-only">
       <caption>{caption}</caption>
@@ -371,7 +389,10 @@ export function TrendChart({
   const cx = active !== null ? Math.round(x(active)) + 0.5 : 0;
   const day = active === null ? '' : tick ? tick(dates[active]) : formatDate(dates[active]);
   /** The day pointed at, in words, for a screen reader: the readout is drawn for the eye and hidden from it. */
-  const reading = active === null ? null : `${day}${active === soFar ? ', so far' : ''}${marks?.dates.includes(dates[active]) ? `, ${marks.label}` : ''}: ${series.map((s) => `${s.label} ${fmt(s.values[active])}`).join(', ')}${totals ? `, Total ${fmt(totals[active])}` : ''}`;
+  // A point inside a span says which (#124): the wash is a shape, and the pointer and the keys must name the period it
+  // stands in as they name a marked day.
+  const spanAt = (i: number | null) => (i === null ? [] : washes.filter((w) => i >= w.start && i <= w.end).map((w) => w.label));
+  const reading = active === null ? null : `${day}${active === soFar ? ', so far' : ''}${marks?.dates.includes(dates[active]) ? `, ${marks.label}` : ''}${spanAt(active).map((l) => `, ${l}`).join('')}: ${series.map((s) => `${s.label} ${fmt(s.values[active])}`).join(', ')}${totals ? `, Total ${fmt(totals[active])}` : ''}`;
 
   return (
     <div ref={box} className={cn('relative w-full select-none', fill && 'min-h-55 flex-1', className)} style={fill ? undefined : { height }}>
@@ -409,6 +430,23 @@ export function TrendChart({
               </linearGradient>
             ))}
           </defs>
+          {/* A span: the period a fact names, as a full-height wash behind everything the plot draws, so "when" reads as
+              a stretch of the axis and not as a value. It is quiet, and the caption, the readout and the key name it. */}
+          {washes.map((w) => (
+            <rect
+              key={`${w.label}:${w.start}`}
+              data-span={w.label}
+              x={x(w.start)}
+              y={pad.t}
+              width={Math.max(1, x(w.end) - x(w.start))}
+              height={H}
+              fill="var(--fill-track)"
+              fillOpacity={0.55}
+              className="reveal-x"
+            >
+              <title>{w.label}</title>
+            </rect>
+          ))}
           {band ? (
             // The band: a wash of the track's own colour up to its ceiling, under the gridlines, so what the page is
             // judged against is the ground the line stands on rather than a line the reader has to be told about.
@@ -550,6 +588,9 @@ export function TrendChart({
               them too, but a screen reader reads that and the pointer only finds a title. */}
           {marks ? <li data-key-mark className="flex items-center gap-1.5"><svg width="8" height="10" className="shrink-0 overflow-visible"><line x1="4" x2="4" y1="1" y2="9" stroke={marks.tone === 'warning' ? 'var(--warning)' : 'var(--ink-2)'} strokeOpacity={0.45} /><circle cx="4" cy="1" r="2.5" fill={marks.tone === 'warning' ? 'var(--warning)' : 'var(--ink-2)'} stroke="var(--surface)" strokeWidth="1.5" /></svg>{marks.label}</li> : null}
           {running ? <li data-key-running className="flex items-center gap-1.5"><svg width="14" height="4" className="shrink-0 overflow-visible"><line x1="1" x2="13" y1="2" y2="2" stroke="currentColor" strokeWidth={1.5} strokeDasharray="3 4" strokeLinecap="round" /></svg>{SO_FAR}</li> : null}
+          {/* A span is a wash, and a wash with no word is a shape a reader guesses at: each names itself here, as a mark does.
+              Two spans of the same name are one legend entry. */}
+          {[...new Set(washes.map((w) => w.label))].map((w) => <li key={w} data-key-span className="flex items-center gap-1.5"><svg width="10" height="10" className="shrink-0 overflow-visible"><rect x="1" y="1" width="8" height="8" rx="1" fill="var(--fill-track)" fillOpacity={0.55} stroke="var(--ink-3)" strokeOpacity={0.35} /></svg>{w}</li>)}
         </ul>
       ) : null}
       {active !== null && width > 0 ? (
@@ -557,7 +598,7 @@ export function TrendChart({
           {/* A marked day says what it is marked for where every other reading of the day is (#94): the dot and its stem
               are a shape, the group they stand in takes no pointer, and the table's caption is read by a screen reader and
               not by the person pointing at the chart. */}
-          <p className="t-eyebrow mb-1.5 break-words">{day}{active === soFar ? ' · so far' : null}{marks?.dates.includes(dates[active]) ? ` · ${marks.label}` : null}</p>
+          <p className="t-eyebrow mb-1.5 break-words">{day}{active === soFar ? ' · so far' : null}{marks?.dates.includes(dates[active]) ? ` · ${marks.label}` : null}{spanAt(active).map((l) => ` · ${l}`).join('')}</p>
           {/* Stacked, the readout lists the bands top to bottom, as they sit on the chart, then the total. */}
           {(stacked ? series.map((s, k) => ({ s, k })).reverse() : series.map((s, k) => ({ s, k }))).map(({ s, k }) => (
             <p key={s.key} className="flex flex-wrap items-start gap-x-2 text-xs leading-6">
