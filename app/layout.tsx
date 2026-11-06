@@ -22,8 +22,8 @@ export const metadata: Metadata = {
 /* The browser chrome's colour is a meta tag, which cannot read a CSS variable: these are the two grounds, by hand. */
 export const viewport: Viewport = {
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#EEF0F8' }, // allow-literal-colour: ground, light
-    { media: '(prefers-color-scheme: dark)', color: '#0A0B10' }, // allow-literal-colour: ground, dark
+    { media: '(prefers-color-scheme: light)', color: '#EDF0F8' }, // allow-literal-colour: ground, light
+    { media: '(prefers-color-scheme: dark)', color: '#090A0F' }, // allow-literal-colour: ground, dark
   ],
 };
 
