@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { parseCalendarDate } from './calendar-date.ts';
+import { WEEKDAY_NAMES_MONDAY_FIRST } from './insight.ts';
 
 /** A named set of records the pages and the assistant read and change through one interface. */
 type Op = 'create' | 'update' | 'remove';
@@ -218,7 +219,7 @@ export function queryRows<T extends Record<string, unknown>>(rows: T[], key: key
 
 const AGGS = ['count', 'sum', 'avg', 'min', 'max', 'p95'];
 const BUCKETS = ['day', 'week', 'month', 'weekday'];
-const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+const WEEKDAYS = WEEKDAY_NAMES_MONDAY_FIRST;
 const DEFAULT_TOP = 8;
 const MAX_TOP = 50;
 

@@ -14,6 +14,7 @@ import { freshnessOf, type Fact, type Insight, type SharedContext } from '@/lib/
 import type { Totals } from '@/lib/totals';
 import { against, factInsight, inDays, unreadNote, type PageHead } from './fact-insight';
 import { HOME_METRICS, NO_PREVIOUS, change } from './home-context';
+import { WEEKDAY_NAMES_MONDAY_FIRST as DAYS } from '@/lib/insight';
 
 /** Each part's title, as its card is headed. The context names the parts by the same words. */
 export const USAGE_PARTS = {
@@ -62,7 +63,7 @@ export type UsageData = {
   now: string;
 };
 
-const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
 const count = (n: number) => n.toLocaleString('en-US');
 
 /**

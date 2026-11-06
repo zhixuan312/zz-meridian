@@ -8,7 +8,7 @@ import type { DailyPoint } from '@/data/sample';
 import { app } from '@/app.config';
 import { formatCompact, formatCost, formatDuration, formatPercent, inWords, ordinal, plural } from '@/lib/format';
 import { formatDate, formatDay } from '@/lib/format-date';
-import { sameWeekdayBaseline, weekday, median } from '@/lib/insight';
+import { sameWeekdayBaseline, weekday, median, WEEKDAY_NAMES } from '@/lib/insight';
 import { PERIOD_DAYS, PERIOD_LABEL, type Period } from '@/lib/period';
 import { freshnessOf, type Fact, type Insight, type SharedContext } from '@/lib/shared-context';
 import type { Totals } from '@/lib/totals';
@@ -104,7 +104,7 @@ export type HomeData = {
   day?: string | null;
 };
 
-const WEEKDAY = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
 const times = (r: number) => `${r.toFixed(1)}×`;
 /**
  * The Home's title, from plain figures. A record is stated alone, with its run. Otherwise the revenue's change on the
@@ -266,7 +266,7 @@ export function homeContext(data: HomeData, index: number | null = null): Shared
     const requests = series.map((x) => x.requests);
     const errorRate = series.map((x) => (x.requests ? x.errors / x.requests : 0));
     const usual = sameWeekdayBaseline(requests, series.map((x) => x.date), index);
-    const wd = WEEKDAY[weekday(d.date)];
+    const wd = WEEKDAY_NAMES[weekday(d.date)];
     const medianError = median(errorRate);
     const medianP95 = median(series.map((x) => x.p95));
     // A ratio against a median of zero has no meaning — a healthy period's error rate and latency both are — and the
