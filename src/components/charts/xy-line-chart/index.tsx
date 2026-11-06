@@ -64,10 +64,12 @@ export function XYLineChart({
   const xSpan = xHigh - xLow || 1;
   const ys = series.flatMap((s) => s.points.map((p) => p.y)).filter((v): v is number => v !== null);
   const held = domain && domain[1] > domain[0] ? domain : null;
-  const dataLow = Math.min(0, ...ys), dataHigh = Math.max(0, ...ys);
-  const widened = Boolean(held && (dataLow < held![0] || dataHigh > held![1]));
-  const levels = held && !widened ? [held[0], held[1]] : niceTicks(Math.max(held?.[1] ?? 0, dataHigh > 0 ? dataHigh : 1), 4);
-  const yLow = held && !widened ? held[0] : Math.min(0, ...ys);
+  // A line over a numeric x is read by its y position, not by the height of a bar: its scale need not start at zero, and
+  // forcing zero in made a stated range of 0.5–0.9 report itself widened to 0–1 for no reason. Without a domain the
+  // scale is the values' own, rounded to levels; zero is included only when the data itself crosses it.
+  const widened = Boolean(held && (Math.min(...ys) < held![0] || Math.max(...ys) > held![1]));
+  const levels = held && !widened ? [held[0], held[1]] : held ? niceTicks(Math.max(held[1], Math.max(...ys)), 4) : niceTicks(Math.max(...ys, 1), 4);
+  const yLow = held && !widened ? held[0] : Math.min(...ys, levels[0]);
   const yTop = levels[levels.length - 1];
   const ySpan = yTop - yLow || 1;
   const left = Math.max(...levels.map((t) => format(t).length)) * 6.5 + 12;

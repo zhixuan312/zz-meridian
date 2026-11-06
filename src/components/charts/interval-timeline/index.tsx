@@ -144,6 +144,16 @@ export function IntervalTimeline({
                       </span>
                     );
                   })}
+                  {/* The readout names the run the pointer or the keys found: a bar's length and tone are shapes, and the
+                      words are the only place a reader learns which run it is. It sits in this row's own plot, so its `at`
+                      is a pixel of the width that plot was drawn at, not a share of the chart. */}
+                  {pointing && pointing.k >= 0 && rows.findIndex((r) => r.key === pointing.row.key) === rows.indexOf(row) ? (
+                    <Readout at={((at(pointing.run.to ?? now ?? pointing.run.from) ?? 0) / 100) * width} after={false} top={0} visible>
+                      <p className="t-eyebrow mb-0.5 break-words">{pointing.row.label}</p>
+                      <p className="text-xs text-ink">{pointing.run.label}</p>
+                      <p className="t-num text-2xs text-ink-2">{words(pointing.run)}</p>
+                    </Readout>
+                  ) : null}
                 </div>
               </li>
             ))}
@@ -159,15 +169,6 @@ export function IntervalTimeline({
             </div>
           </div>
           {nowAt !== null ? <p data-now-key className="text-2xs text-ink-3">Now · {read(now!)}</p> : null}
-          {/* The readout names the run the pointer or the keys found, in the row it sits in: a bar's length and tone are
-              shapes, and the words are the only place a reader learns which run it is. */}
-          {pointing ? (
-            <Readout at={at(pointing.run.to ?? now ?? pointing.run.from) ?? 0} after={false} top={0} visible>
-              <p className="t-eyebrow mb-0.5 break-words">{pointing.row.label}</p>
-              <p className="text-xs text-ink">{pointing.run.label}</p>
-              <p className="t-num text-2xs text-ink-2">{words(pointing.run)}</p>
-            </Readout>
-          ) : null}
           <p className="sr-only" aria-live="polite">{pointing ? words(pointing.run) : ''}</p>
         </>
       ) : null}

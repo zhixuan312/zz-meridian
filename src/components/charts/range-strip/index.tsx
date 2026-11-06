@@ -69,7 +69,9 @@ export function RangeStrip({
     <div className={cn('flex flex-col gap-3', className)}>
       {widened ? <p data-widened className="text-2xs text-ink-3">{`Scale widened from ${format(held![0])}–${format(held![1])} to ${format(low)}–${format(top)}`}</p> : null}
       <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,2fr)] gap-x-4 gap-y-2">
-        <div aria-hidden className="pointer-events-none col-start-2 row-start-1" style={{ paddingInline: gutter }}>
+        {/* The reference lines cross every row, not the first one only: `row-span-full` reaches from the first row to the
+            last, and the rows behind it are transparent, so one element per level covers the whole plot. */}
+        <div aria-hidden className="pointer-events-none col-start-2 row-span-full row-start-1" style={{ paddingInline: gutter }}>
           <div className="relative h-full">
             {references.map((r) => (
               <span key={r.label} data-reference-line className="absolute inset-y-0 w-px bg-chart-axis" style={{ left: `${at(r.value)}%` }} />

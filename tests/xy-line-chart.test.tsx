@@ -62,6 +62,13 @@ describe('XYLineChart', () => {
     expect(container.querySelector('[data-readout]')).toBeNull();
   });
 
+  it('holds a range that does not start at zero, and only widens when a value is truly outside it', () => {
+    // A line is read by its y position, not by a bar's height: a range of 0.5 to 0.9 holds the points 0.6 and 0.8, and must
+    // not report itself widened because zero is outside it.
+    const { container } = draw({ series: [{ key: 'a', label: 'A', points: [{ x: 1, y: 0.6 }, { x: 2, y: 0.8 }] }], domain: [0.5, 0.9] });
+    expect(container.querySelector('[data-widened]')).toBeNull();
+  });
+
   it('holds the y scale to a stated range and says the range it drew when a value is outside it', () => {
     const held = draw({ domain: [0, 1] });
     expect(held.container.querySelector('[data-widened]')).toBeNull();

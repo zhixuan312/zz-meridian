@@ -65,7 +65,8 @@ A view that draws one shares the rows it draws through its own context; an agent
 - A labelled `ul`, one list item per row, each row a group named by its label and both of its ends in words ("180ms to 391ms").
 - The strip and its marks are `aria-hidden`: the words beside the row carry every value, and a missing end is said rather than drawn.
 - The references' words stand under the plot and once more below the chart, so a level is never told by a line alone.
-- Contrast: the neutral strip in `chart-neutral` holds 3:1 on `surface` as every chart fill does; the accent strip and the ringed ends hold the contrast `pnpm contrast` measures for every theme and accent; the words are `ink-2` and `ink-3`, which pass at `text-2xs`.
+- The neutral strip is not held to 3:1, and does not reach it: `chart-neutral` on `surface` measures 1.50:1 dark and 1.39:1 light. That is the same choice the Column chart makes for its own columns, and the same thing carries it here — every value is written as text at the right of its row, so the strip is a reading aid and never the only place a value stands (WCAG 1.4.11).
+- The accent strip and the ringed ends take the accent's own measurement, which `pnpm contrast` reports for every theme and accent. The words are `ink-2` and `ink-3`, which pass at `text-2xs`.
 
 ## Content
 
