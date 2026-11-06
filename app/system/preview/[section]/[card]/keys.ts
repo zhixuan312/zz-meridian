@@ -72,6 +72,7 @@ export const PREVIEW_KEYS: string[] = [
   'patterns/diverging-bars',
   'patterns/heatmap',
   'patterns/meridian',
+  'patterns/range-strip',
   'patterns/sparkline',
   'patterns/trend-chart',
   'patterns/uptime-bars',

@@ -4,6 +4,10 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 
 ## [Unreleased]
 
+### Added
+
+- **Range strip.** A catalogue chart that draws each row's own range from one value to the other on one shared scale, with both ends marked and one or two reference levels drawn across every row: each endpoint's lowest and median latency against the ceiling. A missing end is drawn open and said in words, never from zero. `domain` holds the scale for charts read side by side and widens rather than clipping, naming the range it drew (refs #126).
+
 ### Fixed
 
 - **A Trend chart can shade a period a fact names.** `spans` (`{ from, to, label }[]`) draws a full-height wash behind the series from a period's first date to its last — the minutes p95 stayed over its ceiling, or an incident's run — so a chart shows *when* a condition held and not only where the line was. The caption and the key name each span, the readout says which span a pointed point stands in, and a period still open at an edge of the plot reaches that edge. It is not a second band: a band is a level, a span is a period (refs #124).

@@ -76,6 +76,7 @@ export const CARDS: Card[] = [
   { id: 'diverging-bars', layer: 3, section: 'patterns', dir: 'src/components/charts/diverging-bars', Preview: dynamic(() => import('@/components/charts/diverging-bars/preview')) },
   { id: 'heatmap', layer: 3, section: 'patterns', dir: 'src/components/charts/heatmap', Preview: dynamic(() => import('@/components/charts/heatmap/preview')) },
   { id: 'meridian', layer: 3, section: 'patterns', dir: 'src/components/charts/meridian', Preview: dynamic(() => import('@/components/charts/meridian/preview')) },
+  { id: 'range-strip', layer: 3, section: 'patterns', dir: 'src/components/charts/range-strip', Preview: dynamic(() => import('@/components/charts/range-strip/preview')) },
   { id: 'sparkline', layer: 3, section: 'patterns', dir: 'src/components/charts/sparkline', Preview: dynamic(() => import('@/components/charts/sparkline/preview')) },
   { id: 'trend-chart', layer: 3, section: 'patterns', dir: 'src/components/charts/trend-chart', Preview: dynamic(() => import('@/components/charts/trend-chart/preview')) },
   { id: 'uptime-bars', layer: 3, section: 'patterns', dir: 'src/components/charts/uptime-bars', Preview: dynamic(() => import('@/components/charts/uptime-bars/preview')) },
