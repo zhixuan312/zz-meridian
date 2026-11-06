@@ -38,7 +38,7 @@ describe('the browser slots', () => {
     const hold = slots(3);
     let releaseHeld!: () => void;
     // Two of three slots held by a long job leaves one free.
-    const held = hold(2, () => new Promise<void>((r): void => { releaseHeld = r; }));
+    void hold(2, () => new Promise<void>((r): void => { releaseHeld = r; }));
     // Queued in this order: one that needs all three (cannot start), then one that needs the single free slot.
     let bigStarted = false, smallStarted = false;
     const big = hold(3, async () => { bigStarted = true; });

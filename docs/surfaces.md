@@ -145,6 +145,9 @@ All components are surface-agnostic by construction: they size from control toke
 | Composition bar | One whole split into parts | Legend four across from 36rem of the bar's own width, two under it | Legend two across | Same as mobile |
 | Heatmap | Weekday by hour, or a year of days | 24 columns of hours; a calendar's column is a week | Hours grouped in threes (8 columns); a calendar shows the latest weeks that fit at 12px a cell | Fullscreen only |
 | Uptime bars | A service's state, a bar a day | Every day it is given | Every day it is given, the gaps tighter | Same as mobile |
+| Range strip | Each row's own range from one value to the other, both ends marked, against one or two reference levels | A third of the width for the label, the rest for the plot; both values as text at the right of each row | The same; long labels are cut sooner and the figures stay at the right | Same as mobile inline; the console's in fullscreen |
+| Interval timeline | What ran and when on one time axis: a row a series of runs from start to end, a now line when the window holds it | Every row; the axis at every level | Three axis ticks under 640px; a run too short to draw is a marker at its start | Same as mobile inline; the console's in fullscreen |
+| XY line chart | A measure over a numeric x-axis: a distribution as a step line, a reading against a reference as a straight one | 240px tall; one y-scale for every series | The same; the three x ticks stay labelled at every width | Same as mobile inline; the console's in fullscreen |
 | Filter bar | Search, filters and view controls for one list | One row | Search, then a Filters sheet | Search only |
 | Data table | A list of records: sort, select, page, empty and loading states | Columns | Card list | Five rows, Expand |
 | Page loading | The masthead and body shapes a route shows while its page streams in | The page's own width | Same | None |

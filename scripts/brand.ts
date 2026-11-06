@@ -185,6 +185,11 @@ if (hue !== undefined) {
   const accent = opt('--accent');
   if (accent) defaultAccent(accent);
 }
+// A preset and a colour are two answers to one question. Silently dropping the preset left the caller believing a
+// choice had been applied, so the pair is refused before anything is written.
+if (opt('--accent') && (hex !== undefined || hue !== undefined)) {
+  throw new Error('--accent names a preset; --hex and --hue name a colour. Pass one or the other, not both');
+}
 
 if (theme) {
   const s = read('src/app.config.ts');

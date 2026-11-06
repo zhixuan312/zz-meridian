@@ -96,8 +96,10 @@ this is the reason they agree.
   median, p95 and max. A p95 over its budget is `warn`; a sample that is never ready, or a control that does nothing, still fails.
 - Every run ends with one coverage line, and writes the gate and build counts to `out/verify.txt`. Nothing that did not
   run is reported as passed.
-- HTML caps are `/requests` 150 KiB and `/health` 100 KiB. The stakeholder set them after measurement showed no variant
-  kept the page title instant within 130 KiB.
+- Every page's HTML is held to its own figure in the baseline. No route carries an absolute cap today: the template's
+  `budgets.htmlKb` is empty, so each page is held to growth over the baseline it was recorded at. A product that wants
+  one pins it there. (This replaces an earlier line that named a `/requests` 150 KiB cap and a `/health` 100 KiB one:
+  `/health` is no longer a route, and neither cap was ever declared in the configuration.)
 - Weekly is weekly, release is release, and nothing runs twice. The release gates, each once, on the default verify
   from a clean `.next` on the GitHub-hosted ubuntu-24.04 4-CPU runner (at most 120 s, raised to 180 s in 0.6.0 because the runner's CPU varies, with its browser smoke; the gate
   and its unit tests run inside it) and on the consumer smoke from the tarball: adopt, create with its default verify,
