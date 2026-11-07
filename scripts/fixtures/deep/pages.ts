@@ -440,6 +440,28 @@ ${chart(`${RULE(50)}${CAPTION}`)}
   '/console-error': deep('A page that logged a failure', { body: '<p>The figures are below.</p>', script: "console.error('the fixture logs a failure on purpose');" }),
 
   // ---- the helper's own page: nested roots, a slot, a closed root ----
+  /**
+   * A focus ring that arrives a frame late, as a real one does: `:focus-visible` styles are computed after the key event,
+   * so a walk that samples in the same tick reports 0px on a control that is ringed a frame later. Measured on `/` at
+   * 1440: `outline-width` is 0px at once and 2px on the next frame.
+   */
+  '/late-ring': `<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Late ring</title>
+<style>${BASE_CSS}
+:focus { outline: none; }
+:focus-visible { outline: 2px solid rgb(0, 102, 255); outline-offset: 2px; }
+</style></head>
+<body><main><h1>Late ring</h1><button id="first">First</button> <button id="second">Second</button></main>
+<script>
+  // The ring arrives a frame after the focus, as a style computed after the key event does: the class that draws it is
+  // added on the next frame, so a walk sampling in the same tick sees the outline reset by \`:focus\` and no ring yet.
+  document.addEventListener('focusin', (event) => {
+    const el = event.target;
+    el.style.outline = 'none';
+    requestAnimationFrame(() => requestAnimationFrame(() => { el.style.outline = '2px solid rgb(0, 102, 255)'; el.style.outlineOffset = '2px'; }));
+  });
+</script></body></html>`,
+
   '/helper': `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><title>Helper</title></head>
 <body>

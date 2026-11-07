@@ -366,10 +366,17 @@ const measure = async (route: string, width: number, theme: string, embed: boole
   for (let i = 0; i < 18; i++) {
     await page.send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Tab', code: 'Tab', windowsVirtualKeyCode: 9 });
     await page.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Tab', code: 'Tab', windowsVirtualKeyCode: 9 });
-    const miss = await page.eval<string | null>(`(() => {
+    // A focus style lands a frame or two after the key, and occasionally later than that: read in the tick the key
+    // arrives, every stop reports a 0px ring (measured on `/` at 1440: `0px` at once, `2px` one frame on), and the audit
+    // reported 907 issues that were its own timing rather than the page's. So it polls for the ring instead of sampling
+    // once, up to ~5 frames, and only then calls the stop unmarked.
+    const miss = await page.eval<string | null>(`(async () => {
       const el = deepActive(); if (!el || el === document.body) return null;
+      const frame = () => new Promise((done) => requestAnimationFrame(() => done(true)));
       // A ring is a change on focus, wherever on the element's frames it may be drawn (scripts/lib/deep.ts).
-      if (ringChain(el).some((n) => ringed(n, window.__ringBefore && window.__ringBefore.get(n)))) return null;
+      const marked = () => ringChain(el).some((n) => ringed(n, window.__ringBefore && window.__ringBefore.get(n)));
+      for (let i = 0; i < 6 && !marked(); i++) await frame();
+      if (marked()) return null;
       return el.tagName.toLowerCase() + '.' + String(el.className).split(' ').slice(0, 3).join('.');
     })()`);
     if (miss) r.focusless.push(miss);
