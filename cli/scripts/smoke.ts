@@ -88,6 +88,9 @@ const sections = ['--adopt', '--create', '--update', '--update-all'];
 // managed, and this check called them unmanaged).
 const unmanaged = (manifest: { files: Record<string, string> }) => Object.keys(manifest.files).filter((p) => !MANAGED_PATH.test(p) || NEVER_MANAGED(p));
 
+/** The adopted fixture's own pages, which use Tailwind defaults Meridian does not render: adopt restyles them, and so does --update. */
+const TEAM_PAGES = ['app/page.tsx', 'app/orders/page.tsx'];
+
 // ── adopt ──────────────────────────────────────────────────────────────────────────────────────────────
 if (args.includes('--adopt') || !sections.some((s) => args.includes(s))) {
   const app = path.join(work, 'acme');
@@ -171,7 +174,6 @@ if (args.includes('--adopt') || !sections.some((s) => args.includes(s))) {
 const CARD = 'src/components/ui/card/index.tsx';
 const KEPT_SKILL = '.agents/skills/zz-meridian/SKILL.md';
 const KEPT_TOKEN = 'tokens/density.compact.tokens.json';
-const TEAM_PAGES = ['app/page.tsx', 'app/orders/page.tsx'];
 const semverLess = (a: string, b: string) => { const [x, y] = [a, b].map((v) => v.split('.').map(Number)); return (x[0] - y[0] || x[1] - y[1] || x[2] - y[2]) < 0; };
 const sha = (f: string) => (fs.existsSync(f) ? `sha256-${hash(f)}` : null);
 const secs = (ms: number) => (ms / 1000).toFixed(1);
