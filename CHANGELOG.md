@@ -2,7 +2,7 @@
 
 Every release of ZZ Meridian, newest first. Versions follow semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Each entry says what breaks and what to do instead.
 
-## [Unreleased]
+## [0.38.0] · 2026-11-07
 
 ### Added
 
@@ -48,6 +48,13 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 - **Calendar labels preserve the date they were given.** Impossible dates such as February 30 remain visible as invalid input instead of rolling into March, and valid years below 100 no longer acquire 1900 years.
 - **Rebranding reports an incomplete rollback honestly.** When restoring one file fails after a write error, branding continues restoring the others and names the paths requiring recovery instead of claiming nothing changed.
 - **Adoption checks both skill destinations before changing the project.** A skill file or folder linked elsewhere, including a dangling link, is refused before copying or branding files. Previously adoption could modify the project and then fail when the skill installer rejected the same link.
+
+### Known issues
+
+These are reds from the weekly run of 2026-11-02 (commit b7c7a5fa). Under decision 0010 they do not hold a release.
+
+- **The after-live journey to `/requests` has no start** (#139). `scripts/perf.ts` reports that no other rail route registers live data to start from. This is the first weekly run since the pages moved into workspaces. The fix is in the check, and the issue says how to tell which of two causes it is.
+- **`/` can drop one frame when the navigation opens on the weekly runner** (#140). The longest frame was 59 ms against the 50 ms floor: 32 ms of it is script run by the click. It is fixed in the page, not by moving the floor.
 
 ## [0.37.1] · 2026-11-01
 
