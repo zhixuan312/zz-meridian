@@ -173,14 +173,28 @@ const walk = async (route: string, width: number) => {
     const arm = () => page.eval<Armed>(ARM(controls[i], nth, keys[i], keyNth)).catch((): Armed => null);
     let armed = await arm();
     // Something left open or a toast in the way: start the page again and try once more. A control not drawn yet on the
-    // new load (a list still loading) is waited for up to the hang bound before it is called gone.
+    // new load (a list still loading), or still under a toast the previous press raised, is waited for up to the hang
+    // bound before it is called gone: four browsers run beside each other in `pnpm verify --full`, and a re-render that
+    // lands a moment late left two controls reported as covered or missing on a page that has both.
     if (!armed || armed.covered) {
       await fresh();
       armed = await arm();
-      for (let waited = 0; !armed && waited < HANG_BOUND_MS; waited += 200) { await sleep(200); armed = await arm(); }
+      for (let waited = 0; (!armed || armed.covered) && waited < HANG_BOUND_MS; waited += 200) { await sleep(200); armed = await arm(); }
     }
-    // Tagged by this suite a moment ago and gone after a fresh load: say so, never skip it.
-    if (!armed) { failures.push(`${route} @${width}: "${controls[i]}" was listed but could not be found again`); continue; }
+    // A control is listed only while it is not already chosen (`pressable`, above). A radio or a tab that a press a
+    // moment ago chose is therefore gone from the list by design: pressing it again changes nothing, which is not a dead
+    // control. That is the one way a listed control may be absent on the fresh load, and it is only that one — anything
+    // else absent is still reported.
+    if (!armed) {
+      const settled = await page.eval<boolean>(`(() => {${CONTROLS}
+        const all = pressable(deepAll(document.body));
+        return all.filter((b) => nameOf(b) === ${JSON.stringify(controls[i])})[${nth}] === undefined
+          && chosen(deepAll(document.body).find((b) => nameOf(b) === ${JSON.stringify(controls[i])}) || document.body);
+      })()`).catch(() => false);
+      if (settled) { continue; }
+      failures.push(`${route} @${width}: "${controls[i]}" was listed but could not be found again`);
+      continue;
+    }
     if (armed.covered) { failures.push(`${route} @${width}: "${controls[i]}" is covered by ${armed.covered}`); continue; }
     await sleep(100);
     const choosers = page.fileChoosers();
