@@ -329,7 +329,7 @@ const isInstall = (v: ValidationResult) => v.command.endsWith(' install');
 /**
  * The managed files that are not the release's bytes and that no keep entry explains, as lines to print; none when
  * there are none. Nothing else reports them between releases, and the next update would meet each as an edit nobody
- * recorded a reason for. A keep register that cannot be read explains nothing, and the gate already says why.
+ * recorded a reason for. A keep register that cannot be read explains nothing, and the checks already say why.
  */
 function unrecordedEdits(root: string, manifest: Manifest): string[] {
   let kept = new Set<string>();

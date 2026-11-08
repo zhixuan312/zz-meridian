@@ -111,14 +111,15 @@ const matching = (root: string, test: (rel: string, src: string) => boolean): st
 };
 
 /**
- * The team's files where `verify` is followed on one line by a flag the modes replaced. A shell script is the team's
- * unless the project's manifest records it: scripts/ is Meridian's folder and the usual home of a team's CI script.
+ * The team's files that still invoke `verify` — the package script, a workflow, or a shell script — or name its removed
+ * `scripts/verify.ts`. A shell script is the team's unless the project's manifest records it: scripts/ is Meridian's
+ * folder and the usual home of a team's CI script.
  */
 function removedVerifyFlags(root: string): string[] | null {
   const files: string[] = ['package.json'];
   walk(root, '.github/workflows', files, /\.ya?ml$/);
   walk(root, '', files, /\.sh$/, ownedIn(root));
-  const removed = /\bverify\b[^\n]*?--(?:quick|no-vitals|extra)\b/;
+  const removed = /\b(?:pnpm|npm|yarn|bun)\s+(?:run\s+)?verify\b|\bscripts\/verify\.ts\b/;
   const hits = [...new Set(files)].filter((rel) => removed.test(text(root, rel) ?? ''));
   return hits.length > 0 ? hits : null;
 }
@@ -300,7 +301,7 @@ function viewToolCalls(src: string): Map<string, string | null>[] {
 
 // ── The registry ─────────────────────────────────────────────────────────────────────────────────────
 
-const GATE_AND_BUILD = ['gate', 'build'];
+const TEST_RELEASE = ['test:release'];
 
 /**
  * The thirty-eight modules 0.28.0 moved into `src/logic/`, as the path each left and the path it went to: the figures
@@ -365,9 +366,9 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     id: 'verify-modes',
     since: '0.5.0',
     applies: removedVerifyFlags,
-    summary: 'verify has four modes, and --quick, --no-vitals and --extra are gone.',
-    instructions: 'Read "Validation" in references/validation.md. Run `pnpm verify` for the bounded default (the gate once, one build, the size checks and a smoke of up to three routes), `pnpm verify --full` for every exhaustive suite, `pnpm verify --timed` for the timed ones (on a quiet machine) and, in CI only, `pnpm verify --perf --shard <i>/<n>` for the 20-sample navigation protocol (`node scripts/perf.ts --routes <route>` narrows it to one route on your machine), and replace the removed flags in the script, workflow or shell file. Read the coverage line each run ends with: it says what ran and what did not.',
-    checks: ['gate'],
+    summary: '`pnpm verify` and its modes are replaced by the three test commands.',
+    instructions: 'Read "Test runs" in AGENTS.md and "The tiers" in docs/testing.md. `pnpm verify` and its flags — `--full`, `--timed`, `--perf`, `--quick`, `--no-vitals` and `--extra` — are removed. Run `pnpm test:t1` after a change (the affected Tier 1 tests, the static checks and the type check), `pnpm test:t2` when the change can alter what a page draws or a control does (the affected Tier 2 checks and the browser sweeps as well), and `pnpm test:release` before a release (every Tier 1 and Tier 2 test once, the timed browser suites, lint and the type check). None takes an argument: the command selects the tests. Replace the removed command and flags in the script, workflow or shell file, and read the line each run ends with: it says what ran and what did not.',
+    checks: ['test:t1'],
   },
   {
     id: 'shell-assistant-promise',
@@ -375,7 +376,7 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     applies: (root) => matching(root, (_, src) => tags(src, 'AppShell').some((t) => /\bassistant\s*=/.test(t)) && !/\.then\(|Promise|\buse\(/.test(src)),
     summary: "AppShell's assistant prop is a Promise<boolean>, not a boolean.",
     instructions: 'Read "The shell\'s assistant promise" in references/cache.md. Pass a promise of whether the assistant is configured, such as `connection().then(() => assistantConfig(process.env) !== null)`, and do not await it in the layout. The launcher keeps its place until the promise resolves true.',
-    checks: GATE_AND_BUILD,
+    checks: TEST_RELEASE,
   },
   {
     id: 'assistant-available-promise',
@@ -383,7 +384,7 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     applies: (root) => matching(root, (_, src) => !/\buse\(/.test(src) && callArity(src, 'useAssistantAvailable').length > 0),
     summary: 'useAssistantAvailable() returns a Promise<boolean>, not a boolean.',
     instructions: 'Read "The shell\'s assistant promise" in references/cache.md. Read the hook with `use(useAssistantAvailable())` inside a Suspense boundary that keeps the control\'s space, and render nothing clickable until it is true.',
-    checks: GATE_AND_BUILD,
+    checks: TEST_RELEASE,
   },
   {
     id: 'clock-now-required',
@@ -391,7 +392,7 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     applies: (root) => matching(root, (_, src) => ['Freshness', 'ShellTools', 'AlertsPanel'].some((n) => tags(src, n).some((t) => !/\bnow\s*=/.test(t))) || callArity(src, 'formatRelative').some((n) => n === 1)),
     summary: 'Freshness, ShellTools, AlertsPanel and formatRelative take the data clock explicitly.',
     instructions: 'Read "The clock is the data\'s" in references/cache.md. Pass `now` (the read\'s `observedAt`, or the data\'s clock) to each `<Freshness>`, `<ShellTools>` and `<AlertsPanel>`, and as the second argument of `formatRelative`. None of them reads the browser\'s clock any more.',
-    checks: GATE_AND_BUILD,
+    checks: TEST_RELEASE,
   },
   {
     id: 'cache-components-config',
@@ -410,7 +411,7 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     },
     summary: 'next.config sets cacheComponents and partialPrefetching.',
     instructions: 'Read "Turn Cache Components on" in references/cache.md. Add `cacheComponents: true` and `partialPrefetching: true` to the Next config, then make every route static or partial: a page that reads the request or an uncached source streams that part behind its own Suspense boundary.',
-    checks: GATE_AND_BUILD,
+    checks: TEST_RELEASE,
   },
   {
     id: 'connection-boundaries',
@@ -418,7 +419,7 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     applies: (root) => matching(root, (rel, src) => isPageOrLayout(rel) && /\bawait\s+connection\(\)/.test(src)),
     summary: 'A page or layout no longer awaits connection() as a render-per-request switch.',
     instructions: 'Read "Turn Cache Components on" in references/cache.md. Remove `await connection()` from the page or layout. Read request-dependent data inside a Suspense boundary of its own, through `read()` for a collection, so the rest of the route prerenders. A promise such as `connection().then(…)` that the shell resolves behind a boundary stays allowed.',
-    checks: GATE_AND_BUILD,
+    checks: TEST_RELEASE,
   },
   {
     id: 'authorized-read',
@@ -426,7 +427,7 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     applies: (root) => matching(root, (rel, src) => appPath(rel) !== null && /^page\.tsx?$/.test(base(rel)) && /\.query\(/.test(src)),
     summary: 'A page reads a collection through the authorized, cached read(), not by querying it directly.',
     instructions: 'Read "Authorized, scoped reads" in references/cache.md. Replace `collection.query(q)` in the page with `read(name, q)` from `src/data/read.ts`, format any freshness against the returned `observedAt`, and add `src/data/access.ts` and `src/data/read.ts` from the reference, bound to your own sign-in and database predicates.',
-    checks: GATE_AND_BUILD,
+    checks: TEST_RELEASE,
   },
   {
     id: 'scoped-invalidation',
@@ -434,7 +435,7 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     applies: (root) => matching(root, (_, src) => isServerFile(src) && /\.(?:create|update|remove)!?\(/.test(src) && !/\b(?:updateTag|revalidateTag)\(/.test(src)),
     summary: 'A Server Action that writes a collection invalidates that tenant\'s cached reads.',
     instructions: 'Read "Writes authorize, then invalidate" in references/cache.md. After the commit, call `updateTag(collectionTag(scope.tenantId, name))`, and write through `collectionFor(scope, name)`, never a collection bound elsewhere. Authorize the operation and every record it touches first.',
-    checks: GATE_AND_BUILD,
+    checks: TEST_RELEASE,
   },
   {
     id: 'live-provider',
@@ -448,7 +449,7 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     },
     summary: 'The console has a live route, a refresh action and a provider.',
     instructions: 'Read "The live starters" and "Refreshing" in references/live.md. Add `app/api/live/route.ts`, `src/data/live-stream.ts`, `src/data/live-actions.ts` and `src/views/console-live.tsx` from the references, wrap the dashboard layout\'s children in the provider, and read "The demo\'s limits" before relying on the stream across processes.',
-    checks: GATE_AND_BUILD,
+    checks: TEST_RELEASE,
   },
   {
     id: 'authorized-endpoints',
@@ -456,7 +457,7 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     applies: (root) => matching(root, (rel, src) => (appPath(rel) === 'api/assistant/route.ts' || (isActionsFile(rel) && isServerFile(src))) && !/\bresolveAccess\(/.test(src)),
     summary: 'The assistant route and every actions file resolve the caller before they act.',
     instructions: 'Read "Writes authorize, then invalidate" and "The assistant route" in references/cache.md. Call `resolveAccess()` first in the route and in each Server Action, answer 401 or an error result when there is no session, and hand the assistant only the collections the caller may read. The route passes a guard that authorizes each approved change again when it runs, so `src/lib/assistant/tools.ts` and `src/lib/assistant/respond.ts` take that guard too: bring them over from the release with the route.',
-    checks: GATE_AND_BUILD,
+    checks: TEST_RELEASE,
   },
   {
     id: 'share-view-context',
@@ -464,7 +465,7 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     applies: (root) => matching(root, (_, src) => callArity(src, 'useShareView').some((n) => n === 2)),
     summary: 'useShareView takes one shared context, not a sentence and an object.',
     instructions: 'Read "Legible" in references/agents.md and "A shared context" in references/customize.md. Build the view\'s context with the fields of `SharedContext` from `src/lib/shared-context.ts` (scope, freshness, each figure with its unit, change and definition, what code finds, what the data cannot say) in a pure function beside the view, and pass it alone: `useShareView(context)`. Both agents read it: an MCP host and the console\'s assistant.',
-    checks: GATE_AND_BUILD,
+    checks: TEST_RELEASE,
   },
   {
     id: 'assistant-view-tools',
@@ -480,7 +481,7 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     },
     summary: "The assistant's route-side code predates view tools and its limits.",
     instructions: 'Read "Adding an MCP server later" in example:docs/assistant.md. Bring `src/lib/assistant/tools.ts` and `src/lib/assistant/respond.ts` over from the release: `assistantTools(collections, writer, guard, views)` offers every view in `src/views/tools.ts` as a read-only `view_<name>` tool, `respond` lists what the assistant cannot do or see (`limitsOf`) and passes the views on, and the guard may take a `record`. Then pass `views` from the assistant route to `respond`: the template\'s `viewTools`, an adopted project\'s own view tools (`ViewTool` in `src/lib/shared-context.ts`), or none.',
-    checks: GATE_AND_BUILD,
+    checks: TEST_RELEASE,
   },
   {
     id: 'agent-reads-section',
@@ -488,7 +489,7 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     applies: pagesWithoutAgentReads,
     summary: 'A page under app/(dashboard)/ or app/embed/ says what the agent reads.',
     instructions: 'Read "A page spec" in references/customize.md. Under `## Agents` in the page\'s README.md, add `### What the agent reads`: what the page\'s shared context tells each agent, with a real line of it, and what the MCP App and the console\'s assistant each receive. `scripts/check.ts` requires it.',
-    checks: ['gate'],
+    checks: ['test:t1'],
   },
   {
     id: 'nav-needs',
@@ -496,15 +497,15 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     applies: navItemsWithoutNeeds,
     summary: 'Every item in the project\'s `nav` carries a `needs`, so the rail shows only the destinations a person may reach.',
     instructions: 'Read "5. Decide who may do what" in the Start guide (docs/start-a-dashboard.md). For each item in `src/app.config.ts`\'s `nav`, add `needs: \'public\'` when everyone may open that page, or point it at its feature (`needs: FEATURES.<id>.needs`); the fourth of its four steps covers it, and `scripts/check.ts` fails the project\'s gate, naming the href, on an item without one. `adopt` writes `needs: \'public\'` for a project it sets up from now on. A `NavItem` type of your own declares `needs` too; if every item and the type already carry it, there is nothing to change.',
-    checks: ['gate'],
+    checks: ['test:t1'],
   },
   {
     id: 'agent-reads-own-group',
     since: '0.15.0',
     applies: ownGroupPagesWithoutAgentReads,
     summary: 'A page under the route group the project keeps its console in says what the agent reads.',
-    instructions: 'The gate asked this of pages under `app/(dashboard)/` only; from 0.15.0 it asks it under whatever route group sits at the top of the app folder. Read "A page spec" in references/customize.md. Under `## Agents` in each page\'s README.md listed here, add `### What the agent reads`: what the page\'s shared context tells each agent, with a real line of it, and what the MCP App and the console assistant do with it. A copy of the rule kept in `scripts/check.local.ts` for the project\'s own group can be deleted.',
-    checks: ['gate'],
+    instructions: 'The checks asked this of pages under `app/(dashboard)/` only; from 0.15.0 it asks it under whatever route group sits at the top of the app folder. Read "A page spec" in references/customize.md. Under `## Agents` in each page\'s README.md listed here, add `### What the agent reads`: what the page\'s shared context tells each agent, with a real line of it, and what the MCP App and the console assistant do with it. A copy of the rule kept in `scripts/check.local.ts` for the project\'s own group can be deleted.',
+    checks: ['test:t1'],
   },
   {
     id: 'refusal-declared',
@@ -512,7 +513,7 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     applies: refusalUndeclared,
     summary: 'The product says what an address a person may not open draws: `refusal` in `src/app.config.ts`.',
     instructions: 'Read "Navigation: `src/app.config.ts`" in references/customize.md. Add `export const refusal: \'explain\' | \'absent\' = \'explain\';` to `src/app.config.ts`, beside `facts`: `explain` keeps the no-access page a refused page draws today, and `absent` answers as an address that names nothing. A project that keeps the sample\'s access seam brings `src/data/access.ts` and `src/data/refusal.ts` over from the release (`gate` reads `refusal`, with `gatedMetadata` and `withheldEntries` beside it, and `gatedLoading` reads it alone), titles each gated page with `export function generateMetadata() { return gatedMetadata(\'<feature>\', { title: \'<its title>\' }); }` in place of a static `metadata`, passes its loading state\'s `name` and `title` through `gatedLoading`, and adds `refusal,` to the config object of `scripts/verify.config.ts`, imported from `../src/app.config.ts`, so `verify --as` expects the page the product chose.',
-    checks: GATE_AND_BUILD,
+    checks: TEST_RELEASE,
   },
   {
     id: 'managed-exports-removed',
@@ -520,23 +521,23 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     applies: removedExportReaders,
     summary: 'A file of the team\'s imports an export the release removed from a managed module: `deviations`, `largest`, `runs` or `weekendRatio` from `src/lib/insight.ts`, or `queryInput` from `src/lib/collection.ts`.',
     instructions: 'The update brought `src/lib/insight.ts` and `src/lib/collection.ts` without them, so each file listed here fails the type check. A file of the sample\'s comes over from the release: the Overview context is Home\'s, `src/views/home-context.ts` (see `sample-pages-renamed`); the assistant reads through `view_<name>` and `explore_<view>` and has no `query_<name>` tools, so bring `src/lib/assistant/tools.ts` and `src/lib/assistant/respond.ts` over and pass `readable`, every collection the person may read, from the assistant route to `respond` beside `collections` (read "Prepared queries" in references/agents.md); and a shipped test that imports one, such as `tests/shared-context.test.tsx` or `tests/collection.test.ts`, comes over as the release has it. A file of your own that still needs one of the functions writes it in that file, from its 0.15.0 source.',
-    checks: GATE_AND_BUILD,
+    checks: TEST_RELEASE,
   },
   {
     id: 'view-tool-page-explore',
     since: '0.16.0',
     applies: (root) => matching(root, (_, src) => viewToolCalls(src).some((k) => !k.has('...') && !(k.has('page') && k.has('explore')))),
     summary: 'Every view tool names the page it renders and its prepared query: `page` and `explore` on `defineViewTool`.',
-    instructions: 'Read "Prepared queries" in references/agents.md. Add to each `defineViewTool` call in the files listed here `page`, the console route of the page the view renders (a rail destination\'s `href` in `nav`, or a detail page\'s route with its segment, such as `/customers/[id]`), and `explore`, its prepared query (`PreparedQuery` in `src/lib/explore.ts`), declared beside the view as the sample\'s are in `src/views/<view>-explore.ts`. `ViewTool` in `src/lib/shared-context.ts` requires both, so a tool without them fails the type check. A project that kept the sample\'s view tools brings `src/views/tools.ts` and the `src/views/*-explore.ts` files over from the release. Once a tool names its page, the gate asks that page\'s specification what the agent does there (`agent-does-here-section`).',
-    checks: GATE_AND_BUILD,
+    instructions: 'Read "Prepared queries" in references/agents.md. Add to each `defineViewTool` call in the files listed here `page`, the console route of the page the view renders (a rail destination\'s `href` in `nav`, or a detail page\'s route with its segment, such as `/customers/[id]`), and `explore`, its prepared query (`PreparedQuery` in `src/lib/explore.ts`), declared beside the view as the sample\'s are in `src/views/<view>-explore.ts`. `ViewTool` in `src/lib/shared-context.ts` requires both, so a tool without them fails the type check. A project that kept the sample\'s view tools brings `src/views/tools.ts` and the `src/views/*-explore.ts` files over from the release. Once a tool names its page, the checks ask that page\'s specification what the agent does there (`agent-does-here-section`).',
+    checks: TEST_RELEASE,
   },
   {
     id: 'agent-does-here-section',
     since: '0.16.0',
     applies: viewToolPagesWithoutAgentDoes,
     summary: 'The specification of a page a view tool renders says what the agent does there.',
-    instructions: 'Read "Prepared queries" in references/agents.md. Under `## Agents` in the README.md of each page a view tool\'s `page` names, add `### What the agent does here`: a line `Protagonist: <the card\'s name>.`, then at least three questions a person on the page asks that its context does not answer alone, each `- "<question>" — <what the prepared query is asked>`, and mark that card on the page with `data-protagonist="<name>"`. `scripts/check.ts` fails the gate on such a page without the part. While a view tool names no page yet (`view-tool-page-explore`), every console page specification without the part is listed: one that no tool comes to name needs nothing.',
-    checks: ['gate'],
+    instructions: 'Read "Prepared queries" in references/agents.md. Under `## Agents` in the README.md of each page a view tool\'s `page` names, add `### What the agent does here`: a line `Protagonist: <the card\'s name>.`, then at least three questions a person on the page asks that its context does not answer alone, each `- "<question>" — <what the prepared query is asked>`, and mark that card on the page with `data-protagonist="<name>"`. `scripts/check.ts` fails the checks on such a page without the part. While a view tool names no page yet (`view-tool-page-explore`), every console page specification without the part is listed: one that no tool comes to name needs nothing.',
+    checks: ['test:t1'],
   },
   {
     id: 'sample-pages-renamed',
@@ -544,7 +545,7 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     applies: renamedSampleFiles,
     summary: 'The project holds the sample\'s pages and views under their 0.15.0 names: Overview is Home, Analytics is Usage at `/usage` and Operations is Services at `/services`.',
     instructions: 'The release renamed them with no redirect, and an update writes none of the team\'s pages, views or tests. Each file listed is one of them or names one: a page or a view, the view tools, `src/app.config.ts`\'s nav and the feature ids it names, the routes of `scripts/verify.config.ts`, or a shipped test that expects them. A project that kept the sample\'s pages as they were brings the release\'s over: `app/(dashboard)/` and `app/embed/`, `src/views/`, `src/data/`, `src/lib/assistant/` beside `prompt.ts`, `src/app.config.ts` with its own `app` kept, and each shipped test as the release has it; a file listed here that the release no longer has is deleted. A project that made the pages its own keeps its own names, makes the changes this release\'s other migrations list in them, and reads "not applicable" for the assistant walk-through\'s steps on Home and Now (`scripts/lib/sample.ts`).',
-    checks: GATE_AND_BUILD,
+    checks: TEST_RELEASE,
   },
   {
     id: 'marker-measured-on-observe',
@@ -552,7 +553,7 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     applies: railObserverNeverAnswers,
     summary: 'A test mounts the rail over a `ResizeObserver` whose `observe` answers nothing: the rail takes its first measurement from the observer now, where it took one by hand.',
     instructions: 'Bring `tests/rail-marker.test.tsx` over from the release as it has it. Since 0.16.2 `src/components/patterns/rail/index.tsx` reads no offset of its own — a rail mounts inside the tap that opens the phone drawer, and a read there lays the page out inside that tap — so the marker\'s first position is the one `observe` delivers, after the effect that called it. A test whose fake answers `observe` with an empty body expects the marker before any delivery and fails; the release\'s fake answers it with the callback, `observe() { for (const cb of observers) queueMicrotask(cb); }`, and reads the marker after that delivery. A test of your own that mounts the rail changes the same way.',
-    checks: ['gate'],
+    checks: ['test:t1'],
   },
   {
     id: 'view-page-matched-as-next',
@@ -563,7 +564,7 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     },
     summary: 'The assistant route finds the view of the page a person is on with `viewAt` from `src/lib/shared-context.ts`, which matches a catch-all `page` as Next.js does.',
     instructions: 'In `app/api/assistant/route.ts`, delete the local `onPage` and find the view with `viewAt` from `@/lib/shared-context` (`@meridian/lib/shared-context` in an adopted project): `const at = viewAt(viewTools, path); const view = at && views.includes(at) ? at : undefined;`, where `views` are the view tools the person may use. `onPage` matched a `[...name]` segment as one segment and a `[[...name]]` never, so a view whose `page` is a catch-all (`/docs/[...path]`) was handed its prepared query at one depth only. `viewAt` matches as Next.js does — `[...name]` one or more segments, `[[...name]]` zero or more — and where two views match one address it takes the one Next.js renders, before asking whether the person may use it, so a less specific view never stands in for the page.',
-    checks: ['gate'],
+    checks: ['test:t1'],
   },
   {
     id: 'journey-moved',
@@ -571,7 +572,7 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     applies: (root) => matching(root, (rel, src) => importsOf(rel, src).some(({ from, names, namespace }) => from === 'scripts/navigate' && (namespace !== null || names.some((n) => n !== 'workspaceHomes')))),
     summary: 'The navigation journey moved from `scripts/navigate.ts` to `scripts/lib/journey.ts`, which keeps every source file Meridian ships under 700 lines.',
     instructions: 'Bring `tests/navigate-start.test.ts` and `tests/navigate-menu-start.test.ts` over from the release as it has them. A file of your own that imports the journey — `startFor`, `journeyStart`, `journey`, `drawerRoutes`, `prepare`, `liveRefresh`, `Fail` and the types `Device`, `Metric`, `Condition`, `Measured`, `Sample` and `NavConfig` — imports it from `scripts/lib/journey.ts` instead; `scripts/navigate.ts` keeps the command and `workspaceHomes` only.',
-    checks: ['gate'],
+    checks: ['test:t1'],
   },
   {
     id: 'today-in-timezone',
@@ -579,15 +580,7 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     applies: (root) => matching(root, (rel, src) => (appPath(rel) === 'api/assistant/route.ts' || rel === 'src/data/metrics.ts') && /\bconst today = clock\(\)\.toISOString\(\)\.slice\(0, 10\)|\btoday: clock\(\)\.toISOString\(\)\.slice\(0, 10\)/.test(src)),
     summary: "Today is the day in `app.timezone` wherever a day is cut: `dayOf(clock())` from `src/lib/format-date.ts`, not the UTC date.",
     instructions: "Replace `clock().toISOString().slice(0, 10)` with `dayOf(clock())` (`dayOf` in `src/lib/format-date.ts`) in each file listed: the prepared query's `today` in `app/api/assistant/route.ts`, and `readDays`'s today in `src/data/metrics.ts`. The prompt has told the model today in `app.timezone` all along, while the prepared query and the page cut their periods at the UTC date, so east of UTC after local midnight (west of UTC in the evening) the model's today and its `7d` window's end were a day apart. A day row is kept under its day in `app.timezone`, so a file of your own that compares an instant's day with one — `now.slice(0, 10)`, `at.slice(0, 10)` — asks `dayOf` too. A product whose `app.timezone` is UTC sees no change. A project that kept the sample's views brings `src/views/now-parts.ts`, `src/views/revenue-parts.ts`, `src/views/customer-context.ts`, `src/views/customer.tsx` and `src/views/members.tsx` over from the release.",
-    checks: ['gate'],
-  },
-  {
-    id: 'verify-tiers',
-    since: '0.17.0',
-    applies: (root) => matching(root, (rel, src) => importsOf(rel, src).some(({ from, names }) => from === 'scripts/lib/coverage' && names.includes('finalOutcome')) && /(?<![\w.$])finalOutcome\(\s*(?!\{)/.test(src)),
-    summary: '`finalOutcome` in `scripts/lib/coverage.ts` takes `{ full, timed }` as its first argument, because verify has a timed tier apart from the full one.',
-    instructions: 'Bring `tests/verify-suite-outcome.test.ts` over from the release as it has it. A file of your own that calls `finalOutcome` passes the tiers, `finalOutcome({ full, timed }, notRun)`, where it passed whether the run was full (`finalOutcome(true, notRun)`): `references/validation.md` describes the tiers, `pnpm verify`, `--full` and `--timed`.',
-    checks: ['gate'],
+    checks: ['test:t1'],
   },
   {
     id: 'no-data-mark',
@@ -595,7 +588,7 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     applies: (root) => matching(root, (rel, src) => importsOf(rel, src).some(({ from }) => from === 'src/components/charts/column-chart') && /\.bg-fill-track['"]\)\)\.not\.toBeNull\(\)/.test(src)),
     summary: 'A Column chart\'s period with no data draws a dashed hairline on the baseline, where it drew a `fill-track` track the height of the scale.',
     instructions: 'Bring `tests/column-chart-no-data.test.tsx` over from the release as it has it. Since 0.19.0 `src/components/charts/column-chart/index.tsx` draws no column for a `null` period: its box has no height, a dashed hairline (`data-no-data-mark`) keeps the slot, and the word stands over it, because the track was the tallest mark on the chart. A test of your own that finds `.bg-fill-track` or `[data-track]` in a no-data column finds `[data-no-data-mark]` instead.',
-    checks: ['gate'],
+    checks: ['test:t1'],
   },
   {
     id: 'table-grid',
@@ -603,15 +596,15 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     applies: (root) => matching(root, (rel, src) => importsOf(rel, src).some(({ from }) => from === 'src/components/ui/table' || from === 'src/components/patterns/data-table') && (/@min-\[672px\]:min-w-64/.test(src) || /<TableCell\b[^>]*\bcolSpan\s*=/.test(src))),
     summary: 'A table is a grid since 0.26.0: its spare width sits in the gaps, a `grow` column\'s floor is 160px at every width, and a cell spans no columns.',
     instructions: 'Bring `tests/table-cut-cell.test.tsx` over from the release as it has it. Since 0.26.0 `src/components/ui/table/index.tsx` lays a table out as a grid whose rows are subgrids: every column is as wide as its content, the spare is shared equally between the gaps, and a `grow` column has a 160px floor at every width. Remove tests that pin the old or new utility-class strings rather than repinning them; check truncation, full-value access and the rendered responsive grid. A `TableCell` of your own with a `colSpan` takes one track of the grid, so it draws in the first column only: a row that should run the width of the table, such as an empty state, is drawn outside the table, or as a `DataTable` `empty`.',
-    checks: ['gate'],
+    checks: ['test:t1'],
   },
   {
     id: 'four-layers',
     since: '0.28.0',
     applies: importsAMovedModule,
     summary: "The template's figures and sentences moved into `src/logic/`: thirty-eight modules left `src/views/` and `src/data/`.",
-    instructions: `Read "The four layers" and "The path an existing product follows" in references/data-layers.md. Thirty-eight modules moved into the logic layer, and each import of one in your own \`src/views/\` producers and pages names the path it left: ${MOVED_LIST}. Rewrite each import to the path the module has now, or move your own module beside the work it does. Two symbols left a card of Meridian's, and both must be rewritten because the update replaces the card: \`afterStart\`, which the incident card exported, is \`@/logic/after-start\`, and \`summarise\`, which the status list re-exported, is \`@/logic/summarise\` (\`@meridian/logic/…\` in an adopted project, where \`@/\` is your own). Every other path your own files name is still there, so a project that imported neither symbol keeps building as it was. The six layer rules stay off until your own \`scripts/check.local.ts\` exports \`fourLayers = true\`; turn them on once your figures have moved, and the gate and the build are what show the work is done.`,
-    checks: GATE_AND_BUILD,
+    instructions: `Read "The four layers" and "The path an existing product follows" in references/data-layers.md. Thirty-eight modules moved into the logic layer, and each import of one in your own \`src/views/\` producers and pages names the path it left: ${MOVED_LIST}. Rewrite each import to the path the module has now, or move your own module beside the work it does. Two symbols left a card of Meridian's, and both must be rewritten because the update replaces the card: \`afterStart\`, which the incident card exported, is \`@/logic/after-start\`, and \`summarise\`, which the status list re-exported, is \`@/logic/summarise\` (\`@meridian/logic/…\` in an adopted project, where \`@/\` is your own). Every other path your own files name is still there, so a project that imported neither symbol keeps building as it was. The six layer rules stay off until your own \`scripts/check.local.ts\` exports \`fourLayers = true\`; turn them on once your figures have moved, and the checks and the build are what show the work is done.`,
+    checks: TEST_RELEASE,
   },
   {
     id: 'env-reset-before-each',
@@ -619,7 +612,7 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     applies: (root) => matching(root, (rel, src) => /\.test\.[cm]?[jt]sx?$/.test(rel) && setsEnvInBeforeAll(src)),
     summary: '`tests/setup.ts` puts `process.env` back before every test, so a value a test file sets in `beforeAll` is gone when its first test runs.',
     instructions: "Since 0.29.0 the shipped `tests/setup.ts` restores the environment before each test, so a stub in one file can no longer reach the file beside it. A test file of your own that sets `process.env` (or calls `vi.stubEnv`) inside `beforeAll` loses the value before its first test, and fails with no reason given. In each file listed, keep the costly start (a fake backend, a server) in `beforeAll` and keep what it returns in a variable, then set the environment from it in a `beforeEach`: `beforeEach(() => { process.env.API_URL = started.base; })`.",
-    checks: ['gate'],
+    checks: ['test:t1'],
   },
   {
     id: 'direct-query-escape',
@@ -627,7 +620,7 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     applies: (root) => matching(root, (rel, src) => (appPath(rel) !== null || /^src\/(?:logic|views|lib)\//.test(rel)) && SOURCE.test(rel) && /\.query\s*\(/.test(src.replace(/\/\/[^\n]*/g, '')) && !/allow-no-direct-query:/.test(src)),
     summary: 'A direct `.query(` call is allowed only where the call states its own escape: `// allow-no-direct-query: <why>`, on that line.',
     instructions: 'Since 0.30.0 `node scripts/check.ts` reports every `.query(` call in `app/`, `src/app/`, `src/logic/`, `src/views/` and `src/lib/`, and keeps the run passing only where the call\'s own line carries the escape the check prints — `// allow-no-direct-query: read() cannot serve this — <why>`. Before this release the rule allowed five sites of the template\'s by line number, so a file of your own that read a collection directly passed as long as the call sat on one of those lines; that list is gone, because a comment added above a call moved it off the line and turned a passing project red for no reason. Read every file named above. Where the read has to be direct — a server action reading the record it is about to change, a streamed export, the sign-in resolving a person before an `AccessScope` exists — state the reason on that line in the form the check prints. Everywhere else, read through `read()`, `readAll()` or `aggregate()` from `@/data/read`, which ask the caller\'s grant.',
-    checks: ['gate'],
+    checks: ['test:t1'],
   },
   {
     id: 'app-description',
@@ -635,7 +628,7 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     applies: appDescriptionMissing,
     summary: 'The product describes itself in one sentence: `description` in the `app` object of `src/app.config.ts`.',
     instructions: 'The release\'s `app/layout.tsx` shows `app.description` as the document\'s description — the line a search engine and a link preview put under the name — where it used to write a sentence of the template\'s own. `src/app.config.ts` is yours and an update does not touch it, so the key is missing there until you add it. Add `description: \'<one sentence about your product>\',` to the `app` object beside `name`. A project that keeps its own `app/layout.tsx` needs the key all the same, because the layout a project brings over from the release reads it.',
-    checks: ['gate'],
+    checks: ['test:t1'],
   },
   {
     id: 'live-stream-shutdown',
@@ -643,7 +636,7 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     applies: liveStreamKeptOnStop,
     summary: 'The live stream ends every open stream when the server is told to stop, so tabs reconnect to the server that replaces it.',
     instructions: '`src/data/live-stream.ts` is yours, so an update does not touch it, and the copy you have never ends a stream. A server told to stop (`next start` on SIGTERM or SIGINT, as a deploy or a restart does) closes its port and waits for its open connections: the old process stays up holding every tab\'s stream while the new one serves the port, so no tab hears a change hint again and every change waits for its next safety poll. Bring the block that begins `Every stream still open` over from `references/live.md` (the `open` set, `endLiveStreams` and `endOnShutdown`), call `open.delete(close)` first in the stream\'s `close`, and `endOnShutdown(close)` after the stream listens for its abort. A project that serves its stream some other way ends its streams on the signal the same way.',
-    checks: ['gate'],
+    checks: ['test:t1'],
   },
   {
     id: 'missing-routes',
@@ -651,7 +644,7 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     applies: detailRoutesWithoutMissing,
     summary: 'A route that answers an error or draws the not-found screen fails every browser suite unless it is declared in missingRoutes.',
     instructions: 'The audit, the presses, the keyboard walk, the vitals and `scripts/shot.ts` now read what a route answered: one that answered an error status or draws the not-found screen (`[data-missing-page]`) was measured as that screen and not as the route, so it fails. In `scripts/verify.config.ts`, which is yours, move every entry of `detailRoutes` that names a record that does not exist (the sample\'s `/requests/req_missing` and `/customers/missing`) into a new `missingRoutes` list; each must be the not-found screen, and one that renders a page fails. A not-found screen of your own carries `data-missing-page` on its root, as `MissingPage` does: inside a streamed shell a missing record has already answered 200.',
-    checks: ['verify'],
+    checks: ['test:release'],
   },
   {
     id: 'computed-series-slot',
@@ -659,7 +652,7 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     applies: (root) => matching(root, (rel, src) => SOURCE.test(rel) && importsOf(rel, src).some(({ from }) => SLOT_CHARTS.includes(from)) && computesSlot(src)),
     summary: "A chart's `color` is a palette slot, `SeriesSlot` (1 to 6), where it took any number: a computed one fails the type check.",
     instructions: "Since 0.32.0 `ColumnPart`, a Composition bar's `Part`, `Sparkline` and a Trend chart's series take `color` as a `SeriesSlot`, `1 | 2 | 3 | 4 | 5 | 6` from `src/components/charts/scale.ts`, because a slot past six named a colour no theme defines and drew nothing. A file of your own that computes the slot (`color: i + 1`) fails `tsc` at `--finalize`. In each file listed, type the value as a `SeriesSlot` where it is computed, or fold the parts past the palette into one \"Other\" part, as the Composition bar does past six. A file that already types it so has nothing to change.",
-    checks: ['gate'],
+    checks: ['test:t1'],
   },
   {
     id: 'use-size-callback-ref',
@@ -667,7 +660,7 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     applies: (root) => matching(root, (rel, src) => SOURCE.test(rel) && importsOf(rel, src).some(({ from, names, locals }) => from === 'src/components/charts/use-size' && names.includes('useSize') && readsSizeRefCurrent(src, locals[names.indexOf('useSize')]!))),
     summary: '`useSize()` returns a callback ref, so its first value has no `.current`.',
     instructions: "`useSize` (`src/components/charts/use-size.ts`) returns a callback that measures the element it is attached to, whenever it is attached, so a team file that read the element through `.current` of the ref fails the type check. In each file listed, keep the element in a ref of your own and hand the `ref` prop one callback that does both: `const own = useRef<HTMLDivElement | null>(null); const [measure, size] = useSize<HTMLDivElement>(); const ref = useCallback((el: HTMLDivElement | null) => { own.current = el; return measure(el); }, [measure]);`, then read `own.current` where the file read the ref's.",
-    checks: GATE_AND_BUILD,
+    checks: TEST_RELEASE,
   },
   {
     id: 'self-hosted-fonts',
@@ -675,7 +668,7 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     applies: (root) => matching(root, (rel, src) => appPath(rel) !== null && SOURCE.test(rel) && /from\s+['"]next\/font\/google['"]/.test(src) && /--font-face-(?:sans|mono)/.test(src)),
     summary: "Meridian's faces ship with the release under `src/styles/fonts/`: a build loads them from there and fetches nothing from Google Fonts.",
     instructions: "Your `app/layout.tsx` is yours, so an update does not touch it, and yours hands `--font-face-sans` and `--font-face-mono` their faces through `next/font/google`, which `next build` fetches from fonts.googleapis.com: with that host unreachable and no build cache, the build fails (`Build error occurred`). The update has delivered the two faces, `src/styles/fonts/Geist-Variable.woff2` and `src/styles/fonts/GeistMono-Variable.woff2`, with their licence. In the layout, replace the `next/font/google` import with `import localFont from 'next/font/local';` and each face's call with `localFont({ src: '../src/styles/fonts/Geist-Variable.woff2', weight: '100 900', variable: '--font-face-sans', display: 'swap' })` and `localFont({ src: '../src/styles/fonts/GeistMono-Variable.woff2', weight: '100 900', variable: '--font-face-mono', display: 'swap' })`, keeping the class names on `<html>` as they are. A layout that gives the tokens faces of its own from Google Fonts is the same case: ship the files and load them with `next/font/local`.",
-    checks: GATE_AND_BUILD,
+    checks: TEST_RELEASE,
   },
   {
     id: 'nav-item-fields',
@@ -683,7 +676,7 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     applies: navItemWithoutFields,
     summary: "The rail reads a navigation item's `under` and `prefetch` directly: the `NavItem` type in `src/app.config.ts` declares both.",
     instructions: "`src/app.config.ts` is yours, so an update does not touch it, and the `NavItem` type in your copy lacks a field the release's rail and trail now read as a property of every item (until 0.36.0 they tested for it first). Add `prefetch?: true; under?: string` to the `NavItem` type, as the release's `src/app.config.ts` declares it: `under` names the `href` of the item a sub page is drawn under, and `prefetch: true` asks the rail to prefetch that item's page in full. Neither changes an item that does not set it. If your type already declares both, in a shape this check does not read whole, there is nothing to change.",
-    checks: ['gate'],
+    checks: ['test:t1'],
   },
   {
     id: 'workspace-homes-moved',
@@ -691,7 +684,7 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     applies: (root) => matching(root, (rel, src) => importsOf(rel, src).some(({ from, names, namespace }) => from === 'scripts/navigate' && (namespace !== null || names.includes('workspaceHomes')))),
     summary: '`workspaceHomes` moved from `scripts/navigate.ts` to `scripts/lib/journey.ts` and takes the arguments of the command it serves.',
     instructions: 'In each file listed, import `workspaceHomes` from `scripts/lib/journey.ts` and call it with the arguments of the command that reads `--homes`: `workspaceHomes(process.argv.slice(2))`. `scripts/navigate.ts` keeps the command only, so a namespace import of it no longer carries `workspaceHomes` either.',
-    checks: ['gate'],
+    checks: ['test:t1'],
   },
   {
     id: 'sample-with-its-tests',
@@ -699,8 +692,8 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     recurring: true,
     applies: sampleBehindItsTests,
     summary: "The release's sample differs from team-owned files, while its shipped tests are managed. Review those differences before finalizing.",
-    instructions: "A project `create` made holds the template's sample (its pages, views, data, figures, their helpers and the demo gate in `proxy.ts`) as its own files, which an update never touches, while the shipped tests are Meridian's and arrive with it. The update reports differing sample files on every upgrade, even when a previous release already reported this migration. Each named file differs from the release's copy, or is a sample module introduced after your project's recorded version; the gate may depend on its changes. Write the release's copies into a scratch folder with `npx zz-meridian@<the version you are updating to> create <scratch folder> --no-install`. For a file your team never changed, copy the release's file over it, and copy each module the release added. For a file your team made its own, preserve the intended product behavior while updating its contracts and meaningful behavior and security tests. Keep coverage for functionality the product still exposes; do not delete failures merely to finalize. Retire tests with removed sample features, or when they only pin wording or implementation details, and record intentionally deleted managed tests in `.meridian/keep.json`. A sample file your team deleted after its introduction is not named.",
-    checks: GATE_AND_BUILD,
+    instructions: "A project `create` made holds the template's sample (its pages, views, data, figures, their helpers and the demo gate in `proxy.ts`) as its own files, which an update never touches, while the shipped tests are Meridian's and arrive with it. The update reports differing sample files on every upgrade, even when a previous release already reported this migration. Each named file differs from the release's copy, or is a sample module introduced after your project's recorded version; the checks may depend on its changes. Write the release's copies into a scratch folder with `npx zz-meridian@<the version you are updating to> create <scratch folder> --no-install`. For a file your team never changed, copy the release's file over it, and copy each module the release added. For a file your team made its own, preserve the intended product behavior while updating its contracts and meaningful behavior and security tests. Keep coverage for functionality the product still exposes; do not delete failures merely to finalize. Retire tests with removed sample features, or when they only pin wording or implementation details, and record intentionally deleted managed tests in `.meridian/keep.json`. A sample file your team deleted after its introduction is not named.",
+    checks: TEST_RELEASE,
   },
   {
     id: 'proposal-approve-required',
@@ -708,7 +701,7 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     applies: (root) => matching(root, (rel, src) => SOURCE.test(rel) && importsOf(rel, src).some(({ from }) => from === 'src/components/patterns/proposal') && tags(src, 'Proposal').some((t) => !/\bstate\s*=/.test(t) && !/\bonApprove\s*=/.test(t) && !/\{\s*\.\.\./.test(t))),
     summary: 'An uncontrolled `Proposal` requires `onApprove`: without it, Approve claimed Applied for a change nothing ran.',
     instructions: 'Since 0.37.0 `src/components/patterns/proposal/index.tsx` types `onApprove` as required when no `state` is passed, so a `<Proposal>` of your own without either fails `tsc` at `--finalize`. In each file listed, pass the function that runs the change as `onApprove`, or pass `state` and own the card\'s states yourself. A card that only shows a change it cannot run is not a proposal: show it in a Card instead.',
-    checks: ['gate'],
+    checks: ['test:t1'],
   },
   {
     id: 'open-command-moved',
@@ -716,7 +709,7 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     applies: (root) => matching(root, (rel, src) => SOURCE.test(rel) && importsOf(rel, src).some(({ from, names }) => from === 'src/components/patterns/command-palette' && names.some((n) => n === 'openCommand' || n === 'usePaletteKey'))),
     summary: '`openCommand` and `usePaletteKey` moved to `src/components/patterns/command-palette/open.ts`, so the palette can be a chunk of its own.',
     instructions: 'Since 0.37.0 the Command palette loads with `next/dynamic` and is in no page\'s first load, so the two things a page needs before it opens, `openCommand` and `usePaletteKey`, live in `src/components/patterns/command-palette/open.ts` and the palette\'s own file no longer exports them. In each file listed, import them from `@/components/patterns/command-palette/open`. Mount the palette the way `src/views/console-chrome.tsx` does, through `dynamic()`, or importing it puts it back in every page\'s first load.',
-    checks: ['gate'],
+    checks: ['test:t1'],
   },
 ];
 
@@ -830,9 +823,9 @@ function removedExportReaders(root: string): string[] | null {
 }
 
 /**
- * The specifications of the pages the view tools render, as the gate reads them from 0.16.0, that lack "What the agent
+ * The specifications of the pages the view tools render, as the checks read them from 0.16.0, that lack "What the agent
  * does here". The registry is `src/views/tools.ts`, and a tool may be defined in any module under `src/` it imports, as
- * the gate reads them since 0.17.0, so every `src/` module is read. While a tool names no page, the gate cannot tell its
+ * the checks read them since 0.17.0, so every `src/` module is read. While a tool names no page, the checks cannot tell its
  * page, and neither can this: every console page specification without the part is listed then.
  */
 function viewToolPagesWithoutAgentDoes(root: string): string[] | null {
@@ -967,14 +960,14 @@ function navItemsWithoutNeeds(root: string): string[] | null {
   // beyond that is the team's own shape, and none of it is read.
   const items = navItemObjects(nav);
   // A project of 0.12.3's vintage also declares `NavItem` itself, without the property: an item that names a `needs` its
-  // own type does not have is the type error the gate prints next, so the change is not done until the type carries it.
+  // own type does not have is the type error the checks print next, so the change is not done until the type carries it.
   const type = navItemType(body);
   return items.some((item) => !/\bneeds\s*:/.test(item)) || (type !== undefined && !/\bneeds\s*:/.test(type)) ? [rel] : null;
 }
 
 /**
  * The page specifications under a route group of the project's own, at the top of its app folder, that lack the part the
- * gate asks for there from 0.15.0. The template's `(dashboard)` is left out: the rule has covered it since 0.9.0.
+ * checks ask for there from 0.15.0. The template's `(dashboard)` is left out: the rule has covered it since 0.9.0.
  */
 function ownGroupPagesWithoutAgentReads(root: string): string[] | null {
   const dirs: string[] = [];

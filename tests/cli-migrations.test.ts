@@ -361,19 +361,6 @@ describe('the 0.16.3 migrations', () => {
   });
 });
 
-describe('the 0.17.0 migration', () => {
-  it('finds a file that calls `finalOutcome` with a boolean, and leaves one that passes the tiers', () => {
-    const imp = "import { finalOutcome } from '../scripts/lib/coverage.ts';\n";
-    expect(byId('verify-tiers').since).toBe('0.17.0');
-    expect(byId('verify-tiers').checks).toEqual(['gate']);
-    expect(byId('verify-tiers').applies(project({ 'tests/verify-suite-outcome.test.ts': `${imp}finalOutcome(true, []);\n` }), '0.35.0')).toEqual(['tests/verify-suite-outcome.test.ts']);
-    expect(byId('verify-tiers').applies(project({ 'tests/verify-suite-outcome.test.ts': `${imp}finalOutcome({ full: true, timed: false }, []);\n` }), '0.35.0')).toBeNull();
-    // A call of another function by that name, with no import of the coverage module, is not this migration's.
-    expect(byId('verify-tiers').applies(project({ 'tests/other.test.ts': 'finalOutcome(true, []);\n' }), '0.35.0')).toBeNull();
-    expect(byId('verify-tiers').applies(path.resolve(import.meta.dirname, '..'), '0.35.0')).toBeNull();
-  });
-});
-
 describe('the 0.19.0 migration', () => {
   it('finds a test that expects a period with no data to draw a track, and leaves the release\'s own', () => {
     const imp = "import { ColumnChart } from '@/components/charts/column-chart';\n";
@@ -627,7 +614,7 @@ describe('the 0.36.0 migration', () => {
 
 describe('the verify-modes migration', () => {
   it('is declared for 0.5.0', () => expect(byId('verify-modes').since).toBe('0.5.0'));
-  it('names each team file that still passes a removed verify flag', () => {
+  it('names each team file that still runs verify, with a removed flag or none', () => {
     const root = project({
       'package.json': JSON.stringify({ scripts: { ci: 'pnpm verify -- --quick', verify: 'node scripts/verify.ts' } }),
       '.github/workflows/ci.yml': 'jobs:\n  check:\n    steps:\n      - run: pnpm verify --no-vitals\n',
@@ -644,14 +631,14 @@ describe('the verify-modes migration', () => {
       'scripts/meridian.sh': '#!/bin/sh\npnpm verify --quick\n',
       '.meridian/manifest.json': JSON.stringify({ version: '0.4.0', route: 'create', brand: {}, files: { 'scripts/meridian.sh': 'sha256-x' } }),
     });
-    expect(byId('verify-modes').applies(root, '0.35.0')).toEqual(['scripts/ci.sh']);
+    expect(byId('verify-modes').applies(root, '0.35.0')).toEqual(['package.json', 'scripts/ci.sh']);
   });
-  it('does not apply once only the modes are used', () => {
+  it('applies to a plain verify call too, since the command itself is gone', () => {
     const root = project({
       'package.json': JSON.stringify({ scripts: { ci: 'pnpm verify --full', verify: 'node scripts/verify.ts' } }),
       '.github/workflows/ci.yml': 'jobs:\n  check:\n    steps:\n      - run: pnpm verify --full --perf\n',
     });
-    expect(byId('verify-modes').applies(root, '0.35.0')).toBeNull();
+    expect(byId('verify-modes').applies(root, '0.35.0')).toEqual(['package.json', '.github/workflows/ci.yml']);
   });
 });
 

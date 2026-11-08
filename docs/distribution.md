@@ -41,7 +41,7 @@ rebuilding each page on Meridian's components, the fake API, and reading what th
   CLI's own source or hold the sample's own figures, which a product replaces. The package carries `dist/`, `payload/`, its README and nothing else: no dependencies, no install
   scripts.
 - **No runtime dependency**: nothing in a dashboard imports `zz-meridian`. It needs Node 22.18 or newer.
-- **Shared session source**: `scripts/lib/update-session.ts` is the one authored standalone, erasable-TypeScript implementation used by an adopted project's plain-Node gate. The payload producer also generates `cli/src/update-session.ts` from the same `HEAD` snapshot, or tracked working-tree source under `--worktree`. Run the producer before CLI compilation and packing; never edit the generated companion.
+- **Shared session source**: `scripts/lib/update-session.ts` is the one authored standalone, erasable-TypeScript implementation used by an adopted project's plain-Node checks. The payload producer also generates `cli/src/update-session.ts` from the same `HEAD` snapshot, or tracked working-tree source under `--worktree`. Run the producer before CLI compilation and packing; never edit the generated companion.
 
 ## Commands
 
@@ -76,7 +76,7 @@ Then, in this order:
 3. Replaces their global stylesheet with the template's `app/globals.css`, keeping theirs as `app/globals.before.css`
    for the agent to port from.
 4. Runs `scripts/brand.ts --existing` with the brand arguments given (or the name from their `package.json`): the name,
-   the accent and the contrast gate. Then it writes Meridian's managed block into their `AGENTS.md`, and `docs/brief.md`
+   the accent and the contrast check. Then it writes Meridian's managed block into their `AGENTS.md`, and `docs/brief.md`
    when they have none.
 5. Installs the skill and writes the manifest.
 6. Runs their package manager's install (pnpm with `--no-frozen-lockfile`, since adopt has just changed `package.json`), `next typegen` and `tsc --noEmit`, and prints the result and the next step:
@@ -86,8 +86,8 @@ Three things make the copy safe in someone else's project. Meridian's own files 
 pinned to the exact module (`…/button/index`), so a team's `components/ui/button.tsx` can never be resolved in place
 of Meridian's whatever their `@/` alias says; the team imports Meridian as `@meridian/…`, which `adopt` adds to
 `tsconfig.json`. Meridian's scripts carry their own lint exceptions, so they pass the team's eslint config — and a
-project that has none is given Meridian's `eslint.config.ts`, since the gate runs the lint and the project would
-otherwise be handed a gate it cannot pass; a project whose configuration is a legacy `.eslintrc`, which ESLint 9 no
+project that has none is given Meridian's `eslint.config.ts`, since `test:release` runs the lint and the project would
+otherwise be handed a check it cannot pass; a project whose configuration is a legacy `.eslintrc`, which ESLint 9 no
 longer loads, keeps it and is told. And
 `scripts/package.json` declares the scripts ES modules when the project's own `package.json` does not, without
 changing how the rest of the project is read.
@@ -126,11 +126,11 @@ three edits named below. It needs a project that adopted or created Meridian 0.3
    work pending, `1` a refusal, failure or interruption.
 4. **Resolutions.** The team (or its agent) makes each decision in the project's own file, then records it in
    `resolutions.json`: one object per item, with the item id, `resolved` (or `not-applicable` for a migration), a
-   reason, and the SHA-256 each named file has now. While the session is open, `node scripts/check.ts` (and so the gate)
+   reason, and the SHA-256 each named file has now. While the session is open, `node scripts/check.ts` (and so every test command)
    fails and names it.
 5. **Finalize.** `npx zz-meridian@<version> update --finalize` (the version named in `MERGE.md`) checks that every
    item has one current resolution, automatically written or removed managed files still match what the update applied,
-   and the installed dependencies match the plan, then runs the project's gate and one `next build` in place. A later
+   and the installed dependencies match the plan, then runs `test:release` and one `next build` in place. A later
    edit to an automatic managed write must be restored from the session's `new/` copy; a removed file must remain absent.
    To have a deliberate edit reviewed in a new plan, save it separately, restore the planned bytes, abort, then reapply
    it and restart. Shared team-owned files and kept files remain the team's. It compares every protected input before
@@ -163,14 +163,14 @@ upgrade at or after its introduction, so updated managed tests do not silently o
 Route, page, layout and page-spec migrations recognize both `app/` and `src/app/`, and report the actual project paths.
 The direct-query migration and layer-rule guard cover both app roots too: use the authorized reader, or state a required direct-query escape on the call's own line.
 A migration only reads team-owned files (the ownership rule's managed paths are skipped); a file it cannot read is absent.
-A project already on the new shape gets no line. Every entry carries `gate` and `build` as its checks (`verify-modes`, `agent-reads-section`, `nav-needs`, `agent-reads-own-group`, `agent-does-here-section`, `marker-measured-on-observe`, `view-page-matched-as-next`, `journey-moved`, `today-in-timezone`, `verify-tiers`, `no-data-mark`, `table-grid`, `direct-query-escape`, `app-description`, `live-stream-shutdown`, `nav-item-fields`, `workspace-homes-moved`, `env-reset-before-each`, `computed-series-slot`, `proposal-approve-required` and `open-command-moved`, `gate` alone; `missing-routes`, `verify`), and its
+A project already on the new shape gets no line. Every entry names the command that proves it — `test:release` where the change reaches the build, `test:t1` where a test run is enough — and its
 instructions name the section of a reference (`cache.md`, `live.md`, `validation.md`, `agents.md`, `customize.md`), of the Start guide or of `docs/assistant.md` to follow.
 
-Thirty-one arrived after 0.5.0 and are resolved as the skill's `references/update.md` says: `share-view-context` and `agent-reads-section` (0.9.0), `assistant-view-tools` (0.10.0), `nav-needs` (0.13.0), `agent-reads-own-group` (0.15.0), `refusal-declared`, `managed-exports-removed`, `view-tool-page-explore`, `agent-does-here-section` and `sample-pages-renamed` (0.16.0), `marker-measured-on-observe` (0.16.2), `view-page-matched-as-next`, `journey-moved` and `today-in-timezone` (0.16.3), `verify-tiers` (0.17.0), `no-data-mark` (0.19.0), `table-grid` (0.26.0), `four-layers` (0.28.0), which moves thirty-eight modules into `src/logic/`, `env-reset-before-each` (0.29.0), `direct-query-escape` and `app-description` (0.30.0), `live-stream-shutdown` (0.31.1), `missing-routes` and `computed-series-slot` (0.32.0), `use-size-callback-ref` (0.33.0), `self-hosted-fonts` (0.34.0), and `nav-item-fields`, `workspace-homes-moved` and `sample-with-its-tests` (0.36.0), the last of which names a created project's sample files the release's shipped tests no longer pass, and `proposal-approve-required` and `open-command-moved` (0.37.0). The ten of 0.5.0 are:
+Thirty arrived after 0.5.0 and are resolved as the skill's `references/update.md` says: `share-view-context` and `agent-reads-section` (0.9.0), `assistant-view-tools` (0.10.0), `nav-needs` (0.13.0), `agent-reads-own-group` (0.15.0), `refusal-declared`, `managed-exports-removed`, `view-tool-page-explore`, `agent-does-here-section` and `sample-pages-renamed` (0.16.0), `marker-measured-on-observe` (0.16.2), `view-page-matched-as-next`, `journey-moved` and `today-in-timezone` (0.16.3), `no-data-mark` (0.19.0), `table-grid` (0.26.0), `four-layers` (0.28.0), which moves thirty-eight modules into `src/logic/`, `env-reset-before-each` (0.29.0), `direct-query-escape` and `app-description` (0.30.0), `live-stream-shutdown` (0.31.1), `missing-routes` and `computed-series-slot` (0.32.0), `use-size-callback-ref` (0.33.0), `self-hosted-fonts` (0.34.0), and `nav-item-fields`, `workspace-homes-moved` and `sample-with-its-tests` (0.36.0), the last of which names a created project's sample files the release's shipped tests no longer pass, and `proposal-approve-required` and `open-command-moved` (0.37.0). The ten of 0.5.0 are:
 
 | Id | Reported when a team-owned file still has | Completion step |
 |----|-------------------------------------------|-----------------|
-| `verify-modes` | a `package.json` script, workflow or shell file passing `--quick`, `--no-vitals` or `--extra` to `verify` | `validation.md`: replace each with the current test commands, `pnpm test:t1`, `pnpm test:t2` or `pnpm test:release` |
+| `verify-modes` | a `package.json` script, workflow or shell file that still runs the old `verify` command, with a removed flag or none | `docs/testing.md`: replace each with the current test commands, `pnpm test:t1`, `pnpm test:t2` or `pnpm test:release`; none takes an argument |
 | `shell-assistant-promise` | `<AppShell` with an `assistant=` prop and no promise (`.then(`, `Promise`, `use(`) | `cache.md`, "The shell's assistant promise": pass a promise and do not await it |
 | `assistant-available-promise` | `useAssistantAvailable()` used as a boolean | same section: `use(useAssistantAvailable())` inside `Suspense` |
 | `clock-now-required` | `<Freshness`, `<ShellTools` or `<AlertsPanel` without `now=`, or `formatRelative(` with one argument | `cache.md`, "The clock is the data's": pass the data's clock |
@@ -184,13 +184,13 @@ Thirty-one arrived after 0.5.0 and are resolved as the skill's `references/updat
 The consumer smoke (`--update`) updates a project adopted and a project created with each of the newest releases before this one (`--origins`: one at release, three weekly). It resolves the migrations the update reports, as `references/update.md` tells an agent: a created origin, whose files are the template's,
 takes the release's versions of the affected team-owned files and the files that arrived with them; an adopted origin,
 whose pages are the team's own, makes the minimal edit the instruction names. It then records the resolutions and
-finalizes, so the gate and the build run on the result, and checks the team's own files kept their bytes.
+finalizes, so `test:release` and the build run on the result, and checks the team's own files kept their bytes.
 
 ### The keep register
 
 `.meridian/keep.json` is a JSON array of exactly `{ "path", "reason" }` entries, for a managed file the team keeps
 its own version of on purpose. An update leaves a kept file as it is; when the new release removes it, it stays and is
-recorded as retired. The gate refuses an entry for a path Meridian never managed (or retired and left in place), and a
+recorded as retired. The checks refuse an entry for a path Meridian never managed (or retired and left in place), and a
 kept file that is missing; an update never recreates one.
 
 ### `brand`
@@ -298,4 +298,4 @@ token, prop or card is major; a new card, token or variant is minor; a corrected
 - **v1**: `create`, `adopt`, `skill`, the manifest, package-manager-agnostic scripts, the pipeline, the
   fixture test.
 - **v2**: `update` (dry-run, update, report, resolutions, finalize, resume, abort), the keep register, `brand`, the session
-  checks in the gate.
+  checks in `test:release`.

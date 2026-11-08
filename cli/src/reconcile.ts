@@ -58,7 +58,7 @@ export function reconcilePackage(teamText: string, template: Template, need: Nee
   const unreadable = (why: string) => ({
     text: null,
     changes: [],
-    migrations: [file('package-json', `package.json could not be reconciled: ${why}`, `Meridian did not touch package.json because ${why}. Add the dependencies and scripts the target template declares by hand, keeping any comments or nonstandard syntax, then run the project's gate.`, 'package.json')],
+    migrations: [file('package-json', `package.json could not be reconciled: ${why}`, `Meridian did not touch package.json because ${why}. Add the dependencies and scripts the target template declares by hand, keeping any comments or nonstandard syntax, then run the project's \`test:t1\`.`, 'package.json')],
   });
   let pkg: unknown;
   try {
@@ -99,15 +99,15 @@ export function reconcilePackage(teamText: string, template: Template, need: Nee
     const wantMin = minimum(spec);
     const dep = (summary: string, how: string) => migrations.push(file(`dependency:${name}`, summary, how, 'package.json'));
     if (!haveMin || !wantMin) {
-      dep(`${name} is declared as ${JSON.stringify(have)}, a specification Meridian cannot compare`, `Meridian ${target === 'dependencies' ? 'needs' : 'tests with'} ${name} ${spec}. Replace the nonstandard requirement ${JSON.stringify(have)} with one that is at least ${spec}, or confirm in writing that your pinned source is compatible, then run the project's gate.`);
+      dep(`${name} is declared as ${JSON.stringify(have)}, a specification Meridian cannot compare`, `Meridian ${target === 'dependencies' ? 'needs' : 'tests with'} ${name} ${spec}. Replace the nonstandard requirement ${JSON.stringify(have)} with one that is at least ${spec}, or confirm in writing that your pinned source is compatible, then run the project's \`test:t1\`.`);
       continue;
     }
     const order = compare(haveMin, wantMin);
     if (order === 0) continue;
     if (order > 0) {
-      dep(`${name} ${have} is newer than the tested ${spec}`, `Meridian is tested against ${name} ${spec}; your ${have} is newer and was left as it is. Run the project's gate and build with it, and read the ${name} release notes for breaking changes before relying on it.`);
+      dep(`${name} ${have} is newer than the tested ${spec}`, `Meridian is tested against ${name} ${spec}; your ${have} is newer and was left as it is. Run the project's \`test:release\`, which builds with it, and read the ${name} release notes for breaking changes before relying on it.`);
     } else if (haveMin[0] !== wantMin[0] && !written(name, have)) {
-      dep(`${name} ${have} is an older major than the tested ${spec}`, `Meridian is tested against ${name} ${spec}; your ${have} is a lower major and is incompatible. Follow the ${name} upgrade guide to reach ${spec}, then run the project's gate.`);
+      dep(`${name} ${have} is an older major than the tested ${spec}`, `Meridian is tested against ${name} ${spec}; your ${have} is a lower major and is incompatible. Follow the ${name} upgrade guide to reach ${spec}, then run the project's \`test:t1\`.`);
     } else {
       // An older entry of the same major is compatible, and an entry Meridian wrote is Meridian's: raised where it is.
       // A lower major the team chose is theirs to upgrade, above.
@@ -124,7 +124,7 @@ export function reconcilePackage(teamText: string, template: Template, need: Nee
   for (const name of new Set([...need.runtime, ...need.dev])) {
     for (const [where, src] of overrideSources) {
       if (src && Object.keys(src).some((k) => k === name || k.startsWith(`${name}@`))) {
-        migrations.push(file(`dependency-override:${name}`, `${where} overrides ${name}`, `Your ${where} entry for ${name} replaces the version Meridian is tested with. Remove it or confirm it still satisfies the target's tested requirement, then run the project's gate.`, 'package.json'));
+        migrations.push(file(`dependency-override:${name}`, `${where} overrides ${name}`, `Your ${where} entry for ${name} replaces the version Meridian is tested with. Remove it or confirm it still satisfies the target's tested requirement, then run the project's \`test:t1\`.`, 'package.json'));
         break;
       }
     }
@@ -143,7 +143,7 @@ export function reconcilePackage(teamText: string, template: Template, need: Nee
       scripts![name] = want;
       changes.push(`updated script ${name}`);
     } else if (have !== want) {
-      migrations.push(file(`script:${name}`, `script "${name}" differs from Meridian's`, `Your "${name}" script is ${JSON.stringify(have)} and was kept; Meridian's is ${JSON.stringify(want)}. Merge the two so the project's gate can call it, or leave yours if it already does the same work.`, 'package.json'));
+      migrations.push(file(`script:${name}`, `script "${name}" differs from Meridian's`, `Your "${name}" script is ${JSON.stringify(have)} and was kept; Meridian's is ${JSON.stringify(want)}. Merge the two so the project's \`test:t1\` can call it, or leave yours if it already does the same work.`, 'package.json'));
     }
   }
 

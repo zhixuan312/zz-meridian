@@ -10,7 +10,7 @@ import { describe, expect, it } from 'vitest';
 const ROOT = path.resolve(import.meta.dirname, '..');
 
 const DOCS = ['README.md', 'AGENTS.md', 'CONTRIBUTING.md', 'cli/README.md', 'docs/testing.md', 'docs/distribution.md', 'docs/benchmark.md', 'docs/agents.md', 'docs/start-a-dashboard.md', 'docs/atlas-scenario-coverage.md', 'docs/skill-evals.md', 'docs/data-display.md', 'docs/data-layers.md', 'docs/product-workspaces.md', 'docs/surfaces.md', 'docs/voice.md'];
-const SCRIPTS = ['scripts/test-run.ts', 'scripts/brand.ts', 'scripts/verify.config.ts', 'scripts/audit.ts', 'scripts/interactions.ts', 'scripts/keyboard.ts', 'scripts/assistant.ts', 'scripts/live.ts', 'scripts/navigate.ts', 'scripts/vitals.ts', 'scripts/sizes.ts', 'scripts/shot.ts', 'scripts/route-policy.ts', 'cli/src/context.ts', 'cli/src/create.ts', 'cli/src/cli.ts', 'cli/src/session.ts', 'cli/scripts/smoke.ts'];
+const SCRIPTS = ['scripts/test-run.ts', 'scripts/brand.ts', 'scripts/verify.config.ts', 'scripts/audit.ts', 'scripts/interactions.ts', 'scripts/keyboard.ts', 'scripts/assistant.ts', 'scripts/live.ts', 'scripts/navigate.ts', 'scripts/vitals.ts', 'scripts/sizes.ts', 'scripts/shot.ts', 'scripts/route-policy.ts', 'cli/src/context.ts', 'cli/src/create.ts', 'cli/src/cli.ts', 'cli/src/session.ts', 'cli/src/merge-report.ts', 'cli/src/reconcile.ts', 'cli/scripts/smoke.ts'];
 const WORKFLOWS = ['.github/workflows/release.yml', '.github/workflows/weekly.yml'];
 const SKILLS = (() => {
   const walk = (rel: string): string[] => fs.readdirSync(path.join(ROOT, rel), { withFileTypes: true }).flatMap((e) => e.isDirectory() ? walk(`${rel}/${e.name}`) : e.name.endsWith('.md') ? [`${rel}/${e.name}`] : []);

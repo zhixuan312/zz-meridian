@@ -24,7 +24,7 @@ function journal(over: Partial<UpdateJournal> = {}): UpdateJournal {
       { path: 'src/b.ts', disposition: 'edited', action: 'stage', base: side(h('b')), ours: side(h('e')), target: side(h('2')), applied: false, appliedHash: null },
       { path: 'src/gone.ts', disposition: 'retired-kept', action: 'leave', base: side(h('d')), ours: side(h('f')), target: side(null), applied: false, appliedHash: null },
     ],
-    migrations: [{ id: 'script:gate', summary: 'Your gate script differs from Meridian\'s.', paths: ['package.json'], instructions: 'Point gate at node scripts/gate.ts.', checks: ['gate'] }],
+    migrations: [{ id: 'script:demo', summary: 'Your demo script differs from Meridian\'s.', paths: ['package.json'], instructions: 'Point demo at node scripts/demo.ts.', checks: ['test:t1'] }],
     retired: [{ path: 'src/gone.ts', baselineHash: h('d'), reason: 'kept by the team' }],
     validation: [],
     failure: null,
@@ -36,7 +36,7 @@ const disk: Record<string, string> = { 'src/a.ts': h('1'), 'src/b.ts': h('e'), '
 const hashOf = (p: string) => (disk[p] ?? null) as ReturnType<Parameters<typeof unresolved>[2]>;
 const resolved: Resolution[] = [
   { id: 'file:src/b.ts', status: 'resolved', reason: 'Ours is deliberate.', files: { 'src/b.ts': h('e') } },
-  { id: 'migration:script:gate', status: 'resolved', reason: 'Renamed ours to gate:team.', files: { 'package.json': h('c') } },
+  { id: 'migration:script:demo', status: 'resolved', reason: 'Renamed ours to demo:team.', files: { 'package.json': h('c') } },
 ];
 
 describe('parseJournal', () => {
@@ -58,11 +58,11 @@ describe('unresolved', () => {
   it('lists the staged path and the migration until they are resolved', () => {
     const out = unresolved(journal(), [], hashOf).join('\n');
     expect(out).toMatch(/file:src\/b\.ts/);
-    expect(out).toMatch(/migration:script:gate/);
+    expect(out).toMatch(/migration:script:demo/);
   });
   it('is empty once every item has a valid, current resolution', () => expect(unresolved(journal(), resolved, hashOf)).toEqual([]));
   it('accepts a not-applicable migration with a reason and the inspected hashes', () => {
-    expect(unresolved(journal(), [resolved[0], { id: 'migration:script:gate', status: 'not-applicable', reason: 'We have no gate script.', files: { 'package.json': h('c') } }], hashOf)).toEqual([]);
+    expect(unresolved(journal(), [resolved[0], { id: 'migration:script:demo', status: 'not-applicable', reason: 'We have no demo script.', files: { 'package.json': h('c') } }], hashOf)).toEqual([]);
   });
   it('reports a resolution whose file changed since it was recorded', () => {
     expect(unresolved(journal(), [{ ...resolved[0], files: { 'src/b.ts': h('9') } }, resolved[1]], hashOf).join('\n')).toMatch(/file:src\/b\.ts/);

@@ -87,7 +87,7 @@ export function renderMergeReport(i: ReportInput): string {
   for (const o of j.operations) out.push(`${o.disposition.padEnd(15)}  ${o.action.padEnd(6)}  ${o.path}`);
   out.push('```', '', '</details>', '');
 
-  out.push('## Verify', '', 'Finalizing runs the project gate and one build. To check by hand first:', '', '```', `${i.pm} run gate`, 'node node_modules/next/dist/bin/next build', '```', '');
+  out.push('## Verify', '', 'Finalizing runs `test:release` — every Tier 1 and Tier 2 test, the timed browser suites, lint, the type check and a build — and one more build. To check by hand first:', '', '```', `${i.pm} run test:release`, 'node node_modules/next/dist/bin/next build', '```', '');
 
   const sections = changelogSections(i.changelog, j.sourceVersion);
   out.push('## Changelog', '', sections.length ? `The target release's changelog sections above ${j.sourceVersion}:` : `The target release has no changelog section above ${j.sourceVersion}.`, '');

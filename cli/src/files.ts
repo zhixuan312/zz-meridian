@@ -77,7 +77,7 @@ export function writeIn(root: string, rel: string, content: string | Buffer) {
 
 export const sha256 = (content: string | Buffer) => `sha256-${createHash('sha256').update(content).digest('hex')}`;
 
-/** What a quiet command may print and still be read whole: past Node's 1 MiB default the child is killed, and a long gate reads as exit 1. */
+/** What a quiet command may print and still be read whole: past Node's 1 MiB default the child is killed, and a long test run reads as exit 1. */
 const OUTPUT = 256 * 1024 * 1024;
 
 /**
