@@ -2,6 +2,12 @@
 
 Every release of ZZ Meridian, newest first. Versions follow semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Each entry says what breaks and what to do instead.
 
+## [Unreleased]
+
+### Known issues
+
+- **The presses suite failed once, on `8471c9f3`, under heavy load from other repositories' runs.** It took 1305.8 s against 1056.2 s on a quieter run, and its own failing line was lost to the runner, so the cause is not named: a retry that passed does not clear it, and it is reported here as flaky. The link wait is now a 60 s hang guard rather than a 10 s budget, and a failed suite now prints its own route, control and reason, so a recurrence names its cause and is fixed under "Fixed means".
+
 ## [0.38.0] · 2026-11-07
 
 ### Added
