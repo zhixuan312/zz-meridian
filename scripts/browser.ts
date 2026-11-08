@@ -138,12 +138,17 @@ for (const sig of ['SIGINT', 'SIGTERM'] as const) process.on(sig, () => process.
 
 function run(script: string, extra: string[], env: NodeJS.ProcessEnv = process.env): Promise<Ran> {
   const t = Date.now();
+  // Announced before it starts, not only after: a suite that stops making progress leaves its command line as the last
+  // line of the log, so where it stalled is visible without attaching to the process.
+  console.log(`… ${script}${extra.length ? ` ${extra.join(' ')}` : ''}`);
   return new Promise((resolve) => {
     const child = spawn(process.execPath, [script, ...extra], { cwd: ROOT, env });
     suites.add(child);
     let out = '';
     let err = '';
-    child.stdout.on('data', (d) => (out += d));
+    // Streamed as it arrives and captured for the report: a suite that stops making progress is visible in the log at
+    // once, instead of the log staying silent until the child finally exits.
+    child.stdout.on('data', (d) => { out += d; process.stdout.write(d); });
     child.stderr.on('data', (d) => { err += d; process.stderr.write(d); });
     child.on('close', (status) => { suites.delete(child); resolve({ status, out: out.trim(), err: err.trim(), took: secs(t) }); });
   });

@@ -22,7 +22,7 @@
  *   control and keyboard stop (scripts/browser.ts --depth fn) and, on a quiet machine, the timed runs (--depth timed).
  *   The 20-sample protocol (--depth perf) runs where CI is true, in the weekly job that calls `pnpm test:t2`.
  */
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { bin } from './lib/bin.ts';
@@ -186,23 +186,37 @@ const affectsDeep = (files: string[]): boolean => files.some((f) => /^(scripts|j
  * The browser suites (scripts/browser.ts), at the depths asked for. Its own line per suite is passed through; the JSON
  * line says what ran and what did not, and its exit 2 is a run with something not run, not a failure.
  */
-function browser(depth: string, built = false): { ok: boolean; notRun: string[]; ran: string[] } {
-  const r = spawnSync(process.execPath, ['scripts/browser.ts', '--depth', depth, ...(built ? ['--built'] : [])], { cwd: ROOT, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
-  const out = `${r.stdout ?? ''}\n${r.stderr ?? ''}`;
-  // A failed suite's own lines are indented beneath its phase line; they name the route and the control, so they are
-  // printed with it rather than dropped with the rest of the suite output.
-  for (const l of out.split('\n').filter((l) => /^(ok|FAIL|not run|n\/a)\s/.test(l) || /^\s+FAIL\b/.test(l) || /^browser: /.test(l))) console.log(l);
-  const json = /^browser: (.*)$/m.exec(out);
-  let state: { ran?: string[]; failed?: boolean; notRun?: string[] } | null = null;
-  try { state = json ? JSON.parse(json[1]) : null; } catch { state = null; }
-  if (r.status === 1 || !state) {
-    console.log(`test: browser suites FAIL (${out.split('\n').filter(Boolean).slice(-1)[0] ?? 'no output'})`);
-    return { ok: false, notRun: [], ran: [] };
-  }
-  return { ok: true, notRun: state.notRun ?? [], ran: state.ran ?? [] };
+function browser(depth: string, built = false): Promise<{ ok: boolean; notRun: string[]; ran: string[] }> {
+  // Streamed as it arrives, not collected and printed when the child exits: a suite that stops making progress must be
+  // visible in the log while it is stuck, never only after it finally returns or times out.
+  return new Promise((resolve) => {
+    const child = spawn(process.execPath, ['scripts/browser.ts', '--depth', depth, ...(built ? ['--built'] : [])], { cwd: ROOT });
+    let out = '';
+    let rest = '';
+    const drain = (text: string) => {
+      out += text;
+      rest += text;
+      let i: number;
+      while ((i = rest.indexOf('\n')) >= 0) { console.log(rest.slice(0, i)); rest = rest.slice(i + 1); }
+    };
+    child.stdout.on('data', (d) => drain(String(d)));
+    child.stderr.on('data', (d) => drain(String(d)));
+    child.on('close', (status) => {
+      if (rest.trim()) console.log(rest);
+      const json = /^browser: (.*)$/m.exec(out);
+      let state: { ran?: string[]; failed?: boolean; notRun?: string[] } | null = null;
+      try { state = json ? JSON.parse(json[1]) : null; } catch { state = null; }
+      if (status === 1 || !state) {
+        console.log(`test: browser suites FAIL (${out.split('\n').filter(Boolean).slice(-1)[0] ?? 'no output'})`);
+        resolve({ ok: false, notRun: [], ran: [] });
+        return;
+      }
+      resolve({ ok: true, notRun: state.notRun ?? [], ran: state.ran ?? [] });
+    });
+  });
 }
 
-function release(): number {
+async function release(): Promise<number> {
   const notRun: string[] = [];
   if (staticChecks() !== 0) {
     console.log('test:release: FAIL: a static check failed');
@@ -238,7 +252,7 @@ function release(): number {
     return 1;
   }
   // The browser suites against that build: the sweeps first, then the timed runs alone on the quiet machine.
-  const browserRun = browser('fn,timed', true);
+  const browserRun = await browser('fn,timed', true);
   if (!browserRun.ok) {
     console.log('test:release: FAIL: a browser suite failed');
     return 1;
@@ -266,7 +280,7 @@ function release(): number {
   return 0;
 }
 
-function affected(tier: 't1' | 't2'): number {
+async function affected(tier: 't1' | 't2'): Promise<number> {
   const { ref, from } = baseline();
   const { all: changed, present, deleted } = changedSince(ref);
   const withTier2 = tier === 't2';
@@ -356,7 +370,7 @@ function affected(tier: 't1' | 't2'): number {
   const notRun: string[] = [];
   if (withTier2 && (ranWhole || touchesBrowserAll(changed))) {
     const perf = process.env.CI === 'true' && ranWhole;
-    const r = browser(perf ? 'fn,perf' : 'fn');
+    const r = await browser(perf ? 'fn,perf' : 'fn');
     if (!r.ok) {
       console.log(`test:${tier}: FAIL: a browser suite failed`);
       return 1;
@@ -395,5 +409,5 @@ if (import.meta.main) {
     console.error('test-run: takes one of t1, t2 or release, and nothing else. Use pnpm test:t1, pnpm test:t2 or pnpm test:release.');
     process.exit(1);
   }
-  process.exit(tier === 'release' ? release() : affected(tier as 't1' | 't2'));
+  process.exit(tier === 'release' ? await release() : await affected(tier as 't1' | 't2'));
 }
