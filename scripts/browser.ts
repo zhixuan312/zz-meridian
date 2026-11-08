@@ -270,6 +270,11 @@ const sized = await run('scripts/sizes.ts', ['--base', `http://127.0.0.1:${serve
   for (const v of verdicts) {
     phase(v.status, `sizes: ${v.name}`, sized.took, v.detail);
     if (v.status === 'FAIL') { failed = true; beneath(sized.out.split('\n').filter((l) => l.startsWith('FAIL')).join('\n')); }
+    else if (v.status === 'warn' && v.name === 'html') {
+      // The HTML growth was not judged (a baseline recorded under another Node major, or none): a check that did not run.
+      const why = /growth not judged \((.*)\)/.exec(v.detail)?.[1];
+      notRun.push(`sizes: html${why ? ` (${why})` : ''}`);
+    }
     else if (v.status === 'not run') notRun.push(`sizes: ${v.name}`);
     else ran.push(`sizes: ${v.name}`);
   }

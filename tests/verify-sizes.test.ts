@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest';
-import { firstLoad, firstLoadProblems, htmlGrowthProblems, htmlProblems, htmlRoutes, isPrefetch, prefetchProblems } from '../scripts/lib/sizes.ts';
+import { firstLoad, firstLoadProblems, htmlGrowthProblems, htmlNodeMismatch, htmlProblems, htmlRoutes, isPrefetch, prefetchProblems } from '../scripts/lib/sizes.ts';
 import { DEFAULT_BUDGETS, budgetsOf } from '../scripts/lib/budgets.ts';
 
 const KiB = 1024;
@@ -73,6 +73,16 @@ describe('HTML and prefetch', () => {
     expect(isPrefetch({ headers: { rsc: '1' } })).toBe(false);
     expect(prefetchProblems({ desktopBytes: 90 * KiB, phoneClosedBytes: 2 * KiB }, { desktop: 80, phoneClosed: 0 })).toHaveLength(2);
     expect(prefetchProblems({ desktopBytes: 60 * KiB, phoneClosedBytes: 0 }, { desktop: 80, phoneClosed: 0 })).toEqual([]);
+  });
+});
+
+describe('the Node major an HTML baseline was recorded under', () => {
+  it('judges the growth only under that major, never across majors', () => {
+    expect(htmlNodeMismatch(22, 22)).toBeNull();
+    expect(htmlNodeMismatch(22, 26)).toBe('baseline recorded on Node 22, this build used Node 26');
+  });
+  it('warns the same way for a baseline recorded before the field existed', () => {
+    expect(htmlNodeMismatch(undefined, 26)).toBe('the baseline records no Node major; this build used Node 26');
   });
 });
 

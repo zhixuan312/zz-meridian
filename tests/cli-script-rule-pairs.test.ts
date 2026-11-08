@@ -106,7 +106,8 @@ const CLEAN: Required<Build> = {
     { route: '/api/live', firstLoadChunkPaths: ['chunks/a.js'] },
   ],
   chunks: { 'chunks/a.js': 100 * KiB, 'chunks/b.js': 50 * KiB },
-  baseline: { method: 'x', routes: { '/': 100 * KiB, '/services': 150 * KiB }, html: { method: 'x', routes: { '/': 20 * KiB, '/services': 20 * KiB } } },
+  // The HTML figures are judged only under the Node major they were recorded with; the fixture records this run's.
+  baseline: { method: 'x', routes: { '/': 100 * KiB, '/services': 150 * KiB }, html: { method: 'x', node: Number(process.versions.node.split('.')[0]), routes: { '/': 20 * KiB, '/services': 20 * KiB } } },
   config: 'export default {};\n',
 };
 const CLEAN_PAGES: Pages = { '/': { status: 200, bytes: 20 * KiB }, '/services': { status: 200, bytes: 20 * KiB } };

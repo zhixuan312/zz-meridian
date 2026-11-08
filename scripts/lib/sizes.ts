@@ -81,6 +81,18 @@ export function htmlGrowthProblems(
   return { problems, growth: baseline ? 'checked' : 'not-configured', overAllowance };
 }
 
+/**
+ * Why the HTML figures cannot be judged against a baseline, or null when they can. Gzip frames a page's inline flight
+ * stream differently on each Node major: one page built by Node 22 and by Node 26 compresses a quarter apart while their
+ * bytes differ by 0.3%, and the compressor itself differs a little between majors. A figure recorded under one major
+ * says nothing about a build made under another, so the baseline records the major and is judged only under it. A
+ * baseline recorded before the field existed is in the same position.
+ */
+export function htmlNodeMismatch(recorded: number | undefined, current: number): string | null {
+  if (recorded === undefined) return `the baseline records no Node major; this build used Node ${current}`;
+  return recorded === current ? null : `baseline recorded on Node ${recorded}, this build used Node ${current}`;
+}
+
 /** Pages over an absolute HTML cap, a route a project pins on top of its baseline. */
 export function htmlProblems(sizes: Record<string, number>, capsKiB: Record<string, number>): string[] {
   return Object.entries(capsKiB)

@@ -11,7 +11,9 @@
  * downloads: the complete streamed response from the app running at `--base`, gzipped. Every page in the baseline's
  * `html` is held to `budgets.htmlGrowthPct` over its own figure, and a route in `budgets.htmlKb` also to that absolute
  * cap. Without a baseline a growth check is `not-configured`, a warning and never a pass; without `--base` the HTML is
- * `not run`.
+ * `not run`. Gzip frames a page's inline flight stream differently on each Node major, so the baseline records the major
+ * its HTML was built with (`html.node`) and the growth is judged only under that major: under another, or when the field
+ * is absent, the line is a `warn` saying the growth was not judged — never an `ok`.
  *
  * `--write-baseline` records the build's sizes as the team's baseline, `scripts/verify.baseline.json`, and checks
  * nothing: first-load for every route and, with `--base`, the HTML of every page (no API, no dynamic segment, not the
@@ -35,7 +37,7 @@ import { gzipSync } from 'node:zlib';
 
 import { FIRST_LOAD_CAP_KB, budgetsOf, type BudgetsConfig } from './lib/budgets.ts';
 import { distDirOf } from './lib/next-config.ts';
-import { firstLoad, firstLoadProblems, htmlGrowthProblems, htmlProblems, htmlRoutes, KIB, kib } from './lib/sizes.ts';
+import { firstLoad, firstLoadProblems, htmlGrowthProblems, htmlNodeMismatch, htmlProblems, htmlRoutes, KIB, kib } from './lib/sizes.ts';
 import verifyConfig from './verify.config.ts';
 import { holdArgs } from './lib/args.ts';
 
@@ -67,20 +69,23 @@ function measured(dist: string): { route: string; bytes: number }[] {
   } catch (e) { return fail((e as Error).message); }
 }
 
-type Baseline = { firstLoad: Record<string, number>; html: Record<string, number> | null };
-const SHAPE = '{ "method": string, "routes": { "<route>": <bytes> }, "html"?: { "method": string, "routes": { "<route>": <bytes> } } }';
+type Baseline = { firstLoad: Record<string, number>; html: Record<string, number> | null; htmlNode?: number };
+const SHAPE = '{ "method": string, "routes": { "<route>": <bytes> }, "html"?: { "method": string, "node"?: number, "routes": { "<route>": <bytes> } } }';
+/** The Node major that built this run's pages: the HTML figures are comparable only within one, so the baseline records it. */
+const NODE_MAJOR = Number(process.versions.node.split('.')[0]);
 const sized = (v: unknown): v is Record<string, number> => !!v && typeof v === 'object' && Object.values(v).every((n) => typeof n === 'number' && n > 0);
 
 /** The team's baseline, or null when it has none. A file that is there and wrong is an error, never a missing baseline. */
 function baselineOf(): Baseline | null {
   if (!fs.existsSync(BASELINE)) return null;
   const rel = path.relative(ROOT, BASELINE);
-  let raw: { routes?: unknown; html?: { routes?: unknown } };
+  let raw: { routes?: unknown; html?: { node?: unknown; routes?: unknown } };
   try { raw = JSON.parse(fs.readFileSync(BASELINE, 'utf8')); } catch (e) { return fail(`${rel} is not JSON: ${(e as Error).message}`); }
-  if (!sized(raw?.routes) || (raw.html !== undefined && !sized(raw.html?.routes))) {
+  const node = raw?.html?.node;
+  if (!sized(raw?.routes) || (raw.html !== undefined && (!sized(raw.html?.routes) || (node !== undefined && !(Number.isInteger(node) && (node as number) > 0))))) {
     return fail(`${rel} must be ${SHAPE}; write it with node scripts/sizes.ts --write-baseline --base <url>`);
   }
-  return { firstLoad: raw.routes, html: raw.html ? (raw.html.routes as Record<string, number>) : null };
+  return { firstLoad: raw.routes, html: raw.html ? (raw.html.routes as Record<string, number>) : null, htmlNode: node as number | undefined };
 }
 
 /** Each page's complete response, read through the end of the stream and gzipped: what a person downloads. */
@@ -110,15 +115,18 @@ async function htmlSizes(routes: string[], why: string): Promise<{ sizes: Record
 async function main(): Promise<number> {
   const routes = measured(path.join(ROOT, await distDirOf(ROOT)));
   if (args.includes('--write-baseline')) {
-    const kept = fs.existsSync(BASELINE) ? baselineOf()?.html ?? null : null;
-    let html: Record<string, number> | null = kept;
+    const before = fs.existsSync(BASELINE) ? baselineOf() : null;
+    let html: Record<string, number> | null = before?.html ?? null;
+    // A baseline kept as it was keeps the major it was recorded under, so its figures stay judgeable under that major.
+    let node: number | undefined = before?.htmlNode;
     if (base) {
       const got = await htmlSizes(htmlRoutes(routes.map((r) => r.route)), 'a page');
       // A page that redirects or is refused here (a sign-in, a 404 by design) has no HTML of its own to hold.
       for (const p of got.problems) console.log(`warn    ${p}; left out of the HTML baseline`);
       html = got.sizes;
+      node = NODE_MAJOR;
     }
-    const written = { method: METHOD, routes: Object.fromEntries(routes.map((r) => [r.route, r.bytes])), ...(html ? { html: { method: HTML_METHOD, routes: html } } : {}) };
+    const written = { method: METHOD, routes: Object.fromEntries(routes.map((r) => [r.route, r.bytes])), ...(html ? { html: { method: HTML_METHOD, ...(node === undefined ? {} : { node }), routes: html } } : {}) };
     fs.writeFileSync(BASELINE, JSON.stringify(written, null, 2) + '\n');
     console.log(`ok      wrote ${path.relative(ROOT, BASELINE)}: first-load of ${routes.length} routes, ${base ? `the HTML of ${Object.keys(html ?? {}).length} pages` : html ? 'the HTML baseline kept as it was (no --base to measure)' : 'no HTML (pass --base <url> of the running build to record it)'}`);
     return 0;
@@ -142,20 +150,24 @@ async function main(): Promise<number> {
   const built = new Set(routes.map((r) => r.route));
   const held = Object.keys(baseline?.html ?? {}).filter((r) => built.has(r));
   const pages = [...new Set([...held, ...capped])].sort();
-  let html: { status: Status; sizes: Record<string, number>; growth?: 'checked' | 'not-configured'; overCap?: boolean; overAllowance?: boolean; reason?: string; problems: string[] };
+  let html: { status: Status; sizes: Record<string, number>; growth?: 'checked' | 'not-configured'; overCap?: boolean; overAllowance?: boolean; reason?: string; unjudged?: string; problems: string[] };
   if (!base) html = { status: 'not run', sizes: {}, reason: 'no app is running to measure', problems: [] };
   else {
     const got = await htmlSizes(pages, 'its HTML is held');
-    const grown = htmlGrowthProblems(got.sizes, { growthPct: budgets.htmlGrowthPct, baseline: baseline?.html ?? null });
+    // A baseline recorded under another Node major says nothing about this build's figures: growth is not judged, and a
+    // cap alone can still fail the line. Never `ok`, because nothing was compared.
+    const unjudged = baseline?.html ? htmlNodeMismatch(baseline.htmlNode, NODE_MAJOR) : null;
+    const grown = unjudged ? { problems: [], growth: 'not-configured' as const, overAllowance: false } : htmlGrowthProblems(got.sizes, { growthPct: budgets.htmlGrowthPct, baseline: baseline?.html ?? null });
     const caps = htmlProblems(got.sizes, budgets.htmlKb);
     const problems = [...got.problems, ...grown.problems, ...caps];
-    html = { status: problems.length ? 'FAIL' : grown.growth === 'not-configured' ? 'warn' : 'ok', sizes: got.sizes, growth: grown.growth, overCap: caps.length > 0, overAllowance: grown.overAllowance, problems };
+    html = { status: problems.length ? 'FAIL' : unjudged || grown.growth === 'not-configured' ? 'warn' : 'ok', sizes: got.sizes, growth: grown.growth, overCap: caps.length > 0, overAllowance: grown.overAllowance, ...(unjudged ? { unjudged } : {}), problems };
   }
   const largestPage = Object.entries(html.sizes).sort((a, b) => b[1] - a[1])[0];
   lines.push(html.status === 'not run'
     ? `not run html ${html.reason}`
     : `${html.status === 'FAIL' ? 'FAIL   ' : html.status === 'warn' ? 'warn   ' : 'ok     '} html ${Object.keys(html.sizes).length} pages gzipped${largestPage ? `, largest ${largestPage[0]} ${(largestPage[1] / KIB).toFixed(1)} KiB` : ''}`
-      + ` · growth ${html.growth === 'checked' ? (html.overAllowance ? `over ${budgets.htmlGrowthPct}% of the baseline` : `within ${budgets.htmlGrowthPct}% of the baseline`) : 'not-configured (no html in scripts/verify.baseline.json: node scripts/sizes.ts --write-baseline --base <url>)'}`
+      + (html.unjudged ? ` · growth not judged (${html.unjudged})`
+        : ` · growth ${html.growth === 'checked' ? (html.overAllowance ? `over ${budgets.htmlGrowthPct}% of the baseline` : `within ${budgets.htmlGrowthPct}% of the baseline`) : 'not-configured (no html in scripts/verify.baseline.json: node scripts/sizes.ts --write-baseline --base <url>)'}`)
       + ` · cap ${html.overCap ? 'exceeded' : 'held'}`
       + (capped.length ? ` · caps ${capped.map((r) => `${r} ${html.sizes[r] === undefined ? 'unmeasured' : `${(html.sizes[r] / KIB).toFixed(1)} KiB`} of ${budgets.htmlKb[r]}`).join(', ')}` : ''));
   for (const p of html.problems) lines.push(`FAIL    ${p}`);
