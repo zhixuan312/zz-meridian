@@ -2,13 +2,24 @@
 
 Every release of ZZ Meridian, newest first. Versions follow semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Each entry says what breaks and what to do instead.
 
-## [Unreleased]
+## [0.39.0] · 2026-11-08
+
+### Breaking
+
+- **Three test commands replace `verify` and `gate`.** `pnpm test:t1` runs the Tier 1 tests affected by the changes since the last green run, the static checks and the type check; `pnpm test:t2` adds the affected Tier 2 checks and the browser sweeps; `pnpm test:release` runs every Tier 1 and Tier 2 test once, with the timed browser suites, lint, the type check and a production build. None takes an argument: the command selects the tests. Removed: `pnpm verify`, `pnpm gate`, the `test`, `audit`, `interactions`, `live`, `keyboard` and `vitals` scripts, `test:all`, the `--full`, `--timed`, `--perf`, `--quick`, `--no-vitals`, `--extra` and `--shard` flags, and `scripts/verify.ts`, `scripts/gate.ts` and `cli/scripts/release-check.ts`. `scripts/verify.config.ts` and `scripts/verify.baseline.json` stay. Replace every removed call in your scripts, workflows and shell files: the update's `verify-modes` migration names them, and `docs/testing.md` describes the three commands and what each runs.
+
+### Changed
+
+- **A browser suite streams its output and names its own failures.** A run announces each suite before it starts, passes its lines through as they arrive, and prints a failed suite's own `FAIL route · control · reason` lines, so a stall or a red names its subject instead of leaving a silent log.
+- **A link that never answers ends within a hang guard, not a budget.** The presses follow every link with a 60 s hang guard, far beyond any real answer: a link that accepts and never answers is a named failure, and how fast a page answers is judged only by the timed suites.
 
 ### Fixed
 
 - **The size checks run again, and every page's HTML is measured.** `scripts/sizes.ts` measures first-load JS from the build's stats and each page's gzipped HTML from the app serving that build. `test:release` ran it with no address, so the HTML line was `not run` in every release, locally and in CI, and `test:t2` did not run it at all. The browser suites now run it once against the app they start, after the build and before any page is walked, and a FAIL fails the run. The baselines in `scripts/verify.baseline.json` are re-recorded from this build: most pages are smaller than the 2026-10-27 figures, and `/system` grew 7.7% as the Atlas gained entries — over the 5% growth allowance, and recorded with the command as an accepted growth. The owner accepted that re-record on 2026-11-08. Every absolute cap held.
 
 ### Known issues
+
+- **`pnpm test:t1` can miss a test that reads a folder rather than naming a file.** A changed document or skill file selects the tests that name it; a test that reads a whole folder — `tests/cli-skill-layouts.test.ts` over `skills/zz-meridian/` — names none of its files, so a skill or document edit can pass `test:t1` and fail `test:release` (one did on `b28a8133`). Until the selector runs the whole Tier 1 set for a change no test names, run `pnpm test:release` after changing a document or a skill file.
 
 - **A stalled DevTools command can end a browser suite; the session is not reconnected, and the cause is not named.** Twice on 2026-11-08 a suite ended on `Error: Input.dispatchTouchEvent timed out` — the 30 s command timeout in `scripts/lib/chrome.ts:152` — after a long run under the throttled CPU: the presses on `8471c9f3` (1305.8 s against 1056.2 s on a quieter run, its failing line lost to the runner) and the vitals walk on `275e65f4` (`/system/states/error`, after 18 of 30 pages). Neither repeated: a full presses run passed on the quieter machine, and on `275e65f4` the page passed alone three times and the whole vitals sequence passed 30/30 standalone. A retry that passes is not a cause found, so this is reported as flaky, not cleared. Raising the 30 s timeout is not the fix; the open work is to find why a command stalls on a live connection — a renderer blocked, or a connection the protocol has stopped answering — and to fail that page by name and carry on instead of ending the suite. The owner decided on 2026-11-08 to release with this open, as a known issue.
 
