@@ -257,8 +257,24 @@ let server = await start(app);
 if (failed) finish();
 
 // The size checks, against the app this run started: first-load bytes from the build's own stats, then every page's
-// gzipped HTML through the served response. One call, once, so neither figure is measured twice; a FAIL fails the run.
-report('sizes: first-load and the HTML of every page', await run('scripts/sizes.ts', ['--base', `http://127.0.0.1:${server.port}`]));
+// gzipped HTML through the served response. One call, once, so neither figure is measured twice. Each verdict is its own
+// phase, as the check prints it: a FAIL fails the run, and a warning ("growth not configured") is never reported as a
+// pass — an adopted project has no HTML baseline until it records one.
+const sized = await run('scripts/sizes.ts', ['--base', `http://127.0.0.1:${server.port}`]);
+{
+  const verdicts = sized.out.split('\n').flatMap((l) => {
+    const m = /^(ok|warn|FAIL|not run)\s+(first-load|html)\s+(.*)$/.exec(l);
+    return m ? [{ status: m[1] as Status, name: m[2], detail: m[3] }] : [];
+  });
+  if (!verdicts.length) { failed = true; phase('FAIL', 'sizes', sized.took, '(printed no verdict)'); beneath(`${sized.out}\n${sized.err}`); }
+  for (const v of verdicts) {
+    phase(v.status, `sizes: ${v.name}`, sized.took, v.detail);
+    if (v.status === 'FAIL') { failed = true; beneath(sized.out.split('\n').filter((l) => l.startsWith('FAIL')).join('\n')); }
+    else if (v.status === 'not run') notRun.push(`sizes: ${v.name}`);
+    else ran.push(`sizes: ${v.name}`);
+  }
+  if (sized.status !== 0) failed = true;
+}
 if (failed) finish();
 
 // The navigation: every rail route when the config maps them all, else the smoke routes with their data and interaction
