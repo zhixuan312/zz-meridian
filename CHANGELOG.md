@@ -4,6 +4,10 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 
 ## [Unreleased]
 
+### Fixed
+
+- **The size checks run again, and every page's HTML is measured.** `scripts/sizes.ts` measures first-load JS from the build's stats and each page's gzipped HTML from the app serving that build. `test:release` ran it with no address, so the HTML line was `not run` in every release, locally and in CI, and `test:t2` did not run it at all. The browser suites now run it once against the app they start, after the build and before any page is walked, and a FAIL fails the run. The baselines in `scripts/verify.baseline.json` are re-recorded from this build: most pages are smaller than the 2026-10-27 figures, and `/system` grew 7.7% as the Atlas gained entries — over the 5% growth allowance, and recorded with the command as an accepted growth. Every absolute cap held.
+
 ### Known issues
 
 - **The presses suite failed once, on `8471c9f3`, under heavy load from other repositories' runs.** It took 1305.8 s against 1056.2 s on a quieter run, and its own failing line was lost to the runner, so the cause is not named: a retry that passed does not clear it, and it is reported here as flaky. The link wait is now a 60 s hang guard rather than a 10 s budget, and a failed suite now prints its own route, control and reason, so a recurrence names its cause and is fixed under "Fixed means".

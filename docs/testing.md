@@ -116,6 +116,7 @@ Every test belongs to exactly one tier, by the convention alone: a file matching
 | `static/contrast` | static | non-functional | 1 | no | `node scripts/contrast.ts` | Every specified foreground on its background, in every theme and accent. |
 | `static/types` | static | functional | 1 | no | `next typegen`, `tsc --noEmit` | The routes are generated and the TypeScript compiles. |
 | `static/lint` | static | non-functional | 1 | no | `eslint . --ignore-pattern .meridian/` | The code passes the Next ESLint config. |
+| `build/sizes` | large | non-functional | 1 | no | the browser run of `pnpm test:t2` and `pnpm test:release` | `scripts/sizes.ts --base`: every route's first-load JS and every page's gzipped HTML, against their caps and baselines. |
 | `tests/tier1` | small, medium | functional | 1 | no | `pnpm test:t1` | Every test under `tests/` outside the Tier 2 convention, selected by the import graph. |
 | `tests/tier1/cli` | small, medium | functional | 1 | no | `pnpm test:t1` | Meridian's repository only. The package's own tests: the CLI, its update and release paths. |
 | `tests/tier1/deep` | large | functional | 1 | no | its own stage of `pnpm test:t1`, `pnpm test:t2` and `pnpm test:release` | Meridian's repository only. `tests/deep-*`: the check scripts against browser fixtures, each planted defect found and each corrected twin passing. |

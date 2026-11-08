@@ -243,11 +243,10 @@ async function release(): Promise<number> {
     }
     if (!deep.ran) notRun.push('browser-fixture tests (tests/deep-*) (no Chrome)');
   }
-  // A production build, its routes declared as the policy says and its first load within budget. The HTML sizes need a
-  // served build, so this run reports them not run rather than passing them.
+  // A production build, its routes declared as the policy says. The size checks need the built app served, so they run
+  // inside the browser suites below, once, against the app they start.
   if (run('build: next build', bin('next'), ['build'], { ...process.env, MERIDIAN_TYPES_CHECKED: '1' }) !== 0
-    || run('route policy', process.execPath, ['scripts/route-policy.ts']) !== 0
-    || run('sizes: first-load', process.execPath, ['scripts/sizes.ts']) !== 0) {
+    || run('route policy', process.execPath, ['scripts/route-policy.ts']) !== 0) {
     console.log('test:release: FAIL: a build check failed');
     return 1;
   }

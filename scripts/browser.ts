@@ -18,6 +18,10 @@
  *
  * `--built` reuses the production build the caller already made (test:release builds once).
  *
+ * The build's sizes (scripts/sizes.ts) run once against the app this run starts, whatever the depth: first-load bytes of
+ * every route and every page's gzipped HTML, each against its budget and baseline. The HTML needs an app serving the
+ * build, so it runs here rather than beside the build itself, which starts nothing.
+ *
  * The presses and the walk-throughs change data, so nothing runs against a backend that is not proven local: a data URL
  * that resolves to another host, or an adopted project that has not said where its presses go, reports the browser not
  * run with the reason, never passed. Chrome absent is the same. One line per suite (`ok`, `FAIL` or `not run`), then
@@ -250,6 +254,11 @@ const refusal = config.refusal === 'absent'
   : { absent: false, selector: '[data-no-access]', page: 'NoAccess' };
 
 let server = await start(app);
+if (failed) finish();
+
+// The size checks, against the app this run started: first-load bytes from the build's own stats, then every page's
+// gzipped HTML through the served response. One call, once, so neither figure is measured twice; a FAIL fails the run.
+report('sizes: first-load and the HTML of every page', await run('scripts/sizes.ts', ['--base', `http://127.0.0.1:${server.port}`]));
 if (failed) finish();
 
 // The navigation: every rail route when the config maps them all, else the smoke routes with their data and interaction
