@@ -189,7 +189,9 @@ const affectsDeep = (files: string[]): boolean => files.some((f) => /^(scripts|j
 function browser(depth: string, built = false): { ok: boolean; notRun: string[]; ran: string[] } {
   const r = spawnSync(process.execPath, ['scripts/browser.ts', '--depth', depth, ...(built ? ['--built'] : [])], { cwd: ROOT, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
   const out = `${r.stdout ?? ''}\n${r.stderr ?? ''}`;
-  for (const l of out.split('\n').filter((l) => /^(ok|FAIL|not run|n\/a)\s/.test(l) || /^browser: /.test(l))) console.log(l);
+  // A failed suite's own lines are indented beneath its phase line; they name the route and the control, so they are
+  // printed with it rather than dropped with the rest of the suite output.
+  for (const l of out.split('\n').filter((l) => /^(ok|FAIL|not run|n\/a)\s/.test(l) || /^\s+FAIL\b/.test(l) || /^browser: /.test(l))) console.log(l);
   const json = /^browser: (.*)$/m.exec(out);
   let state: { ran?: string[]; failed?: boolean; notRun?: string[] } | null = null;
   try { state = json ? JSON.parse(json[1]) : null; } catch { state = null; }

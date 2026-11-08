@@ -36,12 +36,12 @@ describe('the presses bound a link that never answers', () => {
     child.stderr.on('data', (d) => (out += String(d)));
     const outcome = await Promise.race([
       new Promise<number>((resolve) => child.on('close', (code) => resolve(code ?? 1))),
-      new Promise<'timeout'>((resolve) => setTimeout(() => resolve('timeout'), 25_000)),
+      new Promise<'timeout'>((resolve) => setTimeout(() => resolve('timeout'), 90_000)),
     ]);
     if (outcome === 'timeout') child.kill('SIGKILL');
-    expect(outcome, `interactions.ts did not end within 25 s: it was still waiting on the link. Output:\n${out}`).not.toBe('timeout');
+    expect(outcome, `interactions.ts did not end within 90 s: it was still waiting on the link. Output:\n${out}`).not.toBe('timeout');
     expect(outcome).toBe(1);
-    expect(out).toContain('link /never did not answer within 10 s');
+    expect(out).toContain('link /never did not answer within 60 s');
     expect(out).toContain('interactions:');
-  }, 60_000);
+  }, 150_000);
 });

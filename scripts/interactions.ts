@@ -43,6 +43,13 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const HANG_BOUND_MS = 5000;
 
 /**
+ * The link check's guard, not a budget: a link that accepts and never answers would otherwise wait forever. A functional
+ * suite does not judge time (docs/testing.md), so this sits far beyond any real answer — a route on this machine answers
+ * in well under a second, even on a loaded one — and only ends a wait that has nothing else to end it.
+ */
+const LINK_HANG_GUARD_MS = 60_000;
+
+/**
  * The page's controls and how each is named: its accessible name and the roots it sits in. A control is found again by
  * that name (and which of the controls with it), never by its place in the walk: a later load can draw the controls in
  * another order or fewer of them for a while, a table still loading or rows a concurrent write changed (#65). A name that
@@ -159,13 +166,13 @@ const walk = async (route: string, width: number) => {
     try { path = linkPath(href, base + route); } catch { failures.push(`${route}: link ${href} is not a URL`); continue; }
     if (path === null || checkedLinks.has(path)) continue;
     // As the persona the page was opened as: a link that person may follow answers them, not a request with no one signed
-    // in. The fetch is bounded like the presses are: a link that never answers is a dead link and a failure, never a walk
-    // that waits on it with nothing to end the wait.
-    const status = await fetch(base + path, { redirect: 'manual', headers: cookie ? { cookie: `${cookie.name}=${cookie.value}` } : {}, signal: AbortSignal.timeout(10_000) })
+    // in. A link that never answers is a dead link and a failure, ended by the hang guard — never by a budget the walk
+    // would be judging the machine against.
+    const status = await fetch(base + path, { redirect: 'manual', headers: cookie ? { cookie: `${cookie.name}=${cookie.value}` } : {}, signal: AbortSignal.timeout(LINK_HANG_GUARD_MS) })
       .then((r) => r.status)
       .catch(() => 0);
     checkedLinks.set(path, status);
-    if (!status) failures.push(`${route}: link ${href}${path === href ? '' : ` (${path})`} did not answer within 10 s`);
+    if (!status) failures.push(`${route}: link ${href}${path === href ? '' : ` (${path})`} did not answer within ${LINK_HANG_GUARD_MS / 1000} s`);
     else if (status >= 400) failures.push(`${route}: link ${href}${path === href ? '' : ` (${path})`} answers ${status}`);
   }
   for (let i = 0; i < controls.length; i++) {
