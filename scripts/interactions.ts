@@ -158,10 +158,15 @@ const walk = async (route: string, width: number) => {
     let path: string | null;
     try { path = linkPath(href, base + route); } catch { failures.push(`${route}: link ${href} is not a URL`); continue; }
     if (path === null || checkedLinks.has(path)) continue;
-    // As the persona the page was opened as: a link that person may follow answers them, not a request with no one signed in.
-    const status = (await fetch(base + path, { redirect: 'manual', headers: cookie ? { cookie: `${cookie.name}=${cookie.value}` } : {} })).status;
+    // As the persona the page was opened as: a link that person may follow answers them, not a request with no one signed
+    // in. The fetch is bounded like the presses are: a link that never answers is a dead link and a failure, never a walk
+    // that waits on it with nothing to end the wait.
+    const status = await fetch(base + path, { redirect: 'manual', headers: cookie ? { cookie: `${cookie.name}=${cookie.value}` } : {}, signal: AbortSignal.timeout(10_000) })
+      .then((r) => r.status)
+      .catch(() => 0);
     checkedLinks.set(path, status);
-    if (status >= 400) failures.push(`${route}: link ${href}${path === href ? '' : ` (${path})`} answers ${status}`);
+    if (!status) failures.push(`${route}: link ${href}${path === href ? '' : ` (${path})`} did not answer within 10 s`);
+    else if (status >= 400) failures.push(`${route}: link ${href}${path === href ? '' : ` (${path})`} answers ${status}`);
   }
   for (let i = 0; i < controls.length; i++) {
     // Which of the controls named alike this is, in the order the first load listed them; and, for a name that has

@@ -248,7 +248,9 @@ let server = await start(app);
 if (failed) finish();
 
 // The navigation: every rail route when the config maps them all, else the smoke routes with their data and interaction
-// reported not configured. A product mid-adoption has no mappings yet; the smoke is what its own run can prove.
+// reported not configured. A product mid-adoption has no mappings yet; the smoke is what its own run can prove. The
+// function run is read here; the timed one runs last, in the timed block below, so what judges a time runs alone.
+let navPlan: { label: string; args: (timing: 'on' | 'off') => string[] } | null = null;
 if (want('fn') || want('timed')) {
   let rail: { routes: string[]; landing: string };
   try { rail = await railRoutes(); } catch (e) { phase('FAIL', 'the rail routes could not be read', null, (e as Error).message); failed = true; finish(); }
@@ -259,14 +261,13 @@ if (want('fn') || want('timed')) {
     try { navRoutes = selectSmokeRoutes({ smokeRoutes: config.smokeRoutes, nav: rail.routes, landing: rail.landing }); }
     catch { navRoutes = rail.routes.slice(0, 3); }
   }
-  const navArgs = (timing: 'on' | 'off') => ['--base', `http://127.0.0.1:${server.port}`, '--mode', full ? 'full' : 'default', '--timing', timing, '--routes', navRoutes.join(',')];
+  navPlan = {
+    label: full ? 'every rail route' : `the smoke routes ${navRoutes.join(', ')}`,
+    args: (timing) => ['--base', `http://127.0.0.1:${server.port}`, '--mode', full ? 'full' : 'default', '--timing', timing, '--routes', navRoutes.join(',')],
+  };
   if (want('fn')) {
-    const nav = await run('scripts/navigate.ts', navArgs('off'), app);
-    report(`navigation: ${full ? 'every rail route' : `the smoke routes ${navRoutes.join(', ')}`}, its budgets unjudged`, nav);
-  }
-  if (want('timed')) {
-    const nav = await run('scripts/navigate.ts', navArgs('on'), app);
-    report(`navigation: ${full ? 'every rail route' : `the smoke routes ${navRoutes.join(', ')}`}, its budgets judged`, nav);
+    const nav = await run('scripts/navigate.ts', navPlan.args('off'), app);
+    report(`navigation: ${navPlan.label}, its budgets unjudged`, nav);
   }
   if (failed) finish();
 
@@ -372,6 +373,10 @@ if (want('fn')) {
 // The timed set, last and alone: what judges a time must not share the machine with anything else.
 if (want('timed')) {
   const here = `http://127.0.0.1:${server.port}`;
+  if (navPlan) {
+    report(`navigation: ${navPlan.label}, its budgets judged`, await run('scripts/navigate.ts', navPlan.args('on'), app));
+    if (failed) finish();
+  }
   if (hasLiveSample) {
     const dropped = await start({ ...app, LIVE_DROP_HINTS: '1' });
     const live = await run('scripts/live.ts', ['--base', here, '--drop-base', `http://127.0.0.1:${dropped.port}`], app);
