@@ -1,5 +1,5 @@
 /**
- * The journey scripts/navigate.ts and scripts/perf.ts both take: a tab instrumented to time a press by the page's own
+ * The journey scripts/navigate.ts and scripts/perf.ts both take, each as a diagnostic: a tab instrumented to time a press by the page's own
  * clock, a start on the rail route (or the workspace menu) that reaches the destination, the waits a visitor would make
  * (the destination's prefetch, the phone drawer), and the three times from the press: the shell, the data and the
  * interaction, and each workspace's home the start may go through. scripts/navigate.ts says what each time means and how

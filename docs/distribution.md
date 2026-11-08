@@ -18,14 +18,14 @@ An earlier sentence named `adopt`, the wrong command for every request for a new
 The sentence is written to be sent as a goal (`/goal` in Claude Code and Codex), which keeps the agent working until a
 separate model, reading the conversation after every turn, finds the condition met. That model sees the sentence, not
 the skill, so the sentence ends with a condition the transcript can show: the hand-over (SKILL.md, step 7) quotes
-`pnpm verify --full --timed`'s last line and the scoreboard's count, or names what only the person can decide or
+the release command's last line and the scoreboard's count, or names what only the person can decide or
 provide. The degree lives in the skill, never in the sentence: `skills/zz-meridian/references/standard.md` holds the
 register, the scoreboard of floors and craft kept for every view, the loop run until nothing is weak, and which
 decisions the agent makes and records and which wait for the person. People do not say how good it has to be, so the skill does not ask.
 
 The split follows what each part is good at. The package does the settled work, the same way every time, and proves it
 built: what to copy, which dependencies to merge, the alias, the stylesheet, the brand. The agent does the judgement:
-rebuilding each page on Meridian's components, the fake API, and reading what `pnpm verify` finds.
+rebuilding each page on Meridian's components, the fake API, and reading what the tests and diagnostics find.
 
 ## The package
 
@@ -136,7 +136,7 @@ three edits named below. It needs a project that adopted or created Meridian 0.3
    it and restart. Shared team-owned files and kept files remain the team's. It compares every protected input before
    and after each check, so a check that rewrites source fails it. Only when both pass and nothing changed does it
    write the target manifest, atomically, and archive the
-   session under `.meridian/history/<version>/<id>/`. It prints the stage times and says the browser checks did not run. `update --finalize --verify` runs the project's default `verify` once in place of the gate and the build, and prints and records its coverage line instead; the consumer smoke holds it to at most 30 s more than the adopted origin's plain finalize.
+   session under `.meridian/history/<version>/<id>/`. It prints the stage times. Finalize runs `test:release` and one production build, and the Postgres suite is reported not run where its services are absent; the consumer smoke holds it to plain finalize.
 6. **Resume.** `update --resume` continues an update that was interrupted, failed to apply or install, or was started
    with `--no-install`. It applies only what is still the recorded original, never overwrites a later edit, and ends as
    a plain update does.
@@ -170,7 +170,7 @@ Thirty-one arrived after 0.5.0 and are resolved as the skill's `references/updat
 
 | Id | Reported when a team-owned file still has | Completion step |
 |----|-------------------------------------------|-----------------|
-| `verify-modes` | a `package.json` script, workflow or shell file passing `--quick`, `--no-vitals` or `--extra` to `verify` | `validation.md`: replace each with `pnpm verify`, `--full`, `--timed` or `--perf` in the script, workflow or shell file |
+| `verify-modes` | a `package.json` script, workflow or shell file passing `--quick`, `--no-vitals` or `--extra` to `verify` | `validation.md`: replace each with the current test commands, `pnpm test:t1`, `pnpm test:t2` or `pnpm test:release` |
 | `shell-assistant-promise` | `<AppShell` with an `assistant=` prop and no promise (`.then(`, `Promise`, `use(`) | `cache.md`, "The shell's assistant promise": pass a promise and do not await it |
 | `assistant-available-promise` | `useAssistantAvailable()` used as a boolean | same section: `use(useAssistantAvailable())` inside `Suspense` |
 | `clock-now-required` | `<Freshness`, `<ShellTools` or `<AlertsPanel` without `now=`, or `formatRelative(` with one argument | `cache.md`, "The clock is the data's": pass the data's clock |
@@ -231,23 +231,21 @@ Modelled on the release pipeline of the owner's earlier packages, one package in
 
 1. **Dispatch**: `gh workflow run release.yml -f version=<v> [-f dry_run=true]`, from `master`. The version must equal
    `cli/package.json`'s and the tag must be unused.
-2. **Gates** (ubuntu-24.04, 4 CPUs, the reference profile), each run once: the package's own tests (`tests/cli-*`) and the
-   browser-fixture tests of the checks (`tests/deep-*`), which no adopted or created project has and the default
-   `verify` leaves out; the template's default `verify` from a clean `.next` through
-   `cli/scripts/release-check.ts`, within 180 s on the shared runner (whose CPU varies: one commit measured 111 s on one
-   and 152 s on another) and with its browser smoke (the gate and the template's unit tests run
-   inside it); and the consumer smoke from the built tarball (step 4). The full, perf and recovery suites are never
-   run here: they run weekly (below).
-   When each check runs, in a project and in this repository, is `docs/testing.md`'s `## When each runs`.
+2. **Gates** (ubuntu-24.04, 4 CPUs, the reference profile), each run once: `pnpm test:release` (every Tier 1 and Tier 2
+   test, lint, the type check and a production build with its size and route checks; the package's own tests
+   `tests/cli-*` and the browser-fixture tests `tests/deep-*` are inside it), then the consumer smoke from the built
+   tarball (step 4). The Postgres suite is reported not run here, because the job holds no service. Recovery and failure
+   cases run weekly (below). When each command runs, in a project and in this repository, is `docs/testing.md`'s
+   `## When each runs`.
 3. **Pack and assert, before anything is irreversible**: `npm pack` in `cli/`, then on the tarball: the bin has its
    `#!/usr/bin/env node` line; `payload/skills/zz-meridian/SKILL.md` and its references are there; at least 60 component
    folders are there; no `node_modules/`, `tests/` of the CLI, `out/` or `.next/`.
 4. **Consumer smoke, from the tarball** (`smoke.ts --adopt --create --update`):
    - `adopt` into `cli/test/fixture-next-app` (a minimal App Router app with two pages, its own stylesheet, a button and a data module), then
      install, `tsc --noEmit` and `next build`, all green. This is the test that keeps the Route A list complete.
-   - `create` into a clean folder, then its default `pnpm verify`. The smoke quotes the coverage line.
+   - `create` into a clean folder, then its `pnpm test:release`.
    - `update` from the release before (adopted and created, read from the registry): a dry-run that writes nothing, the
-     update, what it reports resolved, finalize with the gate and the build, and the team's bytes unchanged. One origin
+     update, what it reports resolved, finalize with the tests and the build, and the team's bytes unchanged. One origin
      at release and the last three weekly, so the time stays the same however many releases there are; the updater's
      own stages and each migration have their tests (`--update-all`, `tests/cli-*`).
 5. **Publish** the tarball with `npm` 11.5.1 or newer through trusted publishing (OIDC), with `--provenance`. `pnpm
@@ -262,12 +260,10 @@ Modelled on the release pipeline of the owner's earlier packages, one package in
 
 `dry_run` stops after step 4.
 
-**Weekly** (`.github/workflows/weekly.yml`, Mondays and on demand, master's current commit): the template's
-one job per tier on its own runner (`verify --full`, `verify --timed` and `verify --perf --shard <i>/5`, the perf part a report: a p95 over budget is a warning, a
-broken sample a failure; a dispatch names its jobs with `-f jobs=timed`), the browser-fixture tests of the checks
-(`deep`, the one job a release also runs, since Chrome is an input no commit pins), the Postgres references against a
-Postgres and a PgBouncer (`postgres`), the Design Atlas audit (`atlas`), and the consumer smoke's `--adopt --update --origins 3 --update-all --verify` from a tarball packed from that
-commit, labelled as the next patch so `update` treats it as unpublished: the adopted project's default verify cases,
+**Weekly** (`.github/workflows/weekly.yml`, Mondays and on demand, master's current commit): `pnpm test:t2` on the
+whole tree (a fresh clone has no green marker), the Postgres references against a Postgres and a PgBouncer (`postgres`),
+and the consumer smoke's `--adopt --update --origins 3 --update-all` from a tarball packed from that commit, labelled as
+the next patch so `update` treats it as unpublished:
 the update from each of the last three releases, the updater's stages on the 0.3.0 fixture, and every recovery and
 failure case of the update. Both run the
 consumer smoke's `--adopt` and `--update`; weekly reaches three releases back and every recovery case, a release only the

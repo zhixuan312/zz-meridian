@@ -7,7 +7,7 @@ import type { Page } from '../scripts/lib/chrome.ts';
  * The journeys read a page's heading once the page is there, not while its `loading.tsx` stands in for it. The
  * loading masthead holds the page's name ("Customer") where the record's name will be, so a heading read while the
  * body was still busy failed the customer step on a loaded machine (`found a page headed "Customer:"`, the created
- * project's `--full --timed` in the consumer smoke).
+ * project's `test:release` in the consumer smoke).
  */
 const page: Page = {
   errors: [],

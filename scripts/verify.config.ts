@@ -1,5 +1,6 @@
 /**
- * What `pnpm verify` needs to know about this project that it cannot discover from `app/`. Edit it; verify reads it.
+ * What the browser diagnostics need to know about this project that they cannot discover from `app/`. Edit it; the
+ * scripts under `scripts/` read it.
  */
 import { refusal } from '../src/app.config.ts';
 
@@ -31,7 +32,7 @@ type NavigationCheck = {
   budget?: Partial<{ [K in keyof ReadinessBudget]: Partial<DeviceBudget> }>;
 };
 
-/** One way `pnpm verify --as` signs the browser in: the cookie that names the person, and what that person is expected to see. */
+/** One way `--as` signs a diagnostic browser in: the cookie that names the person, and what that person is expected to see. */
 type Persona = {
   /** The cookie every browser suite carries, set before the first request; its value is the sample member's id. */
   cookie: { name: string; value: string };
@@ -49,7 +50,7 @@ type Persona = {
 type VerifyConfig = {
   /**
    * Detail pages checked beside every static route, one per state worth seeing (a normal record, a failed one).
-   * `pnpm verify --full` checks them with every static route. One that answers an error or draws the not-found screen
+   * The audit checks them with every static route. One that answers an error or draws the not-found screen
    * fails, since what was measured is that screen and not the record.
    */
   detailRoutes: string[];
@@ -96,9 +97,8 @@ type VerifyConfig = {
    */
   browserChecks?: (string | { script: string; browsers: number })[];
   /**
-   * The product's own browser checks that judge a time, run by `pnpm verify --timed` alone and one at a time, after the
-   * live data and before Web Vitals, each with `--base <url>` like `browserChecks`. A check that judges a time under the
-   * load of `--full` judges the load; move it here, and keep in `browserChecks` the half that judges no time.
+   * The product's own browser checks that judge a time, run one at a time, on a quiet machine, each with `--base <url>`
+   * like `browserChecks`. A check that judges a time under other load judges the load, not the page.
    */
   timedChecks?: string[];
   /**
@@ -132,8 +132,8 @@ type VerifyConfig = {
     prefetchKb?: { desktop: number; phoneClosed: number };
   };
   /**
-   * One check for every route in the rail (`nav` in src/app.config.ts). `--full`, `--timed` and `--perf` fail on a rail route that has
-   * none; the default smoke reports its data and interaction as not configured. Probes never write.
+   * One check for every route in the rail (`nav` in src/app.config.ts). A full navigation run fails on a rail route that
+   * has none; a narrowed run reports its data and interaction as not configured. Probes never write.
    * Selectors resolve inside open shadow roots as well as the light DOM; a descendant combinator does not cross a shadow
    * boundary, so name an element inside a root with a selector written for that root. When `controlSelector` matches more than
    * one element the first visible one is pressed and a `note: <selector> matches <n> elements; the first visible one was used`
@@ -143,7 +143,7 @@ type VerifyConfig = {
   /** The up to three rail routes the default smoke visits. Without it: the landing route and the next two rail routes. */
   smokeRoutes?: string[];
   /**
-   * The people `pnpm verify --as <persona>` can sign the browser in as, by name. Each carries the cookie a suite sets
+   * The people `--as <persona>` can sign a diagnostic browser in as, by name. Each carries the cookie a suite sets
    * before its first request, the routes that person is expected to see (written by hand), and, for the routes that
    * person may not open, one protected string that must not appear on the page. Leave it out in a product whose sign-in
    * is not Meridian's demo policy: `--as` then names no persona and is refused.

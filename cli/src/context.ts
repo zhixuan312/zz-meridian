@@ -20,10 +20,11 @@ When it is absent, use the skill's brief template with the person's answers; do 
 - Extend rather than edit: follow \`.agents/skills/zz-meridian/references/customize.md\`.
 - Update: follow \`.agents/skills/zz-meridian/references/update.md\`. Installed files do not mean a completed
   upgrade: resolve the report and run the pinned finalization command.
-- Before finishing: safely configured \`pnpm verify\` for the default gate/build/smoke path; report any partial coverage.
-  Use \`pnpm gate\` alone for static feedback. Do not automatically chain it before verify, which already runs it.
-  Use \`pnpm verify --full\` for the exhaustive checks and \`pnpm verify --timed\` for the timed ones (it needs a quiet
-  machine); \`--full --timed\` is the whole standard. The 20-sample \`--perf\` protocol runs only in CI, split by route with \`--shard <i>/<n>\`; locally use \`node scripts/perf.ts --routes <route>\`. Weekly CI runs each tier as its own job.
+- Test runs, and the only test commands: \`pnpm test:t1\` (the Tier 1 tests affected since the last green run),
+  \`pnpm test:t2\` (the affected Tier 2 tests too) and \`pnpm test:release\` (every Tier 1 and Tier 2 test, lint and the
+  type check). The tool picks the tests; never name one. Label every plan phase Tier 1, 2 or 3: Tier 1 phases use
+  \`test:t1\`, Tier 2 and Tier 3 phases use \`test:t2\`. A release in this repository is dispatching
+  \`.github/workflows/release.yml\` from master; \`test:release\` passes before it.
 - Agents in the product read through authorized collections and write only through an approved Proposal.
 ${END}`;
 
@@ -55,7 +56,7 @@ export function command(pm: PackageManager, script: string, flags: string): stri
 
 /** The frozen managed block for a version, with every script command in the project's package manager. */
 export function managedBlock(version: string, pm: PackageManager): string {
-  return BLOCK.replace('<version>', () => version).replace(/`pnpm ([a-z]+)((?: [^`]+)?)`/g, (_m, script: string, flags: string) => `\`${command(pm, script, flags)}\``);
+  return BLOCK.replace('<version>', () => version).replace(/`pnpm ([a-z0-9:]+)((?: [^`]+)?)`/g, (_m, script: string, flags: string) => `\`${command(pm, script, flags)}\``);
 }
 
 const count = (text: string, needle: string) => text.split(needle).length - 1;

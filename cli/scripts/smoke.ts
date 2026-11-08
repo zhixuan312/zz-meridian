@@ -1,18 +1,14 @@
 /**
  * The consumer's path, end to end, from the packed tarball: what CI runs before publishing.
  *
- *   node cli/scripts/smoke.ts [--tarball cli/zz-meridian-0.5.0.tgz] [--adopt] [--create] [--update [--origins N]] [--update-all] [--verify] [--keep]
+ *   node cli/scripts/smoke.ts [--tarball cli/zz-meridian-0.5.0.tgz] [--adopt] [--create] [--update [--origins N]] [--update-all] [--keep]
  *
  * With no section flag the adopt section runs. --adopt names it explicitly, so it can run beside the others.
  * adopt: into a copy of cli/test/fixture-next-app (a create-next-app project with its own button, utils and data
- * layer), committed to git as a team's would be. The team's files must come out unchanged, the gate must pass under
+ * layer), committed to git as a team's would be. The team's files must come out unchanged, the tests must pass under
  * the team's own eslint config, and next build must succeed.
- * --create: a new dashboard from the tarball, then its default pnpm verify (the gate, one build, the bounded smoke).
- * --verify runs pnpm verify --full --timed on it instead (Chrome required; the timed verdicts need a quiet machine, so it
- * runs on request and no workflow runs this case).
+ * --create: a new dashboard from the tarball, then its pnpm test:release (every test, lint and the type check).
  * --keep leaves the fixture projects in the temporary folder for inspection; without it they are removed, pass, fail, error or interrupt.
- * --verify also runs the default verify twice in scratch copies of the adopted project: once with `noLiveApi: true` as a
- * team edit and no mappings, and once with no safe backend. Each case prints its coverage line.
  * Both sections also check the agent context: adopt keeps AGENTS.md's bytes and adds one managed block and the brief;
  * create writes the block and the brief and keeps the assistant's tracing of docs/brief.md. Both fresh manifests hold
  * only the files Meridian manages.
@@ -22,13 +18,12 @@
  * page fix) and committed. The running tarball is then its update target.
  * --update [--origins N]: the N newest releases before this one (default 1, the release's case; weekly passes 3), read
  * from the registry, each adopted and created. Each commits its team's work, dry-runs (which must write nothing),
- * updates, resolves what is reported, finalizes with the gate and the build, and keeps the team's bytes. The window
+ * updates, resolves what is reported, finalizes with the tests and the build, and keeps the team's bytes. The window
  * moves with every release and never grows; an origin older than it is updated in steps (references/update.md).
  * --update-all: the updater's own stages on the 0.3.0 adopted fixture, the one origin that always has both a conflict
- * and a migration: the dry-run, a real update with staged base, ours and new, the gate refusing the open session, a
- * resolution written as references/update.md tells an agent, finalize, the keep and logo gates, and the team's bytes.
- * Then the remaining controlled cases, each on its own copy of that fixture: finalize with and
- * without --verify, an interruption and its resume, a failed install, a type error, a check that writes source, abort,
+ * and a migration: the dry-run, a real update with staged base, ours and new, the checks refusing the open session, a
+ * resolution written as references/update.md tells an agent, finalize, the keep and logo checks, and the team's bytes.
+ * Then the remaining controlled cases, each on its own copy of that fixture: finalize, an interruption and its resume, a failed install, a type error, a check that writes source, abort,
  * a dirty tree, a removal and an addition, and a rebrand followed by an update on both routes. The variant package and
  * the next-patch package exist only in this script's scratch folder; they test the updater and are never releases.
  */
@@ -68,19 +63,17 @@ const commit = (cwd: string, m: string) => {
   try { git(cwd, '-c', 'user.email=smoke@example.com', '-c', 'user.name=smoke', 'commit', '-qm', m); } catch { /* nothing changed */ }
 };
 /**
- * What git leaves out of a project: verify's report and an update in progress, never the manifest, the keep register,
+ * What git leaves out of a project: local reports and an update in progress, never the manifest, the keep register,
  * the update history or the skills, which the next update and the team's agents read.
  */
 function checkIgnored(dir: string, label: string) {
   const temporary = ['out/report.txt', '.meridian/update/9.9.9/MERGE.md', '.meridian/update.lock'];
   const kept = ['.meridian/manifest.json', '.meridian/keep.json', '.meridian/history/9.9.9/x/state.json', '.claude/skills/zz-meridian/SKILL.md', '.agents/skills/zz-meridian/SKILL.md'];
   const ignored = sh('git', ['check-ignore', '--no-index', ...temporary, ...kept], dir).stdout.split('\n').filter(Boolean);
-  check(temporary.every((f) => ignored.includes(f)) && !kept.some((f) => ignored.includes(f)), `${label}: git ignores verify's report and an update in progress, and keeps the manifest, keep.json, the history and the skills`, ignored.join('\n'));
+  check(temporary.every((f) => ignored.includes(f)) && !kept.some((f) => ignored.includes(f)), `${label}: git ignores local reports and an update in progress, and keeps the manifest, keep.json, the history and the skills`, ignored.join('\n'));
 }
 const read = (dir: string, rel: string) => (fs.existsSync(path.join(dir, rel)) ? fs.readFileSync(path.join(dir, rel), 'utf8') : '');
 const write = (dir: string, rel: string, text: string) => { fs.mkdirSync(path.dirname(path.join(dir, rel)), { recursive: true }); fs.writeFileSync(path.join(dir, rel), text); };
-/** The coverage line verify ends with, which every case quotes: the depth that ran, and what did not. */
-const coverageOf = (out: string) => /^coverage: .*$/m.exec(out)?.[0] ?? '';
 const sections = ['--adopt', '--create', '--update', '--update-all'];
 
 /** Files a fresh manifest may hold: the managed folders, plus Meridian's own loose files and the three shipped logic helpers, by name. */
@@ -118,51 +111,15 @@ if (args.includes('--adopt') || !sections.some((s) => args.includes(s))) {
   check(JSON.parse(adoptManifest).version === VERSION && adoptOffenders.length === 0, 'the adopt manifest is the running version and holds only managed paths', adoptOffenders.join('\n'));
   check(fs.existsSync(path.join(app, '.agents/skills/zz-meridian/SKILL.md')) && fs.existsSync(path.join(app, '.claude/skills/zz-meridian/SKILL.md')), 'the skill is in .agents and .claude');
   // Before the agent restyles, the only problems are the team's own Tailwind defaults, which Meridian's scales do not
-  // render; Meridian's own files are clean. Then the restyle, at its smallest, and the gate passes.
-  const first = sh('npm', ['run', 'gate'], app);
+  // render; Meridian's own files are clean. Then the restyle, at its smallest, and the checks pass.
+  const first = sh('npm', ['run', 'test:t1'], app);
   const problems = (first.stdout + first.stderr).split('\n').filter((l) => /^(app|src|scripts|tokens)\/\S+:/.test(l));
-  check(problems.every((l) => TEAM_PAGES.some((p) => l.startsWith(`${p}:`))), "before the restyle, the gate faults only the team's own pages", problems.join('\n'));
+  check(problems.every((l) => TEAM_PAGES.some((p) => l.startsWith(`${p}:`))), "before the restyle, the checks fault only the team's own pages", problems.join('\n'));
   for (const p of TEAM_PAGES) fs.writeFileSync(path.join(app, p), fs.readFileSync(path.join(app, p), 'utf8').replace(/font-bold/g, 'font-semibold'));
-  const gate = sh('npm', ['run', 'gate'], app);
-  check(gate.status === 0, 'after the restyle, npm run gate passes in the adopted project', gate.stdout + gate.stderr);
+  const tests = sh('npm', ['run', 'test:t1'], app);
+  check(tests.status === 0, 'after the restyle, npm run test:t1 passes in the adopted project', tests.stdout + tests.stderr);
   const build = sh('npx', ['next', 'build'], app);
   check(build.status === 0, 'next build passes in the adopted project', build.stdout + build.stderr);
-  const refused = sh('npm', ['run', 'verify', '--', '--full'], app);
-  check(refused.status !== 0 && /kept its own data layer/.test(refused.stdout + refused.stderr), 'verify --full refuses an adopted project that has not said where its presses go', refused.stdout + refused.stderr);
-  if (args.includes('--verify')) {
-    // The default is the partial-coverage experience: it exits 0 for the checks it ran and says what it could not.
-    const scratch = (name: string) => {
-      const copy = path.join(work, name);
-      const cp = sh('cp', ['-R', app, copy], work);
-      check(cp.status === 0, `${name}: a scratch copy of the adopted project`, cp.stderr);
-      fs.rmSync(path.join(copy, '.next'), { recursive: true, force: true });
-      // The team's own work that makes a project ready for verify, as the skill's steps ask: the pages on the shell (the
-      // rail, and the page frame that carries the phone's navigation button) with no link in the content, so a closed drawer
-      // prefetches nothing, and the cache-components-config migration's edit, since the route policy fails a route that
-      // renders per request.
-      write(copy, 'app/layout.tsx', read(copy, 'app/layout.tsx')
-        .replace('import "./globals.css";', 'import "./globals.css";\nimport { Providers } from "../src/components/base/providers";\nimport { AppShell } from "../src/components/base/shell";\nimport { ConsoleRail } from "../src/views/console-chrome";')
-        .replace('{children}</body>', '<Providers>\n          <AppShell rail={<ConsoleRail />} assistant={Promise.resolve(false)}>{children}</AppShell>\n        </Providers></body>'));
-      write(copy, 'app/page.tsx', `import { PageFrame } from '../src/components/base/shell';\n\nexport default function Home() {\n  return (\n    <PageFrame title="Acme console">\n      <p>Orders are in the rail.</p>\n    </PageFrame>\n  );\n}\n`);
-      write(copy, 'app/orders/page.tsx', `import { Button } from '@/components/ui/button';\nimport { listOrders } from '@/lib/orders';\nimport { PageFrame } from '../../src/components/base/shell';\n\nexport default async function OrdersPage() {\n  const orders = await listOrders();\n  return (\n    <PageFrame title="Orders">\n      <ul>{orders.map((o) => <li key={o.id}>{o.customer}: {o.total}</li>)}</ul>\n      <Button>Export</Button>\n    </PageFrame>\n  );\n}\n`);
-      write(copy, 'next.config.ts', read(copy, 'next.config.ts').replace('/* config options here */', 'cacheComponents: true,\n  partialPrefetching: true,'));
-      return copy;
-    };
-    const unsafe = scratch('adopted-unsafe');
-    const v1 = sh('npm', ['run', 'verify'], unsafe);
-    const line1 = coverageOf(v1.stdout);
-    console.log(`     coverage (adopted, no safe backend): ${line1}`);
-    check(v1.status === 0 && /^coverage: default; browser not run \(no fakeApi or noLiveApi\); /.test(line1), 'the default verify on an adopted project without a safe backend exits 0 and reports the browser as not run', v1.stdout + v1.stderr);
-
-    const safe = scratch('adopted-nolive');
-    const config = read(safe, 'scripts/verify.config.ts');
-    write(safe, 'scripts/verify.config.ts', config.replace('detailRoutes: [],', 'noLiveApi: true,\n  detailRoutes: [],'));
-    check(/noLiveApi: true/.test(read(safe, 'scripts/verify.config.ts')), 'noLiveApi: true is written into the adopted verify.config.ts as a team edit');
-    const v2 = sh('npm', ['run', 'verify'], safe);
-    const line2 = coverageOf(v2.stdout);
-    console.log(`     coverage (adopted, noLiveApi): ${line2}`);
-    check(v2.status === 0 && /^coverage: default; browser ran; (\d+) routes; data configured 0\/\1; interaction configured 0\/\1; /.test(line2), 'the default verify on an adopted project with noLiveApi and no mappings exits 0 with data and interaction not configured', v2.stdout + v2.stderr);
-  }
   const bad = sh('npx', ['--yes', '--package', tarball, 'zz-meridian', 'adopt', '--allow-dirty', '--name', 'a\\b'], app);
   check(bad.status !== 0 && /backslash/.test(bad.stderr), 'a brand value with a backslash is refused before anything is copied', bad.stderr);
   const again = sh('npx', ['--yes', '--package', tarball, 'zz-meridian', 'adopt'], app);
@@ -228,7 +185,7 @@ function bringReleaseOver(proj: string, route: string, reported: string[] = []) 
       const added = typed.replace(/^(\s*\{[^\n]*\bhref\s*:[^\n]*?)\s*\},$/gm, (m, head) => (/\bneeds\s*:/.test(head) ? m : `${head}, needs: 'public' },`));
       if (!/\bneeds\s*:\s*Need\b/.test(added) || /^import[^\n]*lib\/collection/m.test(added)) return added;
       // At the top, not after the first import: a project's first import is often a multi-line one, and a line inserted
-      // inside it is a syntax error the gate reports instead of the change this migration is about.
+      // inside it is a syntax error the checks report instead of the change this migration is about.
       return `import type { Need } from './lib/collection.ts';\n${added}`;
     });
   }
@@ -277,7 +234,7 @@ function bringReleaseOver(proj: string, route: string, reported: string[] = []) 
   // The template's console, its data seam, the logic its views read (since 0.28.0 a view imports `@/logic/…`, so a view
   // that came over without the logic beside it named an export its project's logic did not have yet) and the assistant's
   // route-side code (which takes the guard), and the library modules the sample's pages import (`src/lib/totals.ts`, which
-  // `sample-with-its-tests` names; the managed ones come over as the update wrote them), and the demo gate, `proxy.ts`. A test is replaced only where the
+  // `sample-with-its-tests` names; the managed ones come over as the update wrote them), and the demo check, `proxy.ts`. A test is replaced only where the
   // project already has it.
   const owned = (f: string) => (f.startsWith('app/') && !f.startsWith('app/system/')) || f.startsWith('src/views/') || f.startsWith('src/data/') || f.startsWith('src/logic/') || f.startsWith('src/system/fixtures/') || f === 'src/system/sample-cells.tsx' || (f.startsWith('src/lib/') && f !== 'src/lib/assistant/prompt.ts') || f === 'proxy.ts';
   const release = new Set(filesUnder(created).filter(owned));
@@ -402,8 +359,8 @@ function adoptedBase(version = '0.3.0'): string | null {
   check(adopted.status === 0, `adopt with the published ${version} exits 0`, adopted.stdout + adopted.stderr);
   if (adopted.status !== 0) return null;
   commit(proj, `adopt ${version}`);
-  // What a team does after adopting: the restyle the gate asks for, a card edit, its own skill and token file kept on
-  // purpose (a skill that names no paths, since the gate checks every path a skill names), a brief and another doc.
+  // What a team does after adopting: the restyle the checks ask for, a card edit, its own skill and token file kept on
+  // purpose (a skill that names no paths, since the checks read every path a skill names), a brief and another doc.
   fixPages(proj);
   edit(proj, CARD, (t) => `${t}// the team edit\n`);
   write(proj, KEPT_SKILL, '---\nname: zz-meridian\ndescription: Our own notes on how this dashboard is built.\n---\n\n# Our dashboard\n\nWe keep our own version of this skill.\n');
@@ -431,7 +388,7 @@ const OWNED = [...TEAM_DOCS, 'README.md', 'src/app.config.ts', 'scripts/verify.c
 type Upgraded = { manifest: string; packageJson: string; agents: string };
 let upgraded: Upgraded | undefined;
 
-/** The walking skeleton: the dry-run, a real update, the gate on an open session, the resolution, finalize. */
+/** The walking skeleton: the dry-run, a real update, the checks on an open session, the resolution, finalize. */
 function mainUpgrade(): Upgraded {
   if (upgraded) return upgraded;
   console.log('\n── update: a published-0.3.0 adopted project');
@@ -466,8 +423,8 @@ function mainUpgrade(): Upgraded {
   check(initial <= 60, `the initial report took ${initial.toFixed(1)}s excluding install (limit 60s)`);
 
   const stagedNew = sha(path.join(proj, session, 'new', CARD));
-  const open = sh('node', ['scripts/gate.ts'], proj);
-  check(open.status !== 0 && (open.stdout + open.stderr).includes(session), 'while the session is unresolved, the project gate fails and names it', open.stdout + open.stderr);
+  const open = sh('node', ['scripts/test-run.ts', 't1'], proj);
+  check(open.status !== 0 && (open.stdout + open.stderr).includes(session), 'while the session is unresolved, the project tests fail and name it', open.stdout + open.stderr);
   const beforeFinalize = finalManifest(proj);
   check(beforeFinalize.version === '0.3.0', 'the manifest still records 0.3.0 until finalize');
 
@@ -503,19 +460,19 @@ function mainUpgrade(): Upgraded {
   const end = agentsAfter.indexOf(END);
   check(count(agentsAfter, BEGIN) === 1 && end > begin && agentsAfter.slice(0, begin).trim() === agentsBefore.slice(0, agentsBefore.indexOf('# Built on ZZ Meridian')).trim() && agentsAfter.slice(end + END.length).trim() === '', 'AGENTS.md bytes outside the managed block are unchanged', agentsAfter);
 
-  // The gate after finalize refuses a keep entry for a file Meridian never managed, and a logo that is not a local SVG.
+  // The checks after finalize refuse a keep entry for a file Meridian never managed, and a logo that is not a local SVG.
   const keep = read(proj, '.meridian/keep.json');
   const config = read(proj, 'src/app.config.ts');
   write(proj, '.meridian/keep.json', `${JSON.stringify([...JSON.parse(keep), { path: 'src/app.config.ts', reason: 'We never let Meridian touch it.' }], null, 2)}\n`);
-  const keepGate = sh('node', ['scripts/gate.ts'], proj);
-  check(keepGate.status !== 0 && /keep\.json/.test(keepGate.stdout + keepGate.stderr) && /src\/app\.config\.ts/.test(keepGate.stdout + keepGate.stderr), 'a keep entry for a path Meridian never managed fails the gate', keepGate.stdout + keepGate.stderr);
+  const keepGate = sh('node', ['scripts/test-run.ts', 't1'], proj);
+  check(keepGate.status !== 0 && /keep\.json/.test(keepGate.stdout + keepGate.stderr) && /src\/app\.config\.ts/.test(keepGate.stdout + keepGate.stderr), 'a keep entry for a path Meridian never managed fails the checks', keepGate.stdout + keepGate.stderr);
   write(proj, '.meridian/keep.json', keep);
   write(proj, 'src/app.config.ts', config.replace("name: 'Acme Ops',", "name: 'Acme Ops',\n  logo: 'https://x.dev/logo.svg',"));
-  const logoGate = sh('node', ['scripts/gate.ts'], proj);
-  check(logoGate.status !== 0 && /app\.logo/.test(logoGate.stdout + logoGate.stderr), 'an app.logo of https://x.dev/logo.svg fails the gate', logoGate.stdout + logoGate.stderr);
+  const logoGate = sh('node', ['scripts/test-run.ts', 't1'], proj);
+  check(logoGate.status !== 0 && /app\.logo/.test(logoGate.stdout + logoGate.stderr), 'an app.logo of https://x.dev/logo.svg fails the checks', logoGate.stdout + logoGate.stderr);
   write(proj, 'src/app.config.ts', config);
-  const restored = sh('node', ['scripts/gate.ts'], proj);
-  check(restored.status === 0 && read(proj, '.meridian/keep.json') === keep && read(proj, 'src/app.config.ts') === config, 'with both restored, the gate passes again', restored.stdout + restored.stderr);
+  const restored = sh('node', ['scripts/test-run.ts', 't1'], proj);
+  check(restored.status === 0 && read(proj, '.meridian/keep.json') === keep && read(proj, 'src/app.config.ts') === config, 'with both restored, the checks pass again', restored.stdout + restored.stderr);
 
   upgraded = { manifest: read(proj, '.meridian/manifest.json'), packageJson: read(proj, 'package.json'), agents: agentsAfter };
   return upgraded;
@@ -551,7 +508,7 @@ function projectState(proj: string) {
 
 /**
  * A published origin brought to this release as an agent following references/update.md would: the team's work
- * committed, a dry-run that writes nothing, the update, every reported item resolved, finalize with the gate and the
+ * committed, a dry-run that writes nothing, the update, every reported item resolved, finalize with the tests and the
  * build, and the team's bytes unchanged. Every assertion holds whatever the origin; what a release's migrations change
  * is tested in tests/cli-migrations.test.ts. resolveAll knows RELEASE_IDS: a release that adds a migration adds it
  * there and to bringReleaseOver, or the origins before it fail at finalize.
@@ -575,7 +532,7 @@ function originUpgrade(version: string, route: 'adopt' | 'create') {
     if (made.status !== 0) return;
     commit(proj, `created with ${version}`);
     // A created project's template files stay exactly as the release wrote them: the update alone must bring it to a
-    // passing gate. The team's own documents sit beside them.
+    // passing checks. The team's own documents sit beside them.
     writeTeamDocs(proj);
     commit(proj, 'the team work');
     teamOwned = TEAM_DOCS;
@@ -595,7 +552,7 @@ function originUpgrade(version: string, route: 'adopt' | 'create') {
     check(/^outcome: migration-required/m.test(up.out) && /^Next: .*update --finalize/m.test(up.out), `${label}: the update applies and stops on what it lists, with the pinned next command`, up.out + up.err);
     resolveAll(proj, VERSION, 'Kept ours; the project works as it is.');
     const fin = zz(tarball, proj, ['update', '--finalize'], `${label} finalize`);
-    check(fin.status === 0 && /^outcome: complete/m.test(fin.out), `${label}: finalize passes the gate and the build and completes in ${secs(fin.wall)}s`, said(fin));
+    check(fin.status === 0 && /^outcome: complete/m.test(fin.out), `${label}: finalize passes the tests and the build and completes in ${secs(fin.wall)}s`, said(fin));
   } else {
     check(up.status === 0 && /^outcome: complete/m.test(up.out), `${label}: with nothing to resolve, the update completes in one command`, said(up));
     if (up.status !== 0) { done(proj); return; }
@@ -632,26 +589,16 @@ if (args.includes('--update-all') && adoptedBase()) {
     return fin;
   };
 
-  // Finalize both ways.
+  // Finalize.
   {
-    console.log('\n── update-all: finalize and finalize --verify on the adopted origin');
-    const timed = (flag: string[], name: string) => {
-      const proj = clone(adoptedBase()!, name);
-      const up = zz(tarball, proj, ['update'], `${name} update`);
-      check(up.status === 2, `${name}: the update stops with work pending`, up.out + up.err);
-      resolveAll(proj, VERSION, 'Kept ours; the project works as it is.');
-      const fin = zz(tarball, proj, ['update', '--finalize', ...flag], `${name} finalize`);
-      check(fin.status === 0 && /^outcome: complete/m.test(fin.out), `${name}: finalize completes`, said(fin));
-      done(proj);
-      return fin;
-    };
-    const plain = timed([], 'finalize-plain');
-    const verified = timed(['--verify'], 'finalize-verify');
-    const line = coverageOf(verified.out);
-    check(line !== '' && !/browser: not run/.test(verified.out), 'update --finalize --verify prints the coverage line instead of `browser: not run`', verified.out);
-    const extra = (verified.wall - plain.wall) / 1000;
-    console.log(`     finalize ${secs(plain.wall)}s, finalize --verify ${secs(verified.wall)}s, difference ${extra.toFixed(1)}s`);
-    check(extra <= 30, `--verify took ${extra.toFixed(1)}s more than plain finalize (limit 30s)`);
+    console.log('\n── update-all: finalize on the adopted origin');
+    const proj = clone(adoptedBase()!, 'finalize');
+    const up = zz(tarball, proj, ['update'], 'finalize update');
+    check(up.status === 2, 'finalize: the update stops with work pending', up.out + up.err);
+    resolveAll(proj, VERSION, 'Kept ours; the project works as it is.');
+    const fin = zz(tarball, proj, ['update', '--finalize'], 'finalize');
+    check(fin.status === 0 && /^outcome: complete/m.test(fin.out), 'finalize: finalize completes', said(fin));
+    done(proj);
   }
 
   // Interruption.
@@ -725,11 +672,11 @@ if (args.includes('--update-all') && adoptedBase()) {
     const proj = clone(adoptedBase()!, 'update-abort');
     const up = zz(tarball, proj, ['update', '--no-install'], 'update');
     check(up.status === 2, 'update --no-install applies', up.out + up.err);
-    const gateFile = read(proj, 'scripts/gate.ts');
-    write(proj, 'scripts/gate.ts', `${gateFile}// a later edit\n`);
+    const gateFile = read(proj, 'scripts/test-run.ts');
+    write(proj, 'scripts/test-run.ts', `${gateFile}// a later edit\n`);
     const refused = zz(tarball, proj, ['update', '--abort'], 'abort after an edit');
-    check(refused.status === 1 && (refused.out + refused.err).includes('scripts/gate.ts') && fs.existsSync(path.join(proj, session, 'backup')), 'an abort after a later edit refuses, names the path and keeps the backups', refused.out + refused.err);
-    write(proj, 'scripts/gate.ts', gateFile);
+    check(refused.status === 1 && (refused.out + refused.err).includes('scripts/test-run.ts') && fs.existsSync(path.join(proj, session, 'backup')), 'an abort after a later edit refuses, names the path and keeps the backups', refused.out + refused.err);
+    write(proj, 'scripts/test-run.ts', gateFile);
     const aborted = zz(tarball, proj, ['update', '--abort'], 'abort');
     const diff = sh('git', ['diff', 'HEAD', '--stat'], proj).stdout.trim();
     const status = sh('git', ['status', '--porcelain'], proj).stdout.split('\n').filter((l) => l.trim() && !l.includes('.meridian/history/'));
@@ -833,7 +780,7 @@ if (args.includes('--update-all') && adoptedBase()) {
 if (args.includes('--create')) {
   const dir = path.join(work, 'smoke-ops');
   // None of the template's own values: a project made in another timezone, currency, accent and signed-in role must pass
-  // its own gate and its own verify as made. The timezone is the case that broke once — a project created with
+  // its own checks as made. The timezone is the case that broke once — a project created with
   // `--timezone Europe/London` shipped failing its first verify, because the shipped tests read money in `app.currency`
   // and dates in `app.timezone` — and the accent is where the contrast gate is asked about a hue the template never
   // shipped, which is the part of `brand.ts` that adjusts a fill until every pair passes.
@@ -852,19 +799,10 @@ if (args.includes('--create')) {
   check(text('next.config.ts').includes("'/api/assistant': ['./docs/brief.md']"), "next.config.ts still traces docs/brief.md for /api/assistant");
   const createOffenders = unmanaged(JSON.parse(text('.meridian/manifest.json')));
   check(JSON.parse(text('.meridian/manifest.json')).version === VERSION && createOffenders.length === 0, 'the create manifest is the running version and holds only managed paths', createOffenders.join('\n'));
-  // The default verify (the gate, one build, the bounded smoke) is what the team runs every day; --verify asks for --full --timed.
-  if (args.includes('--verify')) {
-    const v = sh(pm, pm === 'npm' ? ['run', 'verify', '--', '--full', '--timed'] : ['run', 'verify', '--full', '--timed'], dir);
-    const line = coverageOf(v.stdout);
-    console.log(`     coverage (created, --full --timed): ${line}`);
-    check(v.status === 0 && line.startsWith('coverage: full+timed; browser ran; ') && /not run: none$/.test(line), `${pm} run verify --full --timed passes in the new dashboard with nothing left unrun`, v.stdout + v.stderr);
-  } else {
-    const t0 = performance.now();
-    const v = sh(pm, ['run', 'verify'], dir);
-    const line = coverageOf(v.stdout);
-    console.log(`     coverage (created, default, ${secs(performance.now() - t0)}s): ${line}`);
-    check(v.status === 0 && /^coverage: default; /.test(line), `${pm} run verify passes in the new dashboard`, v.stdout + v.stderr);
-  }
+  const t0 = performance.now();
+  const t = sh(pm, ['run', 'test:release'], dir);
+  console.log(`     test:release (created, ${secs(performance.now() - t0)}s)`);
+  check(t.status === 0, `${pm} run test:release passes in the new dashboard`, t.stdout + t.stderr);
 }
 
 console.log(failures ? `\nsmoke: ${failures} failed${keep ? ` (work kept in ${work})` : ''}` : '\nsmoke: the consumer path works');

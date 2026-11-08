@@ -5,12 +5,11 @@ import path from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 import { create, nextStep } from '../cli/src/create.ts';
 
-// npm reads flags before `--` as its own config, so `npm run verify --full --timed` runs a plain verify, which never
-// ends with the sentence the step tells the person to wait for.
+// The closing step names the release command, with no flag: the three test commands take none.
 describe("create's closing step", () => {
-  it('names the full verify in a form the package manager passes on', () => {
-    expect(nextStep('npm')).toContain('npm run verify -- --full --timed ends with');
-    expect(nextStep('pnpm')).toContain('pnpm verify --full --timed ends with');
+  it('names the release command in the project package manager', () => {
+    expect(nextStep('npm')).toContain('npm run test:release passes');
+    expect(nextStep('pnpm')).toContain('pnpm test:release passes');
   });
 });
 

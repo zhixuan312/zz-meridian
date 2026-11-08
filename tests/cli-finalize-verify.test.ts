@@ -36,7 +36,7 @@ function project() {
 function ctx(root: string, verifyStatus = 0) {
   const lines: string[] = [];
   const run: Run = (_cmd, args) => {
-    return args.some((a) => a.endsWith('scripts/verify.ts')) ? { status: verifyStatus, output: 'ok   gate (9.1s)\ncoverage: default; browser ran; 3 routes; data configured 3/3; interaction configured 3/3; not run: audit, presses, keyboard, assistant, live, vitals, perf\n' } : { status: 0, output: '' };
+    return args.some((a) => a.endsWith('scripts/test-run.ts')) ? { status: verifyStatus, output: 'test:release: every Tier 1 and Tier 2 test passed, lint passed, types check\n' } : { status: 0, output: '' };
   };
   const c: Context = { root, version: '0.5.0', targetIntegrity: 'sha512-test', source: () => release('0.3.0', BASE), target: () => release('0.5.0', TARGET), run, log: (l) => lines.push(l) };
   return { c, lines };
@@ -46,24 +46,23 @@ const resolve = (root: string) => fs.writeFileSync(path.join(root, '.meridian/up
 ]));
 const opts = { dryRun: false, allowDirty: false, install: true, verbose: false };
 
-describe('update --finalize --verify', () => {
-  it('validates with one default verify in place of the separate gate and build, and says what it covered', () => {
+describe('update --finalize', () => {
+  it('validates with test:release and one build, and says what it covered', () => {
     const root = project();
     expect(start(ctx(root).c, opts)).toBe(2);
     resolve(root);
     const done = ctx(root);
-    expect(finalize(done.c, { verify: true }), done.lines.join('\n')).toBe(0);
-    expect(done.lines.join('\n')).toMatch(/^coverage: default; browser ran; 3 routes/m);
-    expect(done.lines.join('\n')).not.toMatch(/browser: not run/);
+    expect(finalize(done.c), done.lines.join('\n')).toBe(0);
+    expect(done.lines.join('\n')).toMatch(/^tests: every Tier 1 and Tier 2 test passed, lint passed, types check$/m);
     expect(done.lines.join('\n')).toMatch(/outcome: complete/);
   });
-  it('fails the session when verify fails, as a failing gate does', () => {
+  it('fails the session when the tests fail', () => {
     const root = project();
     start(ctx(root).c, opts);
     resolve(root);
     const bad = ctx(root, 1);
-    expect(finalize(bad.c, { verify: true })).toBe(1);
-    expect(bad.lines.join('\n')).toMatch(/verify exited with 1/);
+    expect(finalize(bad.c)).toBe(1);
+    expect(bad.lines.join('\n')).toMatch(/tests exited with 1/);
     expect(JSON.parse(fs.readFileSync(path.join(root, '.meridian/manifest.json'), 'utf8')).version).toBe('0.3.0');
   });
 });

@@ -6,9 +6,9 @@ import { externalPackages, legacySection, planAgents, reconcilePackage } from '.
 const template = {
   dependencies: { next: '16.3.8', react: '19.3.0', 'react-dom': '19.3.0', zod: '4.6.5', clsx: '^2.1.1' },
   devDependencies: { typescript: '6.0.3' },
-  scripts: { gate: 'node scripts/gate.ts', verify: 'node scripts/verify.ts' },
+  scripts: { 'test:t1': 'node scripts/test-run.ts t1', 'test:t2': 'node scripts/test-run.ts t2' },
 };
-const need = { runtime: ['next', 'react', 'react-dom', 'zod', 'clsx'], dev: ['typescript'], scripts: ['gate', 'verify'] };
+const need = { runtime: ['next', 'react', 'react-dom', 'zod', 'clsx'], dev: ['typescript'], scripts: ['test:t1', 'test:t2'] };
 const exact = { next: '16.3.8', react: '19.3.0', 'react-dom': '19.3.0', zod: '4.6.5', clsx: '^2.1.1' };
 const pkg = (o: object, indent = 2) => JSON.stringify({ name: 'team-app', private: true, ...o }, null, indent) + '\n';
 const plan = (o: object) => reconcilePackage(pkg(o), template, need);
@@ -64,9 +64,9 @@ describe('reconcilePackage', () => {
     expect(ids({ dependencies: exact, devDependencies: { typescript: '6.0.3' }, scripts: template.scripts, pnpm: { overrides: { react: '19.2.0' } } })).toContain('dependency-override:react');
   });
   it('reports a conflicting script and keeps it', () => {
-    const o = { dependencies: exact, devDependencies: { typescript: '6.0.3' }, scripts: { ...template.scripts, gate: 'eslint .' } };
-    expect(after(o).scripts.gate).toBe('eslint .');
-    expect(ids(o)).toContain('script:gate');
+    const o = { dependencies: exact, devDependencies: { typescript: '6.0.3' }, scripts: { ...template.scripts, 'test:t1': 'eslint .' } };
+    expect(after(o).scripts['test:t1']).toBe('eslint .');
+    expect(ids(o)).toContain('script:test:t1');
   });
   it('changes nothing when everything already holds', () => {
     expect(plan({ dependencies: exact, devDependencies: { typescript: '6.0.3' }, scripts: template.scripts })).toEqual({ text: null, changes: [], migrations: [] });

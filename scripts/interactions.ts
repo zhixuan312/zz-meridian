@@ -174,7 +174,7 @@ const walk = async (route: string, width: number) => {
     let armed = await arm();
     // Something left open or a toast in the way: start the page again and try once more. A control not drawn yet on the
     // new load (a list still loading), or still under a toast the previous press raised, is waited for up to the hang
-    // bound before it is called gone: four browsers run beside each other in `pnpm verify --full`, and a re-render that
+    // bound before it is called gone: several browsers run beside each other when a team schedules this diagnostic, and a re-render that
     // lands a moment late left two controls reported as covered or missing on a page that has both.
     if (!armed || armed.covered) {
       await fresh();

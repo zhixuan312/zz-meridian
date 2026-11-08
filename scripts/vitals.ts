@@ -22,7 +22,7 @@
  *
  * Every static page and the detail pages in scripts/verify.config.ts are measured, the Atlas's among them: its front
  * page and one card page, the sample every other suite takes. `--atlas` measures every Atlas entry instead (the guides,
- * the token views, the cards and the page specs, about fifteen minutes), and is not part of `pnpm verify`. The Atlas was
+ * the token views, the cards and the page specs, about fifteen minutes), and is a diagnostic, never a tier. The Atlas was
  * left out as "not a product page" until it was measured once: every card page shifted 0.3 to 0.6 against the 0.1
  * floor, and nothing had been looking. `--list` prints the routes a run would visit and exits without a browser.
  *

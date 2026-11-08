@@ -4,8 +4,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { Page } from '../scripts/lib/chrome.ts';
 
 /**
- * `journeys/workspaces.ts`, which `pnpm verify --full` runs as a browser check, expects of a refused destination what
- * the product's `refusal` in `src/app.config.ts` chooses, as `pnpm verify --as` does: the no-access page under
+ * `journeys/workspaces.ts`, a browser diagnostic, expects of a refused destination what
+ * the product's `refusal` in `src/app.config.ts` chooses, as `node scripts/rail.ts --as` does: the no-access page under
  * `explain`, the missing page and no no-access page under `absent`. And each step is gated on the destinations it
  * walks, so a product that drops a page the step never opens still runs it.
  *

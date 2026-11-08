@@ -27,11 +27,11 @@ describe('checkBrief', () => {
 describe('scanReferences', () => {
   const present = new Set(['src/lib/cn.ts', '.agents/skills/zz-meridian/references/customize.md', 'docs/']);
   const exists = (p: string) => present.has(p);
-  const scripts = new Set(['gate', 'verify']);
+  const scripts = new Set(['test:t1', 'test:t2', 'test:release']);
   const scan = (text: string, file = '.agents/skills/zz-meridian/SKILL.md') => scanReferences([{ file, text }], exists, scripts);
 
   it('accepts paths and scripts that exist', () => {
-    expect(scan('Use `src/lib/cn.ts`, `references/customize.md`, `docs/`, `pnpm gate`, `pnpm verify --full`, `npm run verify` and `npm run verify -- --full`.')).toEqual([]);
+    expect(scan('Use `src/lib/cn.ts`, `references/customize.md`, `docs/`, `pnpm test:t1`, `pnpm test:t2`, `npm run test:release` and `yarn test:t1`.')).toEqual([]);
   });
   it('reports a missing required path and script with file and line', () => {
     const out = scan('line one\nSee `src/missing.ts` and `required:app/gone.tsx`.\nRun `pnpm nope` or `yarn nope`.');

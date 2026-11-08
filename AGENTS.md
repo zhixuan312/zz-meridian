@@ -15,6 +15,21 @@ Meridian is a dashboard design system and template: read `README.md` (what it is
 - **Build up, never sideways.** A page arranges patterns; a pattern composes components; a value is a token. Never write a colour, size or shadow that is not a token; `node scripts/check.ts` fails on literal colours and on Tailwind utilities outside Meridian's reset scales (they render nothing).
 - **Tokens** live in `tokens/*.tokens.json` (DTCG 2025.10). `src/styles/tokens.css` and `src/styles/theme.css` are generated: run `pnpm tokens`, never edit them.
 - **A card** is a folder with `index.tsx`, `preview.tsx` (every state, static, labelled) and `README.md` (the anatomy in CONTRIBUTING). After adding one, run `pnpm registry`.
-- **Before finishing**: `pnpm verify` (the gate once, one build, the size checks and a smoke of up to three routes; it ends with a coverage line that says what ran and what did not). For a change to shared components, the shell or data, run `pnpm verify --full`: every route, every control pressed and every link followed, the keyboard walk, the assistant and the product's own checks; it judges no time. `pnpm verify --full --timed` adds the navigation budgets, the live data and Web Vitals on a quiet machine, and is the whole standard. Then look at `node scripts/shot.ts <route> --width 1440,390 --theme dark,light`. `pnpm gate` alone is the fast loop while editing. `docs/testing.md` is the testing standard: its `## When each runs` says which command runs at which moment, and its `## Rules` say when a red is fixed and when a limit may move.
+- **Before finishing**: `pnpm test:t1`; after a change to shared components, the shell or data, `pnpm test:t2`. Then look at `node scripts/shot.ts <route> --width 1440,390 --theme dark,light`. `docs/testing.md` is the testing standard: its `## When each runs` says which command runs at which moment, and its `## Rules` say when a red is fixed and when a limit may move.
+
+## Test runs
+
+Each repository has exactly three test commands, and every one takes no arguments: the tool picks the tests.
+
+| Command | Runs |
+|---|---|
+| `pnpm test:t1` | the Tier 1 tests affected by the changes since the last green run (the import graph's `related` selection) |
+| `pnpm test:t2` | the affected Tier 2 tests too, and the affected Tier 1 tests with them |
+| `pnpm test:release` | every Tier 1 and Tier 2 test, once, with lint and the type check |
+
+- **Tier 2 is a file convention.** `*.perf.test.ts(x)` and this repository's `tests/deep-*.test.ts(x)` are Tier 2; every other test under `tests/` is Tier 1. `test:t1` never runs a Tier 2 file.
+- **"Last green" is a marker.** After a passing run the command writes the commit to `out/last-green` (gitignored) and reads it before the next, so a branch's later runs stay small. A missing marker falls back to the diff against master; a checkout with neither marker nor a diff runs the whole tier.
+- **Every plan phase is labelled Tier 1, 2 or 3.** A Tier 1 phase uses `pnpm test:t1`; a Tier 2 phase and a Tier 3 phase use `pnpm test:t2`. Every phase ends with its command passing.
+- **A release in this repository is dispatching `.github/workflows/release.yml` from master**: it publishes the package and tags last. Pushing to master neither publishes nor deploys. `pnpm test:release` passes on the commit being released before the workflow is dispatched.
 - **Agents in the product** read freely and write only through a Proposal; mark agent work with the Agent mark and "via". See `docs/agents.md`.
 - Everything written to the repository is in English.

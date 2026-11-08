@@ -1,23 +1,20 @@
 // @vitest-environment node
-// docs/testing.md is the testing standard every adopted and created project receives and Meridian follows: the kinds of
-// test, the tiers that combine them, when each runs and the rules a red, a limit and a release follow. A spec cites it
-// rather than restating it. This keeps its shape: each section is there, every tier the table uses is explained, every
-// on-request command is given its moment, both of Meridian's workflows are named, the standing rules are present, and a
-// row whose command runs only files the payload leaves out (cli/scripts/build-payload.ts's PAYLOAD_EXCLUDE) says it is
-// Meridian's repository's, since a project does not have it. The planted cases prove the guard is not vacuous.
+// docs/testing.md is the testing standard every adopted and created project receives and Meridian follows. This keeps its
+// shape: each section is there, the three commands are named, every tier the table uses is explained, both of Meridian's
+// workflows are named, the standing rules are present, and every row names one of the three tiers. The planted cases prove
+// the guard is not vacuous.
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { PAYLOAD_EXCLUDE } from '../cli/scripts/build-payload.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const doc = fs.readFileSync(path.join(ROOT, 'docs/testing.md'), 'utf8');
-const testFiles = fs.readdirSync(path.join(ROOT, 'tests')).filter((f) => /\.test\.tsx?$/.test(f)).map((f) => `tests/${f}`);
 
 const SECTIONS = ['The kinds', 'The tiers', 'When each runs', 'Rules', 'Basis', 'The classification'];
+const COMMANDS = ['pnpm test:t1', 'pnpm test:t2', 'pnpm test:release'];
 const RULES = ['Quiet machine', 'Fixed means', 'Limits', 'Once per commit', 'Flaky is red', 'Releases'];
 const WORKFLOWS = ['.github/workflows/release.yml', '.github/workflows/weekly.yml'];
-const MERIDIAN_ONLY = "Meridian's repository only.";
+const TIERS = ['1', '2', '3'];
 
 type Row = Record<string, string>;
 
@@ -35,66 +32,44 @@ function rows(text: string): Row[] {
   return lines.slice(2).map((l) => Object.fromEntries(cells(l).map((c, i) => [header[i], i === 0 ? c.replace(/`/g, '') : c])));
 }
 
-/** The files a row's command runs: a test group's files, else every repository path its command names. */
-function filesOf(r: Row): string[] {
-  const group = /^tests\/(cli|deep)-\*$/.exec(r.Key);
-  if (group) return testFiles.filter((f) => f.startsWith(`tests/${group[1]}-`));
-  if (r.Key === 'tests/shipped') return testFiles.filter((f) => !/^tests\/(cli|deep)-/.test(f));
-  return [...(r.Command ?? '').matchAll(/(?:^|[\s`])((?:cli|scripts|tests)\/[\w./-]+\.tsx?)/g)].map((m) => m[1]);
-}
-
-const commandOf = (r: Row) => /`([^`]+)`/.exec(r.Command ?? '')?.[1] ?? '';
-
 export function problems(text: string): string[] {
   const out: string[] = [];
   for (const s of SECTIONS) if (!section(text, s)) out.push(`no ## ${s} section`);
-  const table = rows(text);
-  if (!table.length) return out;
 
   const tiers = section(text, 'The tiers');
-  for (const tier of [...new Set(table.map((r) => r.Tier))]) if (!tiers.includes(`- **${tier}**:`)) out.push(`tier ${tier}: no bullet under ## The tiers`);
+  for (const command of COMMANDS) if (!tiers.includes(command)) out.push(`## The tiers does not name ${command}`);
+  const table = rows(text);
+  if (!table.length) return out;
+  for (const tier of [...new Set(table.map((r) => r.Tier))]) if (!TIERS.includes(tier)) out.push(`tier ${tier}: not one of 1, 2, 3`);
+  for (const tier of TIERS) if (!tiers.includes(`**Tier ${tier}`)) out.push(`Tier ${tier}: no bullet under ## The tiers`);
 
   const when = section(text, 'When each runs');
   for (const w of WORKFLOWS) if (!when.includes(w)) out.push(`## When each runs does not name ${w}`);
-  for (const r of table.filter((x) => x.Tier === 'on request')) {
-    const head = commandOf(r).split(' ').slice(0, 3).join(' ');
-    if (!when.includes(head)) out.push(`${r.Key}: ## When each runs does not say when \`${head}\` runs`);
-  }
 
   const rules = section(text, 'Rules');
   for (const rule of RULES) if (!rules.includes(`- **${rule}**`)) out.push(`rule ${rule}: no bullet under ## Rules`);
 
-  for (const r of table) {
-    const files = filesOf(r);
-    const meridian = files.length > 0 && files.every((f) => PAYLOAD_EXCLUDE.test(f));
-    const says = (r['What it checks'] ?? '').startsWith(MERIDIAN_ONLY);
-    if (meridian && !says) out.push(`${r.Key}: its command runs only files a project does not have, and it does not open "${MERIDIAN_ONLY}"`);
-    if (!meridian && says) out.push(`${r.Key}: says "${MERIDIAN_ONLY}", but a project has what its command runs`);
-  }
+  if (!text.includes('*.perf.test.ts(x)')) out.push('the Tier 2 file convention is not named');
+  if (!text.includes('out/last-green')) out.push('the last-green marker is not named');
   return out;
 }
 
 describe('docs/testing.md is the testing standard', () => {
   it('holds for the repository', () => expect(problems(doc)).toEqual([]));
 
-  it('finds a Meridian-only row that does not say so', () => {
-    const planted = doc.replace(/(\| `tests\/deep-\*` \|[^\n]*\| )Meridian's repository only\. /, '$1');
-    expect(planted).not.toBe(doc);
-    expect(problems(planted).join('\n')).toMatch(/^tests\/deep-\*: its command runs only files a project does not have/m);
+  it('finds a tier with no bullet, an on-request row and a missing rule', () => {
+    const planted = doc.replace(/\n- \*\*Tier 3[^\n]*/, '').replace(/\n- \*\*Fixed means\*\*[^\n]*/, '');
+    expect(problems(planted)).toEqual(expect.arrayContaining(['Tier 3: no bullet under ## The tiers', 'rule Fixed means: no bullet under ## Rules']));
+    expect(problems(doc.replace('| 1 | no |', '| on request | no |')).join('\n')).toMatch(/tier on request/);
   });
 
-  it('finds a project row that says it is Meridian-only', () => {
-    const planted = doc.replace(/(\| `gate\/types check` \|[^\n]*\| )([^|\n]+\|\n)/, `$1${MERIDIAN_ONLY} $2`);
-    expect(planted).not.toBe(doc);
-    expect(problems(planted).join('\n')).toMatch(/^gate\/types check: says/m);
-  });
-
-  it('finds a tier with no bullet, an on-request command with no moment, and a missing rule', () => {
-    const planted = doc.replace(/\n- \*\*on request\*\*:[^\n]*/, '').replace(/\n- \*\*Fixed means\*\*[^\n]*/, '');
-    expect(planted).not.toBe(doc);
-    expect(problems(planted)).toEqual(expect.arrayContaining(['tier on request: no bullet under ## The tiers', 'rule Fixed means: no bullet under ## Rules']));
-    const when = section(doc, 'When each runs');
-    expect(problems(doc.replace(when, when.replace(/pnpm verify --perf/g, 'pnpm verify --perhaps'))).join('\n')).toMatch(/verify\/perf: ## When each runs does not say when/);
+  it('finds a missing command, a missing workflow and the missing convention', () => {
+    const planted = doc.replace('pnpm test:release', 'pnpm release').replace('.github/workflows/weekly.yml', 'weekly.yml').split('*.perf.test.ts(x)').join('perf tests');
+    expect(problems(planted)).toEqual(expect.arrayContaining([
+      '## The tiers does not name pnpm test:release',
+      '## When each runs does not name .github/workflows/weekly.yml',
+      'the Tier 2 file convention is not named',
+    ]));
   });
 
   it('finds a section missing', () => {

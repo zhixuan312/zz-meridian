@@ -14,8 +14,8 @@ words at the end:
 In Claude Code or Codex, send it as a goal (`/goal Run npx zz-meridian@latest skill --global, then …`): the agent keeps
 working until the condition holds, and a separate model checks it after every turn against the hand-over, which quotes
 its evidence. The sentence says what you want; the skill carries how good it has to be. It builds, renders every view at
-phone and desktop width in both themes, scores each one on a scoreboard of floors (measured by
-`pnpm verify --full --timed`) and craft (judged on the renders), and improves it round by round until nothing is weak,
+phone and desktop width in both themes, scores each one on a scoreboard of floors (measured by the browser
+diagnostics) and craft (judged on the renders), and improves it round by round until nothing is weak,
 deciding what it can find out and recording each decision it made for you. You get the finished product, the renders,
 and the few questions only you can answer.
 
@@ -85,8 +85,8 @@ writes nothing; run it first.
 - Team-owned sample files are checked again on every forward upgrade, even after their migration's introduction, so newer managed tests do not silently outrun the sample they exercise. They remain team-owned: the migration asks for review and never overwrites them.
 - Everything it did and everything left to do is in `.meridian/update/<version>/MERGE.md`. Resolve the items, then run
   the pinned `npx zz-meridian@<version> update --finalize`; `--resume` continues an interrupted run and `--abort` restores
-  what it changed. Only finalize records the new version. `--finalize --verify` validates with the project's default
-  `verify` instead of the gate and the build, and reports its coverage line.
+  what it changed. Only finalize records the new version: it runs `test:release` (every Tier 1 and Tier 2 test, lint and
+  the type check) and one production build.
 - Failure and coverage metadata is recorded literally in the report, including `$` sequences; it is not interpreted as report-template syntax.
 - It refuses, writing nothing, on a dirty git tree (unless `--allow-dirty`) or while another update is open. `--verbose`
   lists every file.
@@ -108,7 +108,7 @@ The standard a project on Meridian is built to is
 database and the screen, the contract a backend answers, and the six rules a project switches on in its own
 `scripts/check.local.ts`.
 
-Requires Node 22.18 or newer. The default `pnpm verify` runs without Google Chrome and reports the browser checks as not run; `--full`, `--timed` and `--perf` need it.
+Requires Node 22.18 or newer. The three test commands run without Google Chrome; the browser diagnostics under `scripts/` need it.
 
 ## What this package does not do
 

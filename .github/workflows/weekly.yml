@@ -1,33 +1,18 @@
-# The weekly suites (decision 0010, docs/distribution.md): what is too slow or too statistical to gate a release, run on
-# master's current commit. Weekly is weekly and release is release: nothing here runs in release.yml, and nothing runs
-# twice, with one exception: `deep`. A failure fails this run and GitHub notifies; nothing waits on it.
+# The weekly run (decision 0010, docs/distribution.md): the test commands on master's current commit, on their own
+# runners, plus the consumer path from a tarball packed from that commit. A failure fails this run and GitHub notifies;
+# nothing waits on it. This workflow holds no publishing permission and no credential: the Postgres password below is
+# the service container's own, which exists only for the job.
 #
-# Each tier is a job of its own, on its own runner, and the jobs run in parallel. A red is rerun by its job alone
-# ("Re-run failed jobs"), and a dispatch names the jobs it runs: `gh workflow run weekly.yml -f jobs=timed`.
+# A fresh clone has no `out/last-green` marker and no diff from master, so each command runs its whole tier. That is the
+# point of a scheduled run: nothing is skipped for lack of evidence.
 #
-# - `full`: `pnpm verify --full`, the complete suites; it judges no time.
-# - `timed`: `pnpm verify --timed`, the timed suites alone; it judges every time.
-# - `perf`: `pnpm verify --perf --shard <i>/5`, the 20-sample protocol split by route over 5 runners; a p95 over its
-#   budget is a `warn` in the report, only a broken sample fails.
-# - `consumer`: the consumer smoke from a tarball packed from this commit: the adopted project's default verify cases,
-#   the update from each of the last three releases (adopted and created), and every recovery and failure case of the
-#   update. The created project's `--verify` case (`--full --timed`) is not run here or in release.yml; it runs on request.
+# - `t2`: `pnpm test:t2`, the scheduled tier run. On this checkout it covers the whole Tier 2 set and the whole Tier 1 set.
+# - `release`: `pnpm test:release` (every Tier 1 and Tier 2 test, lint, the type check, a production build) with the
+#   Postgres services configured, so its Postgres suite runs rather than reporting `not run`.
+# - `consumer`: the consumer smoke from a tarball packed from this commit: the adopted project's tests, the update from
+#   each of the last three releases (adopted and created), and every recovery and failure case of the update.
 #
-# - `deep`: the browser-fixture tests of the checks (tests/deep-*), the adversarial sample every browser suite is held
-#   to. A release runs them too, on the commit it releases; they run here as well because Chrome is an input no commit
-#   pins: a browser that changes what a suite measures (a phone's viewport widened to its overflow, 2026-10-27) turns a
-#   check blind between releases, and only a run on the week's browser sees it.
-# - `postgres`: the Postgres code the skill's references hand a team (references/live.md's LISTEN and NOTIFY adapter, the
-#   pool and pooler guidance of references/existing-project.md), run by scripts/fixtures/postgres/postgres.test.ts
-#   against a Postgres and a PgBouncer in transaction mode, both service containers. It needs the two services and `pg`,
-#   which the template does not install, so it lives outside tests/ and only this job runs it.
-# - `atlas`: the browser audit of the Design Atlas (`node scripts/audit.ts --atlas`): every card's page and its bare
-#   preview, the token views, the page specifications and the guides, at 1440, 390 and 320px in both themes. No verify depth
-#   runs it, and a card's specimens are where its extreme shapes live: a figure running past its tile and a preview wider
-#   than a phone's column were found there first (2026-10-27), and nothing would have found them again.
-#
-# Each job keeps its log as an artifact. This workflow holds no publishing permission and no credential: the Postgres
-# password below is the service container's own, which exists only for the job.
+# Each job keeps its log as an artifact.
 
 name: weekly
 
@@ -37,9 +22,9 @@ on:
   workflow_dispatch:
     inputs:
       jobs:
-        description: 'The jobs to run, comma-separated without spaces: full,timed,perf,consumer,deep,postgres,atlas'
+        description: 'The jobs to run, comma-separated without spaces: t2,release,consumer'
         type: string
-        default: full,timed,perf,consumer,deep,postgres,atlas
+        default: t2,release,consumer
 
 permissions:
   contents: read
@@ -57,21 +42,21 @@ jobs:
     steps:
       - name: Every name is a job
         env:
-          JOBS: ${{ inputs.jobs || 'full,timed,perf,consumer,deep,postgres,atlas' }}
+          JOBS: ${{ inputs.jobs || 't2,release,consumer' }}
         run: |
           set -euo pipefail
           IFS=',' read -ra names <<< "$JOBS"
-          [ "${#names[@]}" -gt 0 ] || { echo "jobs names no job: give some of full,timed,perf,consumer,deep,postgres,atlas"; exit 1; }
+          [ "${#names[@]}" -gt 0 ] || { echo "jobs names no job: give some of t2,release,consumer"; exit 1; }
           for n in "${names[@]}"; do
             case "$n" in
-              full|timed|perf|consumer|deep|postgres|atlas) ;;
-              *) echo "jobs: '$n' is not a job; name some of full,timed,perf,consumer,deep,postgres,atlas, comma-separated without spaces"; exit 1 ;;
+              t2|release|consumer) ;;
+              *) echo "jobs: '$n' is not a job; name some of t2,release,consumer, comma-separated without spaces"; exit 1 ;;
             esac
           done
 
-  full:
+  t2:
     needs: named
-    if: contains(format(',{0},', inputs.jobs || 'full,timed,perf,consumer,deep,postgres,atlas'), ',full,')
+    if: contains(format(',{0},', inputs.jobs || 't2,release,consumer'), ',t2,')
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     env:
@@ -88,26 +73,54 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: verify --full
+      - name: The template snapshot the package carries
+        run: node cli/scripts/build-payload.ts
+      - name: test:t2
         run: |
           set -euo pipefail
           mkdir -p out
-          pnpm verify --full 2>&1 | tee out/weekly-full.txt
+          google-chrome --version | tee out/weekly-t2.txt
+          pnpm test:t2 2>&1 | tee -a out/weekly-t2.txt
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
-          name: full
+          name: t2
           path: out/
           if-no-files-found: ignore
           retention-days: 30
 
-  timed:
+  release:
     needs: named
-    if: contains(format(',{0},', inputs.jobs || 'full,timed,perf,consumer,deep,postgres,atlas'), ',timed,')
+    if: contains(format(',{0},', inputs.jobs || 't2,release,consumer'), ',release,')
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    timeout-minutes: 60
+    services:
+      postgres:
+        image: postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
+        env:
+          POSTGRES_USER: meridian
+          POSTGRES_PASSWORD: meridian
+          POSTGRES_DB: meridian_test
+        ports: ['5432:5432']
+        options: --health-cmd "pg_isready -U meridian" --health-interval 2s --health-timeout 5s --health-retries 30
+      # One server connection, so the advisory-lock case is the same on every run.
+      pgbouncer:
+        image: edoburu/pgbouncer:v1.26.0-p0@sha256:b17551c776ef7e5769ef80b956d20f85e2fd25dd8912d31d58f782aad495b711
+        env:
+          DB_HOST: postgres
+          DB_USER: meridian
+          DB_PASSWORD: meridian
+          DB_NAME: meridian_test
+          POOL_MODE: transaction
+          AUTH_TYPE: scram-sha-256
+          DEFAULT_POOL_SIZE: '1'
+          LISTEN_PORT: '6432'
+        ports: ['6432:6432']
     env:
       CHROME: /usr/bin/google-chrome
+      MERIDIAN_POSTGRES_URL: postgres://meridian:meridian@127.0.0.1:5432/meridian_test
+      MERIDIAN_POOLER_URL: postgres://meridian:meridian@127.0.0.1:6432/meridian_test
+      MERIDIAN_PG: /tmp/pg
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -120,58 +133,27 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: verify --timed
+      - name: The template snapshot the package carries
+        run: node cli/scripts/build-payload.ts
+      - name: pg, which the template does not install
+        run: npm install --prefix /tmp/pg --no-save --no-package-lock --ignore-scripts pg@8.23.1
+      - name: test:release, the Postgres suite included
         run: |
           set -euo pipefail
           mkdir -p out
-          pnpm verify --timed 2>&1 | tee out/weekly-timed.txt
+          for i in $(seq 1 30); do pg_isready -h 127.0.0.1 -p 6432 -U meridian && break; sleep 1; done
+          pnpm test:release 2>&1 | tee out/weekly-release.txt
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
-          name: timed
-          path: out/
-          if-no-files-found: ignore
-          retention-days: 30
-
-  perf:
-    needs: named
-    if: contains(format(',{0},', inputs.jobs || 'full,timed,perf,consumer,deep,postgres,atlas'), ',perf,')
-    runs-on: ubuntu-24.04
-    timeout-minutes: 45
-    strategy:
-      fail-fast: false
-      matrix:
-        shard: [1, 2, 3, 4, 5]
-    env:
-      CHROME: /usr/bin/google-chrome
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
-        with:
-          version: 11.9.0
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version: 22
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - name: verify --perf, shard ${{ matrix.shard }} of 5 (a report)
-        run: |
-          set -euo pipefail
-          mkdir -p out
-          pnpm verify --perf --shard ${{ matrix.shard }}/5 2>&1 | tee out/weekly-perf.txt
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        if: always()
-        with:
-          name: perf-${{ matrix.shard }}
+          name: release
           path: out/
           if-no-files-found: ignore
           retention-days: 30
 
   consumer:
     needs: named
-    if: contains(format(',{0},', inputs.jobs || 'full,timed,perf,consumer,deep,postgres,atlas'), ',consumer,')
+    if: contains(format(',{0},', inputs.jobs || 't2,release,consumer'), ',consumer,')
     runs-on: ubuntu-24.04
     timeout-minutes: 120
     env:
@@ -200,142 +182,15 @@ jobs:
           mkdir -p /tmp/pack
           (cd cli && npm pack --ignore-scripts --pack-destination /tmp/pack >/dev/null)
           ls /tmp/pack/zz-meridian-*.tgz
-      - name: The adopted project's default verify cases, the update from the last three releases, and its recovery and failure cases
+      - name: The adopted project's tests, the update from the last three releases, and its recovery and failure cases
         run: |
           set -euo pipefail
           mkdir -p out
-          node cli/scripts/smoke.ts --tarball "$(ls /tmp/pack/zz-meridian-*.tgz)" --adopt --update --origins 3 --update-all --verify 2>&1 | tee out/weekly-consumer.txt
+          node cli/scripts/smoke.ts --tarball "$(ls /tmp/pack/zz-meridian-*.tgz)" --adopt --update --origins 3 --update-all 2>&1 | tee out/weekly-consumer.txt
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
           name: consumer
-          path: out/
-          if-no-files-found: ignore
-          retention-days: 30
-
-  deep:
-    needs: named
-    if: contains(format(',{0},', inputs.jobs || 'full,timed,perf,consumer,deep,postgres,atlas'), ',deep,')
-    runs-on: ubuntu-24.04
-    timeout-minutes: 45
-    env:
-      CHROME: /usr/bin/google-chrome
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
-        with:
-          version: 11.9.0
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version: 22
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - name: the browser-fixture tests of the checks
-        run: |
-          set -euo pipefail
-          mkdir -p out
-          google-chrome --version | tee out/weekly-deep.txt
-          pnpm exec vitest run tests/deep- --no-file-parallelism 2>&1 | tee -a out/weekly-deep.txt
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        if: always()
-        with:
-          name: deep
-          path: out/
-          if-no-files-found: ignore
-          retention-days: 30
-
-  postgres:
-    needs: named
-    if: contains(format(',{0},', inputs.jobs || 'full,timed,perf,consumer,deep,postgres,atlas'), ',postgres,')
-    runs-on: ubuntu-24.04
-    timeout-minutes: 15
-    services:
-      postgres:
-        image: postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
-        env:
-          POSTGRES_USER: meridian
-          POSTGRES_PASSWORD: meridian
-          POSTGRES_DB: meridian_test
-        ports: ['5432:5432']
-        options: --health-cmd "pg_isready -U meridian" --health-interval 2s --health-timeout 5s --health-retries 30
-      # One server connection, so the advisory-lock case is the same on every run.
-      pgbouncer:
-        image: edoburu/pgbouncer:v1.26.0-p0@sha256:b17551c776ef7e5769ef80b956d20f85e2fd25dd8912d31d58f782aad495b711
-        env:
-          DB_HOST: postgres
-          DB_USER: meridian
-          DB_PASSWORD: meridian
-          DB_NAME: meridian_test
-          POOL_MODE: transaction
-          AUTH_TYPE: scram-sha-256
-          DEFAULT_POOL_SIZE: '1'
-          LISTEN_PORT: '6432'
-        ports: ['6432:6432']
-    env:
-      MERIDIAN_POSTGRES_URL: postgres://meridian:meridian@127.0.0.1:5432/meridian_test
-      MERIDIAN_POOLER_URL: postgres://meridian:meridian@127.0.0.1:6432/meridian_test
-      MERIDIAN_PG: /tmp/pg
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
-        with:
-          version: 11.9.0
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version: 22
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - name: pg, which the template does not install
-        run: npm install --prefix /tmp/pg --no-save --no-package-lock --ignore-scripts pg@8.23.1
-      - name: the references' Postgres code against a Postgres and a transaction pooler
-        run: |
-          set -euo pipefail
-          mkdir -p out
-          for i in $(seq 1 30); do pg_isready -h 127.0.0.1 -p 6432 -U meridian && break; sleep 1; done
-          pnpm exec vitest run --config scripts/fixtures/postgres/vitest.config.ts 2>&1 | tee out/weekly-postgres.txt
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        if: always()
-        with:
-          name: postgres
-          path: out/
-          if-no-files-found: ignore
-          retention-days: 30
-
-  atlas:
-    needs: named
-    if: contains(format(',{0},', inputs.jobs || 'full,timed,perf,consumer,deep,postgres,atlas'), ',atlas,')
-    runs-on: ubuntu-24.04
-    timeout-minutes: 60
-    env:
-      CHROME: /usr/bin/google-chrome
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
-        with:
-          version: 11.9.0
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version: 22
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - name: the Design Atlas audited, at the pixel ratio verify measures
-        run: |
-          set -euo pipefail
-          mkdir -p out
-          pnpm exec next build > out/weekly-atlas-build.txt 2>&1
-          pnpm exec next start -H 127.0.0.1 -p 3100 > out/weekly-atlas-server.txt 2>&1 &
-          for i in $(seq 1 60); do curl -sf http://127.0.0.1:3100/ -o /dev/null && break; sleep 1; done
-          DPR=1 node scripts/audit.ts --atlas --base http://127.0.0.1:3100 2>&1 | tee out/weekly-atlas.txt
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        if: always()
-        with:
-          name: atlas
           path: out/
           if-no-files-found: ignore
           retention-days: 30

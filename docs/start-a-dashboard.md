@@ -61,8 +61,7 @@ The access layer is one folder, `src/data/`, and four edits take the sample's de
 4. **Name a feature, never a restated need.** Every nav item, page, view tool and action points at its feature's need by reference from `src/data/features.ts` (`needs: FEATURES.<id>.needs`); a page opens with `gate(feature)` from `src/data/access.ts` before it reads, and a view tool calls `requireNeed(...)` before it does.
 
 ```sh
-pnpm gate   # the gate, which fails a nav item whose needs is not a need
-pnpm test   # a test fails a surface that restates a need instead of naming the table
+pnpm test:t1   # the checks, which fail a nav item whose needs is not a need, and a surface that restates one
 ```
 
 The rail and the command palette draw only the destinations the signed-in person satisfies, but that is presentation, not the gate: every page refuses on its own — a person who may not open it gets the product's `refusal` as a normal 200 (the NoAccess view under the sample's `explain`), and a request with no session goes to `/sign-in`. `skills/zz-meridian/references/customize.md` has the reference for the whole access layer.
@@ -95,9 +94,9 @@ The console's assistant is off until you set the `ASSISTANT_*` variables (`.env.
 ## Before you ship
 
 ```sh
-pnpm verify          # the gate once, one production build, the size checks and a smoke of up to three routes
-pnpm verify --full   # every route, every control pressed and link followed, the keyboard walk, the assistant and the product's own checks; no time is judged
-pnpm verify --timed  # the navigation budgets, the live data and Web Vitals; needs a quiet machine, runs alone and last
+pnpm test:t1       # the tests affected by the change since the last green run
+pnpm test:t2       # the affected Tier 2 tests too
+pnpm test:release  # every Tier 1 and Tier 2 test, once, with lint and the type check
 ```
 
-`pnpm verify` is the check to run before you finish. Run `--full` after a change to shared components, the shell or data, and `--timed` on a quiet machine to judge the times; `pnpm verify --full --timed` is the whole standard. Every run ends with a coverage line, such as `coverage: default; browser ran; 3 routes; data configured 3/3; interaction configured 3/3; not run: audit, presses, keyboard, assistant, browserChecks, timing, live, vitals`, which says what ran and what did not. Nothing that did not run is reported as passed. `pnpm verify --perf` is the 20-sample navigation protocol, which runs only in CI, split by route with `--shard <i>/<n>` across runners, and reports; a p95 over its budget is a `warn`, never a failure. On your machine, perf runs only narrowed, `node scripts/perf.ts --routes <route>`. The browser suites look inside open shadow roots, so a web component's content is measured, pressed and walked like any other; a custom element they cannot look inside is reported as `unmeasured:`, and a selector in `navigationChecks` that matches several elements prints a `note:`. `skills/zz-meridian/references/validation.md` says what each line means and what to do about it. The default is built to finish within two minutes; `--full`, `--timed` and `--perf` are what a team schedules, weekly for instance, each as a job of its own.
+`pnpm test:t1` is the check to run before you finish a change. Run `pnpm test:t2` after a change to shared components, the shell or data, and `pnpm test:release` before a release. The browser scripts under `scripts/` are diagnostics: `node scripts/audit.ts`, `node scripts/interactions.ts`, `node scripts/keyboard.ts`, `node scripts/vitals.ts` and the rest are run directly against a served build when a question needs them, with the flags at the top of each script. They look inside open shadow roots, so a web component's content is measured, pressed and walked like any other; a custom element they cannot look inside is reported as `unmeasured:`. `skills/zz-meridian/references/validation.md` says what each line means and what to do about it.

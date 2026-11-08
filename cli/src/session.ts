@@ -274,7 +274,6 @@ function persistCopies(ctx: Context, session: string, p: Plan) {
 
 type Outcome = 'dry-run' | 'migration-required' | 'install-pending' | 'ready-to-finalize' | 'failed';
 export type ResumeOptions = { install: boolean; verbose: boolean };
-export type FinalizeOptions = { verify: boolean };
 
 const pin = (version: string, flag: string) => `npx zz-meridian@${version} update ${flag}`;
 
@@ -555,16 +554,14 @@ function command(ctx: Context, takeover: boolean, body: (l: Loaded) => number): 
 }
 
 /** Updates the phase, outcome and failure lines of `MERGE.md` in place; the rest of the report is left as written. */
-function patchReport(l: Loaded, outcome: string, coverage: string | null = null) {
+function patchReport(l: Loaded, outcome: string) {
   const file = path.join(l.dir, 'MERGE.md');
   if (!fs.existsSync(file)) return;
   const j = l.journal;
   let text = fs.readFileSync(file, 'utf8')
     .replace(/^- Phase: .*$/m, `- Phase: ${j.phase}`)
     .replace(/^- Outcome: .*$/m, `- Outcome: ${outcome}`)
-    .replace(/^- Coverage: .*\n/m, '')
     .replace(/^## Failure\n\n[\s\S]*?\n\n(?=## )/m, '');
-  if (coverage) text = text.replace(/^(- Outcome: .*)$/m, (line) => `${line}\n- Coverage: ${coverage.replace(/^coverage: /, '')}`);
   if (j.failure) text = text.replace(/^## What needs you$/m, () => `## Failure\n\n${j.failure}\n\n## What needs you`);
   writeAtomic(file, text);
 }
@@ -607,7 +604,7 @@ export function dependencyProblems(root: string, session: string, pm: string): s
 }
 
 /** Validates the session in place and, when every check passes on unchanged inputs, completes it. */
-function finalizeLoaded(ctx: Context, l: Loaded, o: FinalizeOptions = { verify: false }): number {
+function finalizeLoaded(ctx: Context, l: Loaded): number {
   const { root, log } = ctx;
   const j = l.journal;
   const pm = packageManager(root);
@@ -672,14 +669,11 @@ function finalizeLoaded(ctx: Context, l: Loaded, o: FinalizeOptions = { verify: 
   const paths = j.operations.map((o) => o.path);
   let seen = takeInventory(root, paths);
   if (seen.conflicts.length) return fail('an output path cannot be exempted:', seen.conflicts);
-  const steps: Array<{ name: string; args: string[]; shown: string }> = o.verify ? [
-    { name: 'verify', args: ['scripts/verify.ts'], shown: 'node scripts/verify.ts' },
-  ] : [
-    { name: 'gate', args: ['scripts/gate.ts'], shown: 'node scripts/gate.ts' },
+  const steps: Array<{ name: string; args: string[]; shown: string }> = [
+    { name: 'tests', args: ['scripts/test-run.ts', 'release'], shown: 'node scripts/test-run.ts release' },
     { name: 'build', args: ['node_modules/next/dist/bin/next', 'build'], shown: 'node node_modules/next/dist/bin/next build' },
   ];
   const took: string[] = [];
-  let coverage: string | null = null;
   let n = 1;
   for (const step of steps) {
     const t0 = performance.now();
@@ -695,26 +689,24 @@ function finalizeLoaded(ctx: Context, l: Loaded, o: FinalizeOptions = { verify: 
       return fail(`${step.name} changed protected inputs, so nothing was validated and the current bytes were kept. Review the change and commit it, then finalize again${r.status === 0 ? '' : ` (it also exited with ${r.status}; see ${l.rel}/${evidence})`}`, changed);
     }
     if (r.status !== 0) return fail(`${step.name} exited with ${r.status}; see ${l.rel}/${evidence}`);
-    if (step.name === 'verify') coverage = r.output.split('\n').reverse().find((line) => line.startsWith('coverage: ')) ?? null;
     seen = after;
   }
 
   writeAtomic(manifestFile, targetText);
   j.phase = 'complete';
   persistJournal(l);
-  patchReport(l, 'complete', coverage);
+  patchReport(l, 'complete');
   const where = archive(root, l);
   log(`time: ${took.join(' · ')}`);
-  if (o.verify) log(coverage ?? 'coverage: not reported by verify');
-  else log(`browser: not run (run ${pm} run verify for the browser checks)`);
+  log('tests: every Tier 1 and Tier 2 test passed, lint passed, types check');
   log(`archived: ${where}`);
   log('outcome: complete');
   return 0;
 }
 
 /** Finalizes the session of this project: validates it and, when every check passes, makes the target the baseline. */
-export function finalize(ctx: Context, o: FinalizeOptions): number {
-  return command(ctx, false, (l) => finalizeLoaded(ctx, l, o));
+export function finalize(ctx: Context): number {
+  return command(ctx, false, (l) => finalizeLoaded(ctx, l));
 }
 
 /** Continues an interrupted update: applies what is unapplied without touching a later edit, then installs. */

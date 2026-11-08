@@ -1,6 +1,6 @@
 /**
  * The typed inventory finalize validates against: every path the checks must leave alone (protected inputs), and the
- * few outputs a gate and a build are expected to write (permitted outputs). A fingerprint is existence plus a SHA-256
+ * few outputs a check and a build are expected to write (permitted outputs). A fingerprint is existence plus a SHA-256
  * and lives in memory only; the inventory is never written anywhere, and only the names of changed paths are reported.
  */
 import fs from 'node:fs';

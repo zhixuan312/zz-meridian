@@ -48,7 +48,7 @@ type RailProps = Omit<ComponentProps<typeof Rail>, 'nav' | 'user' | 'viewAs'> & 
  * The rail's shape while the person's own rail is on its way: the frame's space, held open so the page never shifts and
  * no destination is offered that this person may not have. It is deliberately a skeleton rather than the frame itself —
  * a fallback that drew the real rail would put a second copy of it in every page's HTML, which is what the HTML budget
- * in `pnpm verify` refuses.
+ * in the test run refuses.
  */
 export function RailPending() {
   return (

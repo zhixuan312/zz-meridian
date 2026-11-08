@@ -11,11 +11,11 @@ describe('managedBlock', () => {
   });
   it("uses the project's package manager, with npm's separator before flags", () => {
     const npm = managedBlock('0.5.0', 'npm');
-    expect(npm).toContain('`npm run verify`');
-    expect(npm).toContain('`npm run gate`');
-    expect(npm).toContain('`npm run verify -- --full`');
+    expect(npm).toContain('`npm run test:t1`');
+    expect(npm).toContain('`npm run test:t2`');
+    expect(npm).toContain('`npm run test:release`');
     expect(npm).not.toContain('pnpm');
-    expect(managedBlock('0.5.0', 'yarn')).toContain('`yarn verify --full`');
+    expect(managedBlock('0.5.0', 'yarn')).toContain('`yarn test:t1`');
   });
 });
 

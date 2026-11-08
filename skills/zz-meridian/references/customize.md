@@ -34,7 +34,7 @@ sample, ZZ Meridian's own dashboard, lives in `optional:src/system/fixtures/`; y
   JavaScript has loaded and run, about 2.5 s on a mid-range phone, which puts LCP past the limit. Call
   `preload(url, { as: 'fetch', crossOrigin: 'anonymous' })` from `react-dom` inside the read hook: the server render
   writes a preload into the HTML, and the read starts with the page (ZZ Console measured about 170 ms instead).
-  `pnpm verify --timed` measures LCP on that phone profile (`scripts/vitals.ts`).
+  `node scripts/vitals.ts` measures LCP on that phone profile.
 - **The access seam**: who may do what lives in `optional:src/data/`, and a page never answers it on its own. Three files
   hold the rules and one holds the member boundary.
   - `optional:src/data/roles.ts` is the role table. `MAIN_ROLES`, `ADD_ONS` and `GRANTS`; `effective(role, addOns)` unions a
@@ -104,7 +104,7 @@ exactly what an address that names nothing draws: the console's missing page in 
 tab and the address walked back past every page the person may not open, so nothing names the page, a role or who to ask.
 Every gated route's loading state then names no page for anyone (`gatedLoading`), and the standalone missing page walks
 an address below a refused page back past it too.
-`pnpm verify --as` expects whichever the product chose on every route a persona may not open
+`node scripts/rail.ts --as` expects whichever the product chose on every route a persona may not open
 (`scripts/verify.config.ts` reads it from here), and a view tool's refusal is the same under both.
 
 A project made by `create` (or a clone) starts with the sample's three workspaces: `workspaces` in `src/app.config.ts` (Main,
@@ -121,7 +121,7 @@ navigation, `workspaceOf` says which workspace an address belongs to) and `optio
 (`WorkspaceRail` and `WorkspacePalette`). The address alone decides the workspace; nothing is stored, and a workspace
 chooses what the rail lists, never what a person may open. Keep a workspace with the key `main`: the adapter and the
 refusal page fall back to it for an address no entry owns. The sample's browser journeys (`optional:journeys/workspaces.ts`)
-also name `business` and `engineering`, so `verify --full` fails on a renamed workspace until the journeys are changed
+also name `business` and `engineering`, so `node scripts/rail.ts --as` fails on a renamed workspace until the journeys are changed
 with it or removed, and the gate fails on the tests that hold the sample's three until you rewrite them for yours:
 `optional:tests/workspaces.test.ts`, `optional:tests/workspace-access.test.ts`, `optional:tests/workspace-chrome.test.tsx`,
 `optional:tests/workspace-menu-access.test.tsx` and `optional:tests/no-access.test.tsx`. `optional:docs/product-workspaces.md` is the sample's own guide
@@ -385,8 +385,8 @@ orders is the sample's, not the product's.
   workspaces as an Owner and as a Viewer, the `navigationChecks`, `detailRoutes`, `browserChecks` and `personas` in
   `scripts/verify.config.ts` that name the sample's routes and people, and the shipped tests that hold the sample (the
   next item). Give each rail page of your own its `navigationChecks`
-  entry (`pnpm verify --full` fails a rail route without one) and take the sample's out with its pages.
-  `optional:journeys/workspaces.ts` expects of a refused destination what your `refusal` chooses, as `pnpm verify --as`
+  entry (`node scripts/navigate.ts` fails a rail route without one) and take the sample's out with its pages.
+  `optional:journeys/workspaces.ts` expects of a refused destination what your `refusal` chooses, as `node scripts/rail.ts --as`
   does, and gates each step on the destinations it walks.
 - **The shipped tests that hold the sample**: a test under `optional:tests/` holds the sample when it imports a sample
   page, view or fixture, and also when it reads the sample through a module you keep (`optional:src/data/collections.ts`,
@@ -624,7 +624,7 @@ grep -rn "/services\|/requests\|/customers\|/keys\|/settings\|/members\|/usage\|
   app src/views src/components src/logic src/data --include=*.tsx --include=*.ts | grep -v preview.tsx
 ```
 
-Then `pnpm verify --full --timed`, after `node scripts/registry.ts` in a clone that keeps the Atlas (a created project
+Then `pnpm test:release` and the browser diagnostics, after `node scripts/registry.ts` in a clone that keeps the Atlas (a created project
 has no cards' previews, and there it writes a registry of none).
 
 ## Renaming a thing

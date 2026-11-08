@@ -95,7 +95,7 @@ const RULES: Rule[] = [
   { id: 'no dormant export', source: 'which nothing a product keeps imports', batch: 'T', fails: ['src/lib/planted-lib.ts: exports orphanPlanted, which nothing a product keeps imports'], twin: 'exports usedPlanted' },
   { id: 'the brief has its five sections', source: 'docs/brief.md: ${e}', batch: 'T', fails: ['docs/brief.md: missing required heading "## Glossary"', 'docs/brief.md: heading "## Users" appears 2 times'] },
   { id: 'a path a document names exists', source: 'scanReferences(docs, has, scripts)', batch: 'T', fails: ['path "docs/nope-planted.md" does not exist'], twin: 'optional-planted' },
-  { id: 'a package script a document names exists', source: 'scanReferences(docs, has, scripts)', batch: 'T', fails: ['package script "nopescript" is not in package.json'], twin: 'package script "gate"' },
+  { id: 'a package script a document names exists', source: 'scanReferences(docs, has, scripts)', batch: 'T', fails: ['package script "nopescript" is not in package.json'], twin: 'package script "test:t1"' },
 ];
 
 const ROOT = path.resolve(import.meta.dirname, '..');
@@ -235,7 +235,7 @@ const EDITS: Record<Batch | 'M0', () => void> = {
     edit('scripts/brand.ts', (t) => t.replace('const atlasOnly = [', 'const atlasOnlyList = ['));
     put('docs/brief.md', [
       '# Brief', '', '## Product', 'x', '', '## Users', 'x', '', '## Users', 'x', '', '## Data', 'x', '', '## Decisions',
-      'See `docs/nope-planted.md`, `optional:docs/optional-planted.md` and `pnpm nopescript`, and `pnpm run gate`.', '',
+      'See `docs/nope-planted.md`, `optional:docs/optional-planted.md` and `pnpm nopescript`, and `pnpm run check`.', '',
     ].join('\n'));
   },
   M0: () => {

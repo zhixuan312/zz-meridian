@@ -546,7 +546,7 @@ const ROOT_TOGGLE = define('x-toggle', '<button type="button" class="root-toggle
 const PICK = `Array.from(document.querySelectorAll('button.pick')).forEach((b) => b.addEventListener('click', () => b.setAttribute('aria-pressed', String(b.getAttribute('aria-pressed') !== 'true'))));`;
 
 /**
- * Two live pages for perf's after-live journey (scripts/perf.ts). Each listens for `online` only 1.5 s after it loads, as a
+ * Two live pages for perf's after-live journey (scripts/perf.ts, a diagnostic). Each listens for `online` only 1.5 s after it loads, as a
  * console page does once it has hydrated, and then resyncs as the provider does: a Server Action that answers
  * `{ ok: true }`, then the router's read of the page. An event sent at once is lost, and the page reads as not live.
  */

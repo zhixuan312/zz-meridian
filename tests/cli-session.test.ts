@@ -63,7 +63,7 @@ const resolveAll = (root: string) => fs.writeFileSync(path.join(session(root), '
   [[ui('b'), 'Ours is deliberate.'], [ui('d'), 'We still use it.'], [ui('f'), 'Ours is a different badge; we renamed nothing.']]
     .map(([p, reason]) => ({ id: `file:${p}`, status: 'resolved', reason, files: { [p]: current(root, p) } })),
 ));
-const isGate = (args: string[]) => args.some((a) => a.endsWith('scripts/gate.ts'));
+const isTests = (args: string[]) => args.some((a) => a.endsWith('scripts/test-run.ts'));
 const isBuild = (args: string[]) => args.includes('build');
 
 describe('finalize', () => {
@@ -71,17 +71,17 @@ describe('finalize', () => {
     const root = project();
     expect(start(ctx(root).c, opts)).toBe(2);
     const pending = ctx(root);
-    expect(finalize(pending.c, { verify: false })).toBe(2);
+    expect(finalize(pending.c)).toBe(2);
     expect(pending.lines.join('\n')).toContain(`file:${ui('b')}`);
     expect(manifest(root).version).toBe('0.3.0');
 
     resolveAll(root);
     const done = ctx(root);
-    expect(finalize(done.c, { verify: false })).toBe(0);
+    expect(finalize(done.c)).toBe(0);
     const m = manifest(root);
     expect(m.version).toBe('0.5.0');
     expect(m.files).toEqual(Object.fromEntries(Object.entries(TARGET).map(([p, c]) => [p, sha256(c)])));
-    expect(done.lines.join('\n')).toMatch(/browser: not run/);
+    expect(done.lines.join('\n')).toMatch(/tests: every Tier 1 and Tier 2 test passed, lint passed, types check/);
     expect(has(root, '.meridian/update/0.5.0')).toBe(false);
     const [archived] = fs.readdirSync(path.join(root, '.meridian/history/0.5.0'));
     const h = path.join(root, '.meridian/history/0.5.0', archived);
@@ -99,7 +99,7 @@ describe('finalize', () => {
     resolveAll(root);
     fs.writeFileSync(path.join(root, ui('b')), 'b-ours, edited again');
     const { c, lines } = ctx(root);
-    expect(finalize(c, { verify: false })).toBe(2);
+    expect(finalize(c)).toBe(2);
     expect(lines.join('\n')).toContain(ui('b'));
     expect(manifest(root).version).toBe('0.3.0');
   });
@@ -115,7 +115,7 @@ describe('finalize', () => {
     put(root, { [file]: bytes });
     const commands: string[][] = [];
     const done = ctx(root, { run: (_cmd, args) => { commands.push(args); return { status: 0, output: '' }; } });
-    expect(finalize(done.c, { verify: false })).toBe(2);
+    expect(finalize(done.c)).toBe(2);
     expect(done.lines.join('\n')).toContain(`${file}: changed after the update applied it`);
     expect(commands).toEqual([]);
     expect(read(root, file)).toBe(bytes);
@@ -123,25 +123,25 @@ describe('finalize', () => {
     expect(has(session(root), 'backup')).toBe(true);
     if (Object.hasOwn(TARGET, file)) put(root, { [file]: TARGET[file] });
     else fs.unlinkSync(path.join(root, file));
-    expect(finalize(ctx(root).c, { verify: false })).toBe(0);
+    expect(finalize(ctx(root).c)).toBe(0);
   });
 
   it('keeps the session when a check fails, and completes on the retry', () => {
     const root = project();
     start(ctx(root).c, opts);
     resolveAll(root);
-    expect(finalize(ctx(root, { run: (_c, a) => ({ status: isGate(a) ? 1 : 0, output: 'types fail' }) }).c, { verify: false })).toBe(1);
+    expect(finalize(ctx(root, { run: (_c, a) => ({ status: isTests(a) ? 1 : 0, output: 'types fail' }) }).c)).toBe(1);
     expect(state(root).phase).toBe('failed');
     expect(manifest(root).version).toBe('0.3.0');
-    expect(finalize(ctx(root).c, { verify: false })).toBe(0);
+    expect(finalize(ctx(root).c)).toBe(0);
   });
 
   it('fails, keeps the current bytes and names the path when a check changes a protected input', () => {
     const root = project();
     start(ctx(root).c, opts);
     resolveAll(root);
-    const writer: Run = (_c, a) => { if (isGate(a)) fs.writeFileSync(path.join(root, 'src/app.config.ts'), 'cfg, rewritten by a check'); return { status: 0, output: '' }; };
-    expect(finalize(ctx(root, { run: writer }).c, { verify: false })).toBe(1);
+    const writer: Run = (_c, a) => { if (isTests(a)) fs.writeFileSync(path.join(root, 'src/app.config.ts'), 'cfg, rewritten by a check'); return { status: 0, output: '' }; };
+    expect(finalize(ctx(root, { run: writer }).c)).toBe(1);
     expect(read(root, 'src/app.config.ts')).toBe('cfg, rewritten by a check');
     expect(state(root).phase).toBe('failed');
     expect(state(root).failure).toContain('src/app.config.ts');
@@ -154,26 +154,14 @@ describe('finalize', () => {
     start(ctx(root).c, opts);
     resolveAll(root);
     const writer: Run = (_c, args) => {
-      if (isGate(args)) fs.writeFileSync(path.join(root, file), 'changed by validation');
+      if (isTests(args)) fs.writeFileSync(path.join(root, file), 'changed by validation');
       return { status: 0, output: '' };
     };
-    expect(finalize(ctx(root, { run: writer }).c, { verify: false })).toBe(1);
+    expect(finalize(ctx(root, { run: writer }).c)).toBe(1);
     const failure = state(root).failure;
     expect(failure).toContain(file);
     expect(read(session(root), 'MERGE.md')).toContain(failure!);
     expect(manifest(root).version).toBe('0.3.0');
-  });
-
-  it('keeps literal dollar sequences in the completed validation coverage', () => {
-    const root = project();
-    start(ctx(root).c, opts);
-    resolveAll(root);
-    const coverage = "coverage: owned $& $` $' measurement";
-    const runner: Run = (_c, args) => ({ status: 0, output: args.some((arg) => arg.endsWith('scripts/verify.ts')) ? coverage : '' });
-    expect(finalize(ctx(root, { run: runner }).c, { verify: true })).toBe(0);
-    const history = path.join(root, '.meridian/history/0.5.0');
-    const [archived] = fs.readdirSync(history);
-    expect(read(path.join(history, archived), 'MERGE.md')).toContain(coverage.slice('coverage: '.length));
   });
 
   it('accepts the outputs a build is expected to write', () => {
@@ -184,7 +172,7 @@ describe('finalize', () => {
       if (isBuild(a)) put(root, { '.next/BUILD_ID': 'x', 'next-env.d.ts': '/// <reference types="next" />\n', 'tsconfig.tsbuildinfo': '{}', 'out/verify.txt': 'ok' });
       return { status: 0, output: '' };
     };
-    expect(finalize(ctx(root, { run: builder }).c, { verify: false })).toBe(0);
+    expect(finalize(ctx(root, { run: builder }).c)).toBe(0);
   });
 
   it('refuses an output folder that is a symbolic link', () => {
@@ -192,7 +180,7 @@ describe('finalize', () => {
     start(ctx(root).c, opts);
     resolveAll(root);
     const linker: Run = (_c, a) => { if (isBuild(a)) fs.symlinkSync(path.join(root, 'src'), path.join(root, '.next')); return { status: 0, output: '' }; };
-    expect(finalize(ctx(root, { run: linker }).c, { verify: false })).toBe(1);
+    expect(finalize(ctx(root, { run: linker }).c)).toBe(1);
     expect(state(root).failure).toContain('.next');
     expect(manifest(root).version).toBe('0.3.0');
   });
@@ -202,7 +190,7 @@ describe('finalize', () => {
     const root = project();
     expect(start(ctx(root, { target: release('0.5.0', withoutK) }).c, opts)).toBe(2);
     resolveAll(root);
-    expect(finalize(ctx(root, { target: release('0.5.0', withoutK) }).c, { verify: false })).toBe(0);
+    expect(finalize(ctx(root, { target: release('0.5.0', withoutK) }).c)).toBe(0);
     expect(manifest(root).files[ui('k')]).toBeUndefined();
     expect(read(root, ui('k'))).toBe('k-ours');
     const [archived] = fs.readdirSync(path.join(root, '.meridian/history/0.5.0'));
@@ -234,7 +222,7 @@ describe('finalize', () => {
     };
     check();
     resolveAll(root);
-    expect(finalize(logged().c, { verify: false })).toBe(0);
+    expect(finalize(logged().c)).toBe(0);
     check();
   });
 
@@ -256,9 +244,9 @@ describe('finalize', () => {
     start(ctx(root).c, opts);
     resolveAll(root);
     const other = ctx(root, { version: '0.5.1' });
-    expect(finalize(other.c, { verify: false })).toBe(1);
+    expect(finalize(other.c)).toBe(1);
     expect(other.lines.join('\n')).toContain('0.5.0');
-    expect(finalize(ctx(root, { integrity: 'sha512-other' }).c, { verify: false })).toBe(1);
+    expect(finalize(ctx(root, { integrity: 'sha512-other' }).c)).toBe(1);
     expect(manifest(root).version).toBe('0.3.0');
   });
 
@@ -267,7 +255,7 @@ describe('finalize', () => {
     const { c, lines } = ctx(root);
     expect(start(c, opts)).toBe(0);
     expect(manifest(root).version).toBe('0.5.0');
-    expect(lines.join('\n')).toMatch(/browser: not run/);
+    expect(lines.join('\n')).toMatch(/tests: every Tier 1 and Tier 2 test passed, lint passed, types check/);
   });
 });
 

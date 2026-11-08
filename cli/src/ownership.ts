@@ -13,7 +13,7 @@ export type Action = 'write' | 'delete' | 'stage' | 'leave';
 const HASH = /^sha256-[0-9a-f]{64}$/;
 const SEMVER = /^\d+\.\d+\.\d+$/;
 
-/** The library modules Meridian's components and gates import; the rest of src/lib belongs to the template's pages. */
+/** The library modules Meridian's components and checks import; the rest of src/lib belongs to the template's pages. */
 export const LIB = ['cn', 'format', 'format-date', 'calendar-date', 'period', 'color', 'host', 'preferences', 'csv', 'safe-markdown', 'logo', 'collection', 'explore', 'live', 'shared-context', 'agent-guidance', 'insight', 'facts', 'sort', 'contrast-pairs'].map((n) => `src/lib/${n}.ts`);
 
 /**

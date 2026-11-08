@@ -342,7 +342,7 @@ export const trail = [REQUESTS, W.business.homeHref, HOME];
 /**
  * Open one rail destination as a person and report what is wrong with it, or null. A destination the person may open must
  * draw its title as the heading, with the rail naming the entry's workspace and marking the entry current; one the person
- * may not open must draw what the product's `refusal` chooses, as `pnpm verify --as` expects it: under `explain` the page
+ * may not open must draw what the product's `refusal` chooses, as `node scripts/rail.ts --as` expects it: under `explain` the page
  * that says they lack access to it by its title, under `absent` the missing page and no no-access page.
  */
 export async function visit(page: Page, who: string, item: (typeof items)[number], may: boolean): Promise<string | null> {

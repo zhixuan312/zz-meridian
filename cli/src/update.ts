@@ -99,7 +99,7 @@ export function packageDigest(dir: string): string {
 }
 
 export type Mode = 'dry-run' | 'update' | 'resume' | 'finalize' | 'abort';
-export type Flags = { verbose: boolean; allowDirty: boolean; install: boolean; verify: boolean };
+export type Flags = { verbose: boolean; allowDirty: boolean; install: boolean };
 
 /** Prints one refusal and returns the exit code. */
 const refuse = (cause: string) => { console.error(`zz-meridian update: ${cause}`); return 1; };
@@ -158,7 +158,7 @@ export function update({ root, mode, flags }: { root: string; mode: Mode; flags:
     if (mode === 'resume' || mode === 'finalize' || mode === 'abort') {
       const own: Context = { ...ctx, source: replayed('the recorded release'), target: replayed('the running release'), interruptAfter: undefined };
       if (mode === 'resume') return resume(own, { install: flags.install, verbose: flags.verbose });
-      if (mode === 'finalize') return finalize(own, { verify: flags.verify });
+      if (mode === 'finalize') return finalize(own);
       return abort(own);
     }
     if (mode === 'update') return start(ctx, { dryRun: false, allowDirty: flags.allowDirty, install: flags.install, verbose: flags.verbose });

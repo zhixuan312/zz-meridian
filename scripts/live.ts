@@ -1,7 +1,7 @@
 /**
  * Live data in the browser, checked end to end against the built app: two tabs on /members, a write in one and the other
  * showing it, and every way the stream can go quiet (hints suppressed, a server restart, a hidden tab, a tab offline) or
- * loud (a burst). Explicit verification work that `pnpm verify` runs; it is not part of any default smoke.
+ * loud (a burst). A diagnostic: no test tier runs it.
  *
  *   node scripts/live.ts --base http://127.0.0.1:3000 [--drop-base <url>] [--poll-ms 3000] [--only <case>,<case>]
  *

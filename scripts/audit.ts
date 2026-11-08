@@ -11,7 +11,7 @@
  * --atlas audits the Design Atlas instead: every card's page and its bare preview, and every other entry the Atlas
  * serves — the token views, the page specs and the guides — at 1440, 390 and 320px in both themes.
  * A card's preview is the one place it is drawn alone, so a defect in its own box shows there and nowhere else. It is
- * not part of `pnpm verify` (the default stays fast); run it when the question is the component surface. It takes
+ * not part of a test tier; run it when the question is the component surface. It takes
  * about thirty-five minutes, and a project without the Atlas has nothing for it to read. `--list` prints the routes a run would
  * visit, and for `--atlas` what they are by kind, and exits without opening a browser: what a run covers, before it runs.
  *

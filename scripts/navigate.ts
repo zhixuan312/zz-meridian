@@ -40,10 +40,9 @@
  * With `--timing on`, a time that passes leaving less than a fifth of its budget makes its line `warn` (scripts/lib/timing.ts
  * `HEADROOM`): a pass by a hair here is a red on a slower machine, and the weekly runner is one.
  *
- * scripts/perf.ts drives the same journey 20 times per route, device and condition (warm, cold and after a live refresh).
  *
  * The exit code is non-zero on a FAIL and on a configuration error. Missing Chrome makes every line `not run`: exit 0 in
- * the default mode, non-zero in `full`. The mappings and budgets come from scripts/verify.config.ts, which `--config` can
+ * the default mode, non-zero in `full` mode. The mappings and budgets come from scripts/verify.config.ts, which `--config` can
  * replace and `--rail` can name the rail routes for (the readiness fixtures, which have no src/app.config.ts). Each
  * workspace's home and name come from `workspaces` in src/app.config.ts (its `homeHref` and `label`); beside `--rail`, a
  * fixture names them with `--homes <home>=<workspace>,...`, and with `--rail` and no `--homes` no route is a home.
@@ -193,7 +192,7 @@ async function main(): Promise<number> {
   holdArgs('navigate', args, ['--base', '--config', '--homes', '--mode', '--rail', '--rate', '--routes', '--samples', '--timing']);
   if (timing !== 'on' && timing !== 'off') { console.error(`--timing must be on or off, got ${timing}`); return 1; }
   if (mode !== 'default' && mode !== 'full') { console.error(`--mode must be default or full, got ${mode}`); return 1; }
-  if ((opt('--samples') ?? '1') !== '1') { console.error('--samples: one sample and two retakes is the only protocol here; scripts/perf.ts takes the 20-sample one'); return 1; }
+  if ((opt('--samples') ?? '1') !== '1') { console.error('--samples: one sample and two retakes is the only protocol here; a 20-sample protocol takes its own samples'); return 1; }
 
   const config = ((await import(pathToFileURL(path.resolve(ROOT, opt('--config') ?? 'scripts/verify.config.ts')).href)) as { default?: NavConfig }).default ?? {};
   const budgets = budgetsOf(config);

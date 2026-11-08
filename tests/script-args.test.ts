@@ -45,7 +45,7 @@ describe('a script run by hand', () => {
     });
   }
   it('shot refuses a missing repeated press name before starting Chrome', () => {
-    for (const args of [['--press'], ['--press', '--full'], ['--press', 'Menu', '--press', '--width', '390']]) {
+    for (const args of [['--press'], ['--press', '--whole-page'], ['--press', 'Menu', '--press', '--width', '390']]) {
       const r = run('shot', ...args);
       expect(r.status).toBe(1);
       expect(r.stderr).toContain('shot: --press needs a value');

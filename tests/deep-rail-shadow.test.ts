@@ -8,7 +8,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 const ROOT = path.resolve(import.meta.dirname, '..');
 
 /**
- * `pnpm verify --as <persona>` compares the rail rail.ts reads with the persona's expected routes. A product whose rail
+ * `node scripts/rail.ts --as <persona>` compares the rail rail.ts reads with the persona's expected routes. A product whose rail
  * is a web component keeps the links in an open shadow root, which the journey and the walk-through enter; rail.ts read
  * the light DOM only and failed "the rail drew no links" on a rail that was drawn.
  */

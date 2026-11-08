@@ -6,7 +6,7 @@ import type { Migration } from './update-session.js';
 
 /** The dev dependencies and scripts adopt adds to a project, and `update` reconciles. */
 export const TOOLCHAIN = ['typescript', '@types/node', '@types/react', '@types/react-dom', 'tailwindcss', '@tailwindcss/postcss', 'eslint', 'eslint-config-next', 'vitest', '@vitejs/plugin-react', 'jsdom', '@testing-library/react', '@testing-library/dom', '@testing-library/jest-dom'];
-export const MERIDIAN_SCRIPTS = ['typecheck', 'test', 'tokens', 'check', 'contrast', 'gate', 'audit', 'verify', 'brand', 'shot', 'interactions', 'keyboard', 'vitals'];
+export const MERIDIAN_SCRIPTS = ['typecheck', 'test:t1', 'test:t2', 'test:release', 'tokens', 'check', 'contrast', 'brand', 'shot'];
 
 export type Template = { dependencies?: Record<string, string>; devDependencies?: Record<string, string>; scripts?: Record<string, string> };
 export type Need = { runtime: string[]; dev: string[]; scripts: string[] };

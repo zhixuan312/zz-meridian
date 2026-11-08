@@ -57,7 +57,7 @@ const escapes: string[] = [];
  * judged nothing, which reads exactly like a rule that judged everything and found it right: the agent sections passed a
  * project whose view tools were in modules the reader did not follow (#43), and the agent-reads rule passed a route
  * group not named `(dashboard)` (#23). So a rule that judged nothing says so, in the line `judged nothing: <rules>`,
- * which the gate and the coverage line of `pnpm verify` carry. It is not a failure: a product without cards has none.
+ * which the checks carry. It is not a failure: a product without cards has none.
  */
 const judged: [rule: string, count: number][] = [];
 

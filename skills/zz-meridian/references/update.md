@@ -9,7 +9,7 @@ for either.
 When the project is already on the running version, `update` (and its dry run) prints
 `already at <version>; nothing to update` and exits 0: say so in the hand-over and stop there; the standard is not
 re-proven for a change that did not happen. After an update that changed files, run the loop in `standard.md` on what it
-changed, and close with `pnpm verify --full --timed`. A release can make a suite look further than the last one did (the
+changed, and close with `pnpm test:release` and the browser diagnostics. A release can make a suite look further than the last one did (the
 browser checks now look inside open shadow roots), so a finding that is new after an update may be a page that was never
 measured before; `validation.md` says what each line means.
 
@@ -123,10 +123,9 @@ left by a process that is no longer running, after it has read the journal.
 3. The installed dependencies must match the plan: each entry the update added or raised, and `next`, `react` and
    `react-dom`, must be installed at a version that satisfies the planned specification; the framework must be
    exactly the planned version.
-4. It runs the project gate (which already type checks) and then one `next build`, in place, with no separate `tsc`.
-   With `--verify` it runs the project's default verify (`node scripts/verify.ts`) once instead, which is the gate, the build and the
-   bounded smoke, so nothing runs twice. The output goes to `evidence/`. Before and after each command it compares the
-   protected inputs.
+4. It runs `node scripts/test-run.ts release` (every Tier 1 and Tier 2 test, lint and the type check) and then one
+   `next build`, in place. The output goes to `evidence/`. Before and after each command it compares the protected
+   inputs.
 5. When both pass and the inputs still match, it writes the target manifest atomically, marks the session complete and
    moves it to `.meridian/history/<version>/<id>/`, keeping `state.json`, `MERGE.md`, `resolutions.json` and
    `evidence/` and dropping the temporary `base/`, `ours/`, `new/` and `backup/`. A rename that was interrupted is
@@ -145,12 +144,11 @@ project, overlaps a managed or kept file or is a folder holding tracked files is
 conflict. A protected file a check rewrites, such as a `tsconfig.json` that Next updates, also fails: review and
 commit the change, then finalize again.
 
-**What "complete" means.** The gate and one production build passed on the live project, the files are the target
-release's (plus the team's resolutions), and `optional:.meridian/manifest.json` now records the target as the baseline
-for the next update. Without `--verify` it does not mean the browser checks ran: the output says `browser: not run`, and
-`<pm> run verify` runs the bounded smoke (`<pm> run verify -- --full` the exhaustive suites, `-- --timed` the timed
-ones). With `--verify` the output, `MERGE.md` and the archived evidence carry verify's coverage line, which says what
-ran and what did not. A failing verify fails the session as a failing gate does.
+**What "complete" means.** Every Tier 1 and Tier 2 test, lint and the type check passed, one production build passed
+on the live project, the files are the target release's (plus the team's resolutions), and
+`optional:.meridian/manifest.json` now records the target as the baseline for the next update. The Postgres suite, where
+its URLs are not set, is reported `not run`; the browser diagnostics are not part of finalize. A failing test or build
+fails the session.
 
 A zero-conflict update finalizes in the same command: `update` prints the conflict summary and then the finalize
 output, exit `0`.
@@ -222,7 +220,7 @@ each one in the project, then record it as above, with the hashes of the files a
 
 | Id | The old shape it found | The change |
 |----|------------------------|------------|
-| `verify-modes` | a `package.json` script, workflow or shell file passing `--quick`, `--no-vitals` or `--extra` to verify | use `pnpm verify`, `--full`, `--timed` or `--perf` instead: `validation.md`; only the gate runs after it |
+| `verify-modes` | a `package.json` script, workflow or shell file passing `--quick`, `--no-vitals` or `--extra` to verify | use `pnpm test:t1`, `pnpm test:t2` or `pnpm test:release` instead: `validation.md` |
 | `shell-assistant-promise` | `<AppShell assistant=...>` with a boolean | pass a `Promise<boolean>`: `cache.md`, "The shell's assistant promise" |
 | `assistant-available-promise` | `useAssistantAvailable()` read as a boolean | `use(useAssistantAvailable())` inside a `Suspense` boundary: same section |
 | `clock-now-required` | `Freshness`, `ShellTools` or `AlertsPanel` without `now`, `formatRelative` with one argument | pass the data's clock: "The clock is the data's" |
@@ -282,15 +280,15 @@ JSON array of exactly `{ "path", "reason" }` entries. Paths are unique, project-
   fails the gate.
 - A kept file that is missing fails the gate. An update never recreates it: restore the file or remove the entry.
 - Do not add an entry to make a conflict disappear without reading it. The reason is the record of the decision.
-- A managed file whose bytes are not the release's and that no entry keeps is named by the gate, on a `drift:` line
-  after its last line (and under the gate in `pnpm verify`). It is a warning, not a failure: the next update asks about
+- A managed file whose bytes are not the release's and that no entry keeps is named by the static checks, on a `drift:` line
+  after their last line. It is a warning, not a failure: the next update asks about
   each, and it can tell a file whose imports are only spelled differently from one the team changed, which the gate
   cannot. Restore the file to the release, or keep it here with its reason, so the question is answered before the
   update asks it.
 
 ## An unresolved session fails the gate
 
-While an update session exists under `optional:.meridian/update/`, `node scripts/check.ts` (and so `pnpm gate`) refuses
+While an update session exists under `optional:.meridian/update/`, `node scripts/check.ts` (and so every test command) refuses
 it until every open item is resolved: an interrupted apply (run `update --resume`), an edited plan, a write that was
 never applied, a staged file or a migration without exactly one current resolution, and any unknown or duplicate
 resolution. More than one session fails too. When the session is ready, the gate reads its candidate manifest in place

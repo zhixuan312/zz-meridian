@@ -74,11 +74,11 @@ ${nextStep(pm)}`);
   return 0;
 }
 
-/** What the person does next, with the full verify written so their package manager passes its flags on. */
+/** What the person does next, with the release command written so their package manager runs it. */
 export function nextStep(pm: 'pnpm' | 'npm'): string {
   return `Next: follow .agents/skills/zz-meridian/SKILL.md from step 3's brief (the template is fetched and branded): the brief,
-step 4's colour check, then data and the pages, then the loop in references/standard.md until ${command(pm, 'verify', ' --full --timed')} ends with "the project meets the
-Meridian standard" and no view on the scoreboard is Weak.`;
+step 4's colour check, then data and the pages, then the loop in references/standard.md until ${command(pm, 'test:release', '')} passes
+and no view on the scoreboard is Weak.`;
 }
 
 function fail(msg: string): number {

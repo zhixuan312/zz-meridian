@@ -12,7 +12,7 @@ const SANDBOX = process.platform === 'linux' && process.env.CI === 'true' ? ['--
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 /**
  * The device pixel ratio a page is opened at: 1 unless `DPR` asks for another. A check measures geometry, and for as long
- * as this default was 2 while `pnpm verify` set 1, one suite gave two answers for one page, by hand and inside verify (a
+ * as this default was 2 while a test run set 1, one suite gave two answers for one page (a
  * table 368px wide in a 356px frame at 2x that fits at 1x). A picture for the eye asks for 2 itself (scripts/shot.ts).
  */
 const dpr = () => Number(process.env.DPR ?? 1);

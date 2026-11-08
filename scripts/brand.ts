@@ -14,7 +14,7 @@
  * theme, a step at a time, until every pair in every theme passes. --no-atlas removes the Design Atlas: its routes, its
  * modules, its nav entries (the footer's link follows them) and its build tracing (the card previews stay: the gate checks them; the markdown packages stay for Prose).
  * --product goes further, for a dashboard that is not the design system: --no-atlas, and the card specs and previews,
- * page specs, docs, decisions, changelog and skill go too (the assistant, its collections and its fake model stay); the components, tokens, scripts and gates stay.
+ * page specs, docs, decisions, changelog and skill go too (the assistant, its collections and its fake model stay); the components, tokens, scripts and checks stay.
  * --existing is for an existing project that brought Meridian in (route A in the skill): it sets the name, accent and the
  * rest, never renames package.json unless --package is given, and has no Atlas or product branch to run. It never
  * touches AGENTS.md: the CLI writes the managed block there.
@@ -217,14 +217,14 @@ if (has('--no-atlas') || has('--product')) {
     return `import {\n  ${kept.join(', ')},\n} from 'lucide-react';`;
   });
   write('src/app.config.ts', cfg);
-  // The verification config's mappings and smoke routes for the Atlas, with the comments over them, which verify --full
+  // The diagnostic config's mappings and smoke routes for the Atlas, with the comments over them, which a navigation run
   // would report as no route.
   write('scripts/verify.config.ts', read('scripts/verify.config.ts').replace(/(?:\n\s*\/\/[^\n]*)*\n\s*\{ path: '\/system(?:\/[^']*)?'[^\n]*\},/g, '').replace(/,\s*'\/system(?:\/[^']*)?'/g, ''));
   // Build tracing: only the Atlas's `/system/**` entry goes; the tab icon's and the assistant's brief stay.
   write('next.config.ts', read('next.config.ts').replace(/\/\/ Card specifications[^\n]*/, '// The tab icon reads the tokens, and the assistant reads the brief, at build time.').replace(/'\/system\/\*\*':\s*\[[^\]]*\],\s*/, ''));
   // Route types generated for the removed pages would fail the type check until regenerated.
   for (const d of ['.next/types', '.next/dev/types']) fs.rmSync(file(d), { recursive: true, force: true });
-  done.push('the Design Atlas removed: app/system, its modules in src/system, its rail links and with them the footer link, its verification mappings and its build tracing');
+  done.push('the Design Atlas removed: app/system, its modules in src/system, its rail links and with them the footer link, its diagnostic mappings and its build tracing');
 }
 
 if (has('--product')) {
@@ -233,14 +233,14 @@ if (has('--product')) {
   const walkDirs = (dir: string): string[] => fs.existsSync(file(dir)) ? fs.readdirSync(file(dir), { withFileTypes: true }).flatMap((e) => e.isDirectory() ? walkDirs(path.join(dir, e.name)) : [path.join(dir, e.name)]) : [];
   for (const f of walkDirs('src/components')) if (/\/(README\.md|preview\.tsx)$/.test(f)) fs.rmSync(file(f));
   for (const f of walkDirs('app')) if (/\/README\.md$/.test(f)) fs.rmSync(file(f));
-  // Tests of removed specimens go with them; production components, tokens, styles and gates stay.
+  // Tests of removed specimens go with them; production components, tokens, styles and checks stay.
   for (const f of ['src/system/specimen.tsx', 'tests/specimen-still.test.tsx', 'tests/atlas-product-slice.test.tsx', 'tests/atlas-template-contracts.test.tsx', 'tests/popover-preview.test.tsx', 'tests/banner-preview.test.tsx', 'tests/preview-live-controls.test.tsx', 'src/system/registry.ts', 'CONTRIBUTING.md', 'CHANGELOG.md']) fs.rmSync(file(f), { force: true });
   for (const d of ['docs', 'decisions', 'skills']) fs.rmSync(file(d), { recursive: true, force: true });
   const p = json('package.json');
   delete p.scripts?.registry;
   write('package.json', JSON.stringify(p, null, 2) + '\n');
   const product = read('src/app.config.ts').match(/name: '([^']*)'/)?.[1] ?? 'Dashboard';
-  write('README.md', `# ${product}\n\nA dashboard built on ZZ Meridian (Next.js, React, Tailwind v4, DTCG tokens).\n\n## Run it\n\n\`\`\`sh\npnpm install\npnpm dev        # http://localhost:3000\npnpm verify     # the gate once, one build, the size checks and a smoke of up to three routes; --full runs the exhaustive suites and --timed the ones that judge a time; --full --timed is the whole standard\n\`\`\`\n\n## Where things are\n\n| Path | What |\n|---|---|\n| \`src/app.config.ts\` | Name, workspace, accent, timezone, currency, the signed-in user and the navigation |\n| \`src/data/collections.ts\` | Where pages, actions and the assistant read and change records |\n| \`src/views/\`, \`app/\` | The pages |\n| \`src/components/\` | Meridian's components and patterns |\n| \`tokens/\` | Colour, type, space and motion (run \`pnpm tokens\` after a change) |
+  write('README.md', `# ${product}\n\nA dashboard built on ZZ Meridian (Next.js, React, Tailwind v4, DTCG tokens).\n\n## Run it\n\n\`\`\`sh\npnpm install\npnpm dev          # http://localhost:3000\npnpm test:t1      # the tests affected by the change since the last green run\npnpm test:t2      # the affected Tier 2 tests too\npnpm test:release # every Tier 1 and Tier 2 test, with lint and the type check\n\`\`\`\n\n## Where things are\n\n| Path | What |\n|---|---|\n| \`src/app.config.ts\` | Name, workspace, accent, timezone, currency, the signed-in user and the navigation |\n| \`src/data/collections.ts\` | Where pages, actions and the assistant read and change records |\n| \`src/views/\`, \`app/\` | The pages |\n| \`src/components/\` | Meridian's components and patterns |\n| \`tokens/\` | Colour, type, space and motion (run \`pnpm tokens\` after a change) |
 
 ## Assistant
 
@@ -255,7 +255,7 @@ The dashboard carries an assistant panel. It is off until \`ASSISTANT_PROVIDER\`
 
 - Collections live in \`src/data/collections.ts\`: replace each \`rows\` with your API and \`clock\` with \`new Date()\`. The assistant reads and proposes changes only through them.
 - Add your sign-in check in the dashboard layout (\`app/(dashboard)/layout.tsx\`), in \`app/api/assistant/route.ts\` before the model is reached, and in every server action (each \`actions.ts\`): an action is a public endpoint the layout does not guard.
-- \`pnpm verify --full\` runs the assistant off, then on against a fake model (\`scripts/fake-llm.ts\`); the default \`pnpm verify\` does not.
+- \`node scripts/assistant.ts\` is the diagnostic that runs the assistant off, then on against a fake model (\`scripts/fake-llm.ts\`); no test tier runs it.
 `);
   const agents = read('AGENTS.md');
   const cut = agents.indexOf('# Working in Meridian');

@@ -255,19 +255,17 @@ This historical ledger records the original delivery, as retained in the [0.36.0
 | `app/system/(atlas)/products` | added | the Atlas's layer 5 entry at the product guide's address |
 | `app/system/preview/[section]/[card]/keys.ts` | changed | the Atlas |
 | `journeys/workspaces.ts` | added | `scripts/verify.config.ts` runs it beside the audit as a browser check |
-| `scripts/assistant.ts` | changed | named by `scripts/verify.ts` |
+| `scripts/assistant.ts` | changed | the assistant browser diagnostic |
 | `scripts/brand.ts` | changed | named by `CONTRIBUTING.md`, `app/icon.ts`, `package.json`, `scripts/check.ts`, `src/app.config.ts` |
 | `scripts/lib/atlas.ts` | changed | imported by `scripts/audit.ts`, `scripts/vitals.ts` |
 | `scripts/lib/chrome.ts` | changed | imported by `journeys/workspaces.ts`, `scripts/assistant.ts`, `scripts/audit.ts`, `scripts/interactions.ts`, `scripts/keyboard.ts` and 8 more; and its tests |
-| `scripts/live.ts` | changed | named by `scripts/verify.ts` |
-| `scripts/navigate.ts` | changed | `scripts/verify.ts` and the browser walks, which start from a link on screen |
-| `scripts/perf.ts` | changed | named by `scripts/navigate.ts`, `scripts/verify.ts` |
-| `scripts/rail.ts` | changed | named by `scripts/verify.ts` |
+| `scripts/live.ts` | changed | the live-data browser diagnostic |
+| `scripts/navigate.ts` | changed | the browser walks, which start from a link on screen |
+| `scripts/rail.ts` | changed | the rail browser diagnostic |
 | `scripts/registry.ts` | changed | imported by `scripts/check.ts`; and its tests; named by `CONTRIBUTING.md`, `app/system/preview/[section]/[card]/keys.ts`, `package.json`, `scripts/audit.ts`, `scripts/brand.ts` |
-| `scripts/tokens.ts` | changed | imported by `scripts/contrast.ts`; named by `CONTRIBUTING.md`, `package.json`, `scripts/brand.ts`, `scripts/gate.ts` |
-| `scripts/verify.baseline.json` | changed | named by `scripts/sizes.ts`, `scripts/verify.config.ts`, `scripts/verify.ts` |
-| `scripts/verify.config.ts` | changed | `pnpm verify`; it names the workspace journeys, finds Settings ready by its theme choice and presses Services' strip of days |
-| `scripts/verify.ts` | changed | named by `package.json` |
+| `scripts/tokens.ts` | changed | imported by `scripts/contrast.ts`; named by `CONTRIBUTING.md`, `package.json`, `scripts/brand.ts`, `scripts/test-run.ts` |
+| `scripts/verify.baseline.json` | changed | named by `scripts/sizes.ts`, `scripts/verify.config.ts` |
+| `scripts/verify.config.ts` | changed | the browser diagnostics; it names the workspace journeys, finds Settings ready by its theme choice and presses Services' strip of days |
 | `docs/assistant.md` | changed | read by `src/system/content.ts` |
 | `docs/atlas-scenario-coverage.md` | added | `tests/cli-atlas-inventory.test.ts` and `tests/cli-atlas-review.test.ts` |
 | `docs/benchmark.md` | changed | read by `src/system/content.ts` |

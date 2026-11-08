@@ -26,7 +26,7 @@ const HELP = `zz-meridian ${VERSION}
   npx zz-meridian@latest update [--allow-dirty] [--no-install] [--verbose]
       Apply the safe changes, stage everything you changed with base/ours/new copies, and write .meridian/update/<version>/MERGE.md.
 
-  npx zz-meridian@<version> update --resume [--no-install] | --finalize [--verify] | --abort
+  npx zz-meridian@<version> update --resume [--no-install] | --finalize | --abort
       Continue, complete or roll back the update in progress. Use the version named in MERGE.md.
 
   npx zz-meridian@<installed version> brand [brand flags] [--allow-dirty]
@@ -71,9 +71,8 @@ function main(): number {
   if (command === 'update') {
     const modes = (['dry-run', 'resume', 'finalize', 'abort'] as const).filter((m) => flags[m]);
     if (modes.length > 1) { console.error(`zz-meridian update: ${modes.map((m) => `--${m}`).join(' and ')} cannot be combined`); return 1; }
-    if (flags.verify && !flags.finalize) { console.error('zz-meridian update: --verify belongs to --finalize'); return 1; }
     const mode: Mode = modes[0] ?? 'update';
-    return update({ root: process.cwd(), mode, flags: { verbose: Boolean(flags.verbose), allowDirty: Boolean(flags['allow-dirty']), install, verify: Boolean(flags.verify) } });
+    return update({ root: process.cwd(), mode, flags: { verbose: Boolean(flags.verbose), allowDirty: Boolean(flags['allow-dirty']), install } });
   }
   if (command === 'brand') return brandCommand({ root: process.cwd(), flags: brand, allowDirty: Boolean(flags['allow-dirty']) });
   if (command === 'skill') {

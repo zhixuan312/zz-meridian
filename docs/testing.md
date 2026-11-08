@@ -1,6 +1,6 @@
 # Testing
 
-This page is the testing standard: the kinds of test, the tiers that combine them, when each runs, and the rules a red, a limit and a release follow. An adopted or created project is advised to follow it, Meridian follows it, and a spec cites it rather than restating it. The last section classifies every check Meridian runs by those terms. A row or a command that only Meridian's own repository has says so: a project made from Meridian ships without `cli/`, `.github/`, `tests/cli-*` and `tests/deep-*`.
+This page is the testing standard: the kinds of test, the three tiers, when each runs, and the rules a red, a limit and a release follow. An adopted or created project follows it, Meridian follows it, and a spec cites it rather than restating it.
 
 ## The kinds
 
@@ -19,169 +19,107 @@ Size sets the cost, so it sets when a check can run: the smaller it is, the earl
 
 - `functional`: does it do what it should (a control works, a page reaches its data, a function returns the right value).
 - `non-functional`: a quality other than speed (accessibility, contrast, layout and overflow, sizes and bytes, route policy, the safety of the data a run can reach).
-- `performance`: time behaviour against a budget (navigation budgets, live-data bounds, the Web Vitals floors, the 20-sample p95).
+- `performance`: time behaviour against a budget (navigation budgets, live-data bounds, the Web Vitals floors).
 
-Type sets whether a run needs a quiet machine: a performance check measures the machine as well as the page, so only a performance check needs one. Regression is not a type: it is why a change is checked, by the complete and the timed tier together.
-
-### Safe data destinations
-
-Browser verification can change records. Its data-URL guard provisionally fails closed: only a local file or explicit Unix socket, `localhost`, or a validated loopback IP proves a local destination. A missing network host is not proof: PostgreSQL may inherit `PGHOST`, `PGHOSTADDR`, or a connection service. A single-label DNS name such as `db` or `postgres` is not proof of an owned container; DNS search domains can resolve it elsewhere. A `127`-prefixed domain is not a loopback IP, and `0.0.0.0` is not a loopback destination.
-
-For an owned disposable container, publish or forward its database port to `127.0.0.1` and use that loopback address in the verification environment. Check that the forward reaches the disposable store, not a production tunnel. Do not add a broad DNS/container allowlist or set `allowRemoteData` merely to bypass this refusal. That explicit override remains for a run whose owner has independently established what every press reaches.
-
-Only `postgres://` and `postgresql://` URLs use PostgreSQL `host`/`hostaddr` query options. Drivers differ: node-postgres ignores `hostaddr`, while libpq can dial it. Both effective destinations must therefore prove local; a loopback address cannot hide a remote host. Every failover destination is checked, including hosts after a Unix socket. Abstract-socket names beginning with `@` are not portable proof of local transport. Defaults use the same shell-over-env-file precedence as verification. An uninspected service needs an explicit local URI `hostaddr` and otherwise local host candidates, since service settings precede environment defaults. See [libpq connection parameters](https://www.postgresql.org/docs/current/libpq-connect.html). Other schemes' query options do not replace their authority. Hostless file URLs and genuine IPv4/IPv6 loopback forms remain supported.
+Type sets whether a run needs a quiet machine: a performance check measures the machine as well as the page, so only a performance check needs one. Regression is not a type: it is why a change is checked.
 
 ## The tiers
 
-A tier is when a check runs, ordered by speed and scope. The first four are one command each. The change tier adds to the quick one and the complete tier to the change one; the timed tier stands beside the complete one, and the two together are the whole standard. In any combination of them, the gate and the build run once.
+A tier is what a piece of work is for, and it decides which command proves it. There are three, in the order a piece of work is planned.
 
-- **quick**: `pnpm gate`. The static checks and the tests, with no browser and no build; `tests/deep-*` is left out. In Meridian's repository it runs `tests/cli-*` too, which `node scripts/gate.ts --without-cli-tests` leaves out.
-- **change**: `pnpm verify`. Adds to the gate (run without `tests/cli-*`) one production build, the route policy, the first-load and HTML size checks, and the navigation of up to three routes on desktop and through the phone drawer, judged on function. It ends with a coverage line that says what ran and what did not, and never refuses for a missing Chrome or safe backend: it says the browser did not run, and why.
-- **complete**: `pnpm verify --full`. Adds the navigation of every rail route, the audit of every page, every control pressed and every link followed, the keyboard walk, the assistant and the product's own browser checks. Nothing in it judges a time, so it is not the whole standard: `pnpm verify --full --timed` is.
-- **timed**: `pnpm verify --timed`. The navigation of every rail route with its budgets judged, then the live data, the product's own timed checks (`timedChecks` in `scripts/verify.config.ts`) and Web Vitals, alone and last, so it needs a quiet machine. It does not imply the complete tier ran. `pnpm verify --full --timed` is the whole standard, on one gate and one build with the complete suites first, and the only run that can end "the project meets the Meridian standard". The timed suites measure the server the run left: with the assistant off under `--timed` alone, and with it on, pointed at the fake model, under `--full --timed`, so a page there carries the assistant's launcher.
-- **on request**: a command no tier runs, run at the moment `## When each runs` gives it. The combinations that exist:
-  - `pnpm verify --perf` is the 20-sample navigation protocol, and the whole of it runs only in CI, split by route with `--shard <i>/<n>`, each shard on its own runner. It refuses to run elsewhere, and a shard cannot be combined with `--full` or `--timed`: it is passed with `--perf` alone. Locally, perf runs only narrowed, `node scripts/perf.ts --routes <route>`, to diagnose one route or to sample a recalibration.
-  - `pnpm verify --as <persona>` signs the browser in as each persona it names (a comma-separated list), alone or beside `--full`. It is refused beside `--timed` or `--perf`, before anything runs.
-  - `pnpm verify --browsers <n>` holds at most `n` browsers at once in the complete tier. Without it the ceiling is one browser per two CPUs and per 4 GiB of memory, whichever is fewer, and the trace header prints the one a run used (`browsers: at most 5 at once (10 CPUs and 32 GiB)`). The audit, the presses and the keyboard walk take one each; a product check in `browserChecks` takes one, or the `browsers` its entry names (`{ script, browsers: 3 }`), the whole ceiling at most, and is told in `VERIFY_BROWSERS` how many it holds.
-  - `node scripts/audit.ts --atlas` and `node scripts/vitals.ts --atlas` run against a served app, outside `pnpm verify`, over every Design Atlas entry.
-  - Consumer smoke must run on a quiet machine: its `--update-all` mode compares `finalize --verify` with plain finalize against a 30-second overhead budget. Functional cases do not make that timing comparison safe under other builds or browser suites.
-  - The browser-fixture tests of the checks, `pnpm exec vitest run tests/deep- --no-file-parallelism`, run beside `pnpm verify --full` after a change to a check script. Meridian's repository only.
-  - `node cli/scripts/smoke.ts --tarball <tarball>` is the consumer smoke, a packed tarball adopted, created and updated end to end. Meridian's repository only.
+- **Tier 1: works.** The agreed result works, completely: functionality, data integrity, migrations, auth and access boundaries, contracts, compatibility, and any agreed operating requirement. Its tests prove the result; a Tier 1 phase uses `pnpm test:t1`.
+- **Tier 2: works well.** It already meets the requirement and becomes better to use: speed, latency, smoothness, responsiveness beyond what the requirement needs, and the broad sweeps across views, states and widths. A Tier 2 phase uses `pnpm test:t2`.
+- **Tier 3: built to last.** The code is easy to maintain and change: standards, clear implementation, confirmed-dead code removed, reuse where a concrete need exists. It has no test suite of its own; a Tier 3 phase uses `pnpm test:t2`, so whatever it preserves is still proven.
+
+There are exactly three test commands, and none takes an argument. The tool picks the tests.
+
+| Command | Runs |
+|---|---|
+| `pnpm test:t1` | The Tier 1 tests affected by the changes since the last green run. |
+| `pnpm test:t2` | The affected Tier 2 tests, and the affected Tier 1 tests with them. |
+| `pnpm test:release` | Every Tier 1 and Tier 2 test, once, plus lint and the type check. |
+
+**Selection.** Vitest's `related` reads the import graph and runs the tests that reach a changed file; a changed test file is run itself. A changed path that reaches no test at all runs the whole tier: an import graph that knows nothing about a file is not evidence that nothing needs checking. The static checks (the tokens, the registry, the specifications, contrast) read the whole tree and run on every tier.
+
+**Tier 2 is a file convention, never a list kept by hand.** `*.perf.test.ts(x)` is Tier 2 in any repository; in this repository `tests/deep-*.test.ts(x)`, the large browser-fixture suites, is Tier 2 too. Every other test under `tests/` is Tier 1. `test:t1` excludes the Tier 2 convention, so it never runs a Tier 2 file. A repository with no Tier 2 test still has `test:t2`, and it runs the affected Tier 1 tests.
+
+**Last green.** After a passing run the command writes the commit it proved to `out/last-green`, which is gitignored, and reads it before the next run. That keeps a per-change run to the diff since the last green, not the branch's whole history. A missing marker falls back to the diff against master. A checkout with neither a marker nor a diff (master itself, a fresh CI clone) runs the whole tier, because no green run is evidence for it.
+
+A run that needs Chrome (this repository's `tests/deep-*`) reports `not run: no Chrome` with the reason where it is absent, and never `ok`; the same holds for the Postgres suite with no service URLs. Nothing that did not run is reported as passed.
+
+The browser scripts under `scripts/` are diagnostics, not a tier command: `node scripts/audit.ts`, `node scripts/interactions.ts`, `node scripts/keyboard.ts`, `node scripts/vitals.ts` and the rest are run directly against a served build when a question needs them, with the flags at the top of each script. They are not called by the three commands, and CI does not run them.
 
 ## When each runs
 
-A moment is when a person or an agent runs a command. A project's own CI may run the same commands at the same moments.
+A moment is when a person or an agent runs a command. CI runs the same commands at the same moments.
 
-- **While editing**: the test of the file changed, `pnpm exec vitest run <file>`, and a look at the page with `node scripts/shot.ts <route> --width 1440,390 --theme dark,light`.
-- **Before every commit**: `pnpm gate`.
-- **Before finishing a change**: `pnpm verify`.
-- **After a change to shared components, the shell or data, and before a change is handed over**: `pnpm verify --full`.
-- **Before a release of the product**, at the release commit and on a quiet machine: `pnpm verify --full --timed`.
-- **Triggered by what changed**:
-  - who may see or do what: `pnpm verify --as <persona>`, for each persona the change touches;
-  - a card, a pattern or the Atlas: `node scripts/audit.ts --atlas` and, on a quiet machine, `node scripts/vitals.ts --atlas`;
-  - a navigation budget in question: `node scripts/perf.ts --routes <route>`, narrowed to the route, on a quiet machine;
-  - a check script: the browser-fixture tests beside `pnpm verify --full` (Meridian's repository only).
-- **On a schedule**: the slow and statistical checks, each tier as its own job on its own runner: `pnpm verify --full`, `pnpm verify --timed` and `pnpm verify --perf --shard <i>/<n>`. The perf part is a report: a p95 over its budget is a warning and only a broken sample fails. The whole perf protocol runs only in CI: a project runs it in its own CI, split into shards on separate runners.
-- **Meridian's release** (`.github/workflows/release.yml`, dispatched from master; Meridian's repository only), each command once:
-  - `pnpm exec vitest run tests/cli-` and `pnpm exec vitest run tests/deep- --no-file-parallelism`;
-  - `node cli/scripts/release-check.ts --limit 180`: the default verify from a clean build, within 180 s on the shared 4-CPU runner;
-  - `node cli/scripts/smoke.ts --tarball <tarball> --adopt --create --update`, on the tarball the release publishes;
-  - after the publish, a project created from the registry and one updated to it from the release before.
-  - It never runs the complete, timed or perf suites: the weekly run does.
-- **Meridian's weekly run** (`.github/workflows/weekly.yml`, Mondays at 03:17 UTC and on demand, on master's current commit; Meridian's repository only):
-  - the jobs `full` (`pnpm verify --full`), `timed` (`pnpm verify --timed`) and `perf` (`pnpm verify --perf --shard <i>/5`, five shards), in parallel on separate runners, as on a schedule above; a red is rerun by its job, and a dispatch names its jobs with `-f jobs=timed`;
-  - `node cli/scripts/smoke.ts --tarball <tarball> --adopt --update --origins 3 --update-all --verify`, on a tarball packed from that commit: the adopted project's default verify cases, the update from each of the last three releases, and every recovery and failure case of the update.
-  - `pnpm exec vitest run tests/deep- --no-file-parallelism`, the browser-fixture tests of the checks, as the job `deep`: a release runs them on the commit it releases, and the week runs them again because Chrome is an input no commit pins, and a browser that changes what a suite measures turns a check blind between releases.
-  - `pnpm exec vitest run --config scripts/fixtures/postgres/vitest.config.ts`, as the job `postgres`: the Postgres code the skill's references hand a team, against a Postgres and a PgBouncer in transaction mode, both service containers. It needs `MERIDIAN_POSTGRES_URL`, `MERIDIAN_POOLER_URL` and `MERIDIAN_PG` (a directory holding `pg`, which the template does not install) and refuses to run without them; it lives outside `tests/`, so no other command collects it.
-  - `DPR=1 node scripts/audit.ts --atlas` against a build it serves, as the job `atlas`: every card's page and bare preview, the token views, the page specifications and the guides. No verify depth audits the Atlas, and a card's specimens hold its extreme shapes.
-  - Nothing waits on it: a failure notifies.
+- **While editing**: `pnpm test:t1`, or a narrowed run of the file changed, `pnpm exec vitest run <file>`, and a look at the page with `node scripts/shot.ts <route> --width 1440,390 --theme dark,light`.
+- **After a change** (one complete logical change that can be verified on its own, in any tier): `pnpm test:t1` and the tests the change affects. For visible behaviour, exercise the flow or state that changed.
+- **After a Tier 2 or Tier 3 phase**: `pnpm test:t2`.
+- **Before a release**: `pnpm test:release`, once, after any Tier 3 work. A later relevant change makes part of that evidence stale; re-run only the tests it affects.
+- **On a schedule**: `pnpm test:t2` on master's current commit, in `.github/workflows/weekly.yml` (Meridian's repository only). A marker is absent in a fresh CI clone, so the run covers the whole tier.
+- **Meridian's release** (`.github/workflows/release.yml`, dispatched from master; Meridian's repository only): `pnpm test:release`, then the consumer smoke on the tarball the release publishes. It publishes and tags last.
+- **An update's finalize** (`update --finalize`): `pnpm test:release` and a production build in the updated project.
 
 ## Local runtimes
 
-The copied-command regression needs a POSIX shell and `curl`. It runs the generated command against its own loopback HTTP receiver with a dummy key, no external endpoint, and no user's cURL configuration.
+Browser diagnostics need a Chrome executable, which `CHROME` may name, including official `chrome-headless-shell` for unattended runners. Downloads are explicitly directed into each temporary profile's own `Downloads`, never the user's default folder.
 
-Browser checks accept a Chrome executable through `CHROME`, including official `chrome-headless-shell` for unattended runners. Downloads are explicitly directed through the browser protocol into each temporary profile's own `Downloads`, never the user's default folder.
-
-The audit preserves each requested query key's complete ordered value list, including repeated values; an address with the same key and a different value is a different view. Each rail route has exactly one navigation check: duplicate mappings fail even outside the selected smoke routes. The keyboard walk must return to its first stop in both directions; exhausting its walk or repeating a later stop is not a pass. Screenshot `--press` flags each require a control name before the next option. The sample's workspace journey selects existing request details by excluding `missingRoutes`, not by interpreting record names.
+The Postgres suite the skill's references hand a team lives in `scripts/fixtures/postgres/` and needs `MERIDIAN_POSTGRES_URL`, `MERIDIAN_POOLER_URL` and `MERIDIAN_PG`. `pnpm test:release` runs it where those are set and reports it **not run** with the missing names where they are not; it is never reported as passed.
 
 ## Rules
 
-- **Behavior, not pins**: assert user-visible meaning, transitions, boundaries and errors, not source snippets, prose, utility classes, incidental defaults, wiring or byte copies. Remove incidental pins rather than repinning them; retain meaningful behavior, accessibility, security, architecture and planted-validator cases. A removed pin never clears an observable failure: prove the running behavior and generated artifacts.
-- **Observer readiness**: the interaction check waits for its mutation observer to attach before sending input. Elapsed timer delays are not proof that a busy renderer has armed it. Delayed-observer working/dead fixture twins protect both outcomes.
-- **Asynchronous state**: wait for the state under assertion. Clipboard feedback can commit before the selection effect; a neighboring live-region message is not proof that selection has finished.
-- **Standalone gates**: preserve the Node-built-in-only dependency boundary, not byte equality between authored and generated modules.
+- **Behavior, not pins**: assert user-visible meaning, transitions, boundaries and errors, not source snippets, prose, utility classes, incidental defaults, wiring or byte copies. Remove incidental pins rather than repinning them; retain meaningful behavior, accessibility, security, architecture and planted-validator cases.
+- **Observer readiness**: the interaction check waits for its mutation observer to attach before sending input. Elapsed timer delays are not proof that a busy renderer has armed it.
+- **Asynchronous state**: wait for the state under assertion. A neighboring live-region message is not proof that the state under test has settled.
+- **Standalone gates**: preserve the Node-built-in-only dependency boundary.
 - **Isolated effects**: reset observed state between tests and settle the callback created by that test, not a stale callback left by an earlier case.
 - **Owned resources**: temporary fixture folders are removed after each case. A child-process readiness wait reads complete output across chunks, rejects on spawn failure or early exit, and the owning case waits for shutdown in its cleanup.
-- **Framework boundaries**: exercise values the installed framework actually forwards. Next forwards a Client Component's thrown value as-is, including `null`; the dashboard error screen keeps Retry and a client reference available when no string digest exists.
-- **Parser boundaries**: architecture guards resolve explicit JavaScript extensions through TypeScript's source/declaration substitutions before runtime files. Timed-tier documentation checks bind negation to its own clause or sentence, preserving wrapped negatives without hiding a neighboring affirmative claim.
-- **Quiet machine**: A run needs a quiet machine exactly when it runs a check whose type is performance. A quiet machine runs nothing else heavy: no other build, browser or test run. Repeated runs of one check (the three of `Fixed means`) are separate runs, each alone on the machine, so other work can run between them.
-- **Fixed means**: every red is fixed in the product or in the check, never by skipping, narrowing or deleting the check. A limit moved under `Limits` changes a value, never what is measured.
+- **Quiet machine**: A run needs a quiet machine exactly when it runs a check whose type is performance: no other build, browser or test run.
+- **Fixed means**: every red is fixed in the product or in the check, never by skipping, narrowing or deleting the check. A limit moved under `## Budgets` changes a value, never what is measured.
   - A red is fixed when its cause is named and a test that failed on the old code passes, at the lowest layer that can show it.
   - A measurement no test can reproduce (a time, a dropped frame) is fixed after three consecutive passes on a quiet machine. One pass of a measurement is not evidence.
   - A red whose cause is not named after a run narrowed to its route or page, with the render instrumented, goes to the owner as a decision, with what was measured, before any limit is touched.
-- **Limits**: a navigation budget, a live-data bound, or the LCP or INP floor may move, and only this way.
-  - It moves only after a trace of the narrowed run names where the time goes, and none of it is the page's own long task or request that a change in the page would remove.
-  - The new value is the nearest-rank p95 of at least 20 samples on a quiet machine, taken with the phone the timed suites emulate, the larger of the CI protocol's p95 and a narrowed local run's where both exist, times 1.25, rounded up to the next 10 ms.
-  - It is never more than twice the old value without the owner's word.
-  - CLS and dropped frames are never moved: a page that misses them is fixed.
-  - A moved limit is written where the limit lives (`scripts/lib/budgets.ts`, or the check), and recorded in a `## Budgets` section of this page, placed before `## The classification`: one row per limit with its old and new value, the run, machine and commit it was set from, the samples, the p95 and the margin.
-  - The release's time limit on the default verify is not such a limit, and the phone a timed suite emulates is a device, not a limit.
-- **Headroom**: a timed check that passes leaving less than a fifth of its limit (a navigation time, LCP, INP, CLS, the longest frame) prints `warn`, and its phase in `pnpm verify` reads `warn`. A warn is not a red and holds nothing. It says the pass was near its line, where a slower machine fails it: on 2026-10-26 the weekly runner measured about 1.6 times this machine's times at the same phone rate. Before such a pass is evidence, the suite runs again with `--rate 1.6`, which slows the phone that much beyond the host's own rate; a red there is a red under `Fixed means`. The fifth does not predict the runner; `--rate` reproduces it.
-- **Once per commit**: evidence recorded on a commit stands for it and for any later commit whose difference touches none of the command's inputs (defined under `Releases`). A check is run again only when its record is missing, its inputs changed, its record disagrees with what was reported, or it is in concrete doubt. A tier that runs the gate and a build inside it is one command, not a second run of them.
+- **Limits**: a navigation budget, a live-data bound, or the LCP or INP floor may move only after a trace of the narrowed run names where the time goes, and none of it is the page's own long task or request that a change in the page would remove. The new value is the nearest-rank p95 of at least 20 samples on a quiet machine, times 1.25, rounded up to the next 10 ms, and never more than twice the old value without the owner's word. CLS and dropped frames are never moved: a page that misses them is fixed. A moved limit is recorded in `## Budgets` below.
+- **Once per commit**: evidence recorded on a commit stands for it and for any later commit whose difference touches none of the command's inputs. A command is run again only when its record is missing, its inputs changed, its record disagrees with what was reported, or it is in concrete doubt.
 - **Flaky is red**: a check that fails sometimes is a red under `Fixed means`. A retry that passes does not clear it.
-- **Releases**: a release runs its own checks; Meridian's are the steps of `.github/workflows/release.yml`.
-  - The scheduled run's reds are fixed or decided like any red, and do not of themselves hold a release.
-  - A change to the checks themselves (a check script, a tier, a budget) is released from a commit at which every command in the classification has passed, on that commit or on one whose difference touches none of the command's inputs.
-  - A red left at a release is the owner's decision, named in the release's changelog as a known issue with where it is fixed.
-  - A command's inputs are: the scripts it runs; the product code and its configuration; the package manifest and lockfile; every document a page the command reaches renders; and, for a test command, the files its tests read.
-  - After a change that is not the fix of a red, a measurement is repeated on the pages the change touched, with the suite's own `--routes` (`scripts/audit.ts`, `scripts/vitals.ts`, `scripts/navigate.ts`, `scripts/perf.ts`), rather than on every page.
+- **Releases**: a release runs `pnpm test:release` on the commit being released. A red left at a release is the owner's decision, named in the release's changelog as a known issue with where it is fixed. A command's inputs are the scripts it runs, the product code and its configuration, the package manifest and lockfile, every document a page renders, and, for a test command, the files its tests read.
 
 ## Basis
 
-- **Sizes** by what a test needs, not what it intends: Google's small, medium and large (*Software Engineering at Google*, ch. 11, and the Google Testing Blog's "[Test Sizes](https://testing.googleblog.com/2010/12/test-sizes.html)", 2010). Meridian adds `static` for a check that runs no test at all, and counts a browser or a production build as `large` even on one machine, where Google's large is a test that needs more than one.
-- **Tiers** as stages: fast checks before every commit and slower stages after, in one pipeline (Humble and Farley, *Continuous Delivery*, 2010, the deployment pipeline's commit and acceptance stages). In a project, a person or an agent runs the later stages at their moments; only Meridian's release and weekly run are automated.
-- **Proportions**: many fast tests and few slow end-to-end ones ("[The Practical Test Pyramid](https://martinfowler.com/articles/practical-test-pyramid.html)", Ham Vocke, on Martin Fowler's site, 2018).
-- **Types** after the ISTQB glossary and ISO/IEC 25010. Meridian lifts performance out of the non-functional qualities into a type of its own, because it alone needs a quiet machine, and does not count regression as a type, since the ISTQB defines regression testing by why it runs.
-- **Measurement**: performance judged by percentiles of repeated samples on a quiet machine, the phone after Lighthouse's mobile throttling, the device of benchmark index 800 with the CPU slowed by the host's own index over 800, on Slow 4G ([Lighthouse's throttling guide](https://github.com/GoogleChrome/lighthouse/blob/main/docs/throttling.md)). The benchmark times JavaScript, not style and layout, so two hosts of one index can differ in the second: on 2026-10-19 the scheduled runner spent about twice this machine's time in style and layout at the same rate. A dropped frame stays red wherever it is measured, and its cause in the vitals output says which part of the frame the time went to. The 390 px touch width, the 20 samples, the 1.25 margin and the rounding of `Limits` are Meridian's own.
-- **Flakiness** as a defect: a test that passes and fails on the same code erodes trust in every result (*Software Engineering at Google*, ch. 11 and 14). Where a large test's flakiness is tolerated or retried, Meridian does not clear a red by a retry.
+- **Sizes** by what a test needs, not what it intends: Google's small, medium and large (*Software Engineering at Google*, ch. 11, and the Google Testing Blog's "[Test Sizes](https://testing.googleblog.com/2010/12/test-sizes.html)", 2010). Meridian adds `static` for a check that runs no test at all, and counts a browser or a production build as `large`.
+- **Tiers** as stages: fast checks per change and slower stages before a release, in one pipeline (Humble and Farley, *Continuous Delivery*, 2010).
+- **Proportions**: many fast tests and few slow end-to-end ones ("[The Practical Test Pyramid](https://martinfowler.com/articles/practical-test-pyramid.html)", Ham Vocke, 2018).
+- **Types** after the ISTQB glossary and ISO/IEC 25010. Meridian lifts performance out of the non-functional qualities into a type of its own, because it alone needs a quiet machine, and does not count regression as a type.
+- **Measurement**: performance judged by percentiles of repeated samples on a quiet machine, the phone after Lighthouse's mobile throttling.
+- **Flakiness** as a defect: a test that passes and fails on the same code erodes trust in every result (*Software Engineering at Google*, ch. 11 and 14).
 
 ## Budgets
 
-A limit that moved, with what it was set from (`## Rules`, Limits).
+A limit that moved, with what it was set from.
 
 | Limit | Old | New | Run | Machine | Commit | Samples | p95 | Margin |
 |---|---|---|---|---|---|---|---|---|
 | `/system/start/start-a-dashboard` phone warm shell, its own `budget` in `scripts/verify.config.ts` | 300 ms | 250 ms, the shared phone warm shell: the route's own figure is withdrawn | weekly `perf` shard 5/5, run 39145209850 | GitHub's `ubuntu-24.04` runner, the phone at 3.2x | `dfdad67` (withdrawn in `55b7ece`) | 20 | 58 ms (median 43, max 59) | none: a withdrawal returns to the shared figure, which holds the p95 with room |
-| First-load JS cap, every route (`FIRST_LOAD_CAP_KB` in `scripts/lib/budgets.ts`) | 820 KiB | 830 KiB, the owner's decision for 0.33.0: the cap is not a limit `## Rules` lets move, so it went to them with the count | `node scripts/sizes.ts` after `pnpm build` of Phase 1 wave 1 of issue #99 | local, macOS | `bf0fda4` plus wave 1 | 1 (a byte count does not vary between builds of one tree) | n/a | `/engineering` 823 KiB, 7 KiB under: its headroom went to growth since `09d9e0b` (5 to 23 KiB on every large route) and 5 KiB to the #99 forms |
-
-### Turbopack's chunk size
-
-Not a limit, but set against two: `experimental.turbopackChunking` in `next.config.ts`. Turbopack's chunker keeps every
-chunk it merges under 50 KB apart and duplicates what it cannot merge: on 2026-10-24 every route's first load carried a
-second copy of the shell and the shared UI set (40.3 and 29.9 KiB of it on /engineering), which took three routes over
-their first-load budget (/engineering 832 KiB against the 820 KiB cap, /business at it, /customers/[id] 5.6% over its
-baseline). Asking for smaller chunks removed the copies: /engineering 811 KiB, 27 chunks where it asked for 23. A chunk
-is also a script tag in the page's HTML and a name in its flight payload, so the setting is as coarse as the HTML budget
-allows: `minChunkSize: 35000` is the middle of the window measured that day (at 25000 /keys' HTML grew 5.3% over its 5%
-ratchet; at 45000 the chunker stopped splitting and /engineering was back at 832 KiB).
+| First-load JS cap, every route (`FIRST_LOAD_CAP_KB` in `scripts/lib/budgets.ts`) | 820 KiB | 830 KiB, the owner's decision for 0.33.0 | `node scripts/sizes.ts` after `pnpm build` of Phase 1 wave 1 of issue #99 | local, macOS | `bf0fda4` plus wave 1 | 1 (a byte count does not vary between builds of one tree) | n/a | `/engineering` 823 KiB, 7 KiB under |
 
 ## The classification
 
-Every check Meridian runs has one row, named by a key: a gate step, a group of test files, a phase or suite of `pnpm verify`, or a standalone suite. In Meridian's repository the table is guarded by `tests/cli-test-tiers.test.ts`, which fails naming the key when a step, suite or group has no row or a row names something that does not exist. A run needs a quiet machine exactly when it runs a check whose type is performance.
+Every test belongs to exactly one tier, by the convention alone: a file matching `*.perf.test.ts(x)` or this repository's `tests/deep-*.test.ts(x)` is Tier 2, and every other test under `tests/` is Tier 1. `tests/cli-*` is Meridian's repository only (the package's own tests; a project made from Meridian has no `cli/`). The static checks run on every tier because they read the whole tree.
 
-| Key | Size | Type | Tier | Quiet machine | Command | Measured | What it checks |
-|---|---|---|---|---|---|---|---|
-| `gate/tokens are fresh` | static | non-functional | quick | no | `node scripts/tokens.ts --check` | 0.1 s at 0bee6d7 | The generated token CSS matches `tokens/`. |
-| `gate/the registry is fresh` | static | non-functional | quick | no | `node scripts/registry.ts --check` | 0.1 s at 0bee6d7 | The Atlas registry matches the card folders. |
-| `gate/specifications are consistent` | static | non-functional | quick | no | `node scripts/check.ts` | 0.3 s at 2ac458c | Cards, READMEs, tokens and page specifications follow the contract. |
-| `gate/the product's own rules hold` | static | non-functional | quick | no | `node scripts/check.local.ts` | 0.1 s at 686087f | A product's own rules, beside Meridian's. |
-| `gate/contrast holds in every theme and accent` | static | non-functional | quick | no | `node scripts/contrast.ts` | 0.1 s at 0bee6d7 | Every specified foreground on its background, in every theme and accent. |
-| `gate/route types are generated` | static | non-functional | quick | no | `next typegen` | 0.2 s at 0bee6d7 | Route types are generated before the type check. |
-| `gate/types check` | static | functional | quick | no | `tsc --noEmit` | 3.7 s at 40d29c7 | The TypeScript compiles. |
-| `gate/lint passes` | static | non-functional | quick | no | `eslint . --ignore-pattern .meridian/` | 22.5 s at 40d29c7 | The code passes the Next ESLint config. |
-| `gate/tests pass` | small, medium | functional | quick | no | `pnpm exec vitest run --exclude 'tests/deep-*'` | 48.8 s at 40d29c7 | The tests outside `tests/deep-*` pass (run with the lint and the type check). |
-| `tests/shipped` | small, medium | functional | quick | no | `pnpm exec vitest run --exclude 'tests/deep-*' --exclude 'tests/cli-*'` | 42 s at 7e6de42 | The behaviour tests of the components, pages and data (summed file time). |
-| `tests/cli-*` | small, medium | functional | quick | no | `pnpm exec vitest run tests/cli-` | 124 s at 7e6de42 | Meridian's repository only. The package's own tests: the CLI, its update and release paths (summed file time). Several read `cli/payload/`, the template snapshot the package carries, which is a build output: `node cli/scripts/build-payload.ts` writes it from HEAD (`--worktree` for what the tree holds), and a checkout that has never built it is told so by name rather than by an `ENOENT`. Rebuild it after changing a shipped file, or those tests read the tree as it was when it was built. |
-| `tests/deep-*` | large | functional | on request | no | `pnpm exec vitest run tests/deep- --no-file-parallelism` | 1208 s at 1f5ff93 | Meridian's repository only. The check scripts against browser fixtures: each planted defect is found and each corrected twin passes. |
-| `verify/build` | large | functional | change | no | `pnpm verify` | 9.6 s at 40d29c7 | One production build. |
-| `verify/route policy` | large | non-functional | change | no | `pnpm verify` | 0.1 s at 40d29c7 | Every route is declared static or dynamic as its policy says. |
-| `verify/first-load` | large | non-functional | change | no | `pnpm verify` | 0.3 s at 40d29c7 | The first-load size of each route is within its budget. |
-| `verify/html` | large | non-functional | change | no | `pnpm verify` | 1.5 s at dbf4106 | Every page's served HTML, gzipped, is within `htmlGrowthPct` of its own baseline figure and under any `htmlKb` cap. |
-| `verify/navigation` | large | functional | change | no | `pnpm verify` | 92.5 s at 269d307 | From a press in the rail, each route's shell, data and first interaction arrive, on desktop and through the phone drawer, judged on function only, never on time; up to three routes, every rail route under `--full` or `--timed`. |
-| `verify/timing` | large | performance | timed | yes | `pnpm verify --timed` | 88.2 s at fa5bbff | The same navigation of every rail route, with each shell, data and interaction time judged against its budget. |
-| `verify/personas` | large | functional | on request | no | `pnpm verify --as viewer` | 937.8 s at fa5bbff (the five personas) | Signed in as each named persona, the rail shows the routes that persona may open and a denied route draws its refusal. |
-| `verify/audit` | large | non-functional | complete | no | `pnpm verify --full` | 652.0 s at 269d307 | Every page and embed view at six widths in both themes, 320px among them, for layout and accessibility defects. |
-| `verify/presses` | large | functional | complete | no | `pnpm verify --full` | 1006.9 s at 269d307 | Every control pressed and every link followed, on desktop and phone. |
-| `verify/keyboard` | large | functional | complete | no | `pnpm verify --full` | 205.6 s at bc1e10b | Tab through each page and back: focus rings, reach and order. |
-| `verify/assistant` | large | functional | complete | no | `pnpm verify --full` | 101.2 s at bc1e10b | The assistant absent and in a walk-through (54.7 s and 46.5 s). |
-| `verify/live` | large | performance | timed | yes | `pnpm verify --timed` | 41.1 s at fa5bbff | Two tabs, a silent stream, a restart, a hidden and an offline tab and a burst: each converges within its bound. |
-| `verify/timedChecks` | large | performance | timed | yes | `pnpm verify --timed` | 0 s at fa5bbff | The product's own browser checks that judge a time, one at a time; the sample declares none. |
-| `verify/vitals` | large | performance | timed | yes | `pnpm verify --timed` | 315.0 s at fa5bbff | LCP, INP, CLS and dropped frames on a mid-range phone for every static page. |
-| `verify/browserChecks` | large | functional | complete | no | `pnpm verify --full` | 27.8 s at bc1e10b | The product's own browser journeys (`journeys/workspaces.ts`) that judge no time. |
-| `verify/perf` | large | performance | on request | yes | `pnpm verify --perf --shard <i>/<n>` | 24.1 min at dfdad67, the slowest of five shards on the runner | The 20-sample navigation protocol. |
-| `suite/audit --atlas` | large | non-functional | on request | no | `node scripts/audit.ts --atlas` | 34.2 min at 7b8fcd5 | The audit over the Design Atlas: 188 routes at 1440, 390 and 320px in both themes. |
-| `suite/vitals --atlas` | large | performance | on request | yes | `node scripts/vitals.ts --atlas` | 16.2 min at fa5bbff | Web Vitals for every Atlas entry: 110 pages. |
-| `suite/consumer smoke` | large | performance | on request | yes | `node cli/scripts/smoke.ts --tarball <tarball> --adopt --create --update` | 3.0 min at 40d29c7 | Meridian's repository only. The release case: a packed tarball adopted, created and updated end to end. Release runs this command. Weekly runs `--adopt --update --origins 3 --update-all --verify`, whose `--verify` runs the adopted project's default verify cases. The created project's case, `--create --verify`, additionally runs its `verify --full --timed` and runs on request only. Every consumer smoke case uses a quiet machine. |
+| Key | Size | Type | Tier | Quiet machine | Command | What it checks |
+|---|---|---|---|---|---|---|
+| `static/tokens` | static | non-functional | 1 | no | `node scripts/tokens.ts --check` | The generated token CSS matches `tokens/`. |
+| `static/registry` | static | non-functional | 1 | no | `node scripts/registry.ts --check` | The Atlas registry matches the card folders. |
+| `static/specifications` | static | non-functional | 1 | no | `node scripts/check.ts` | Cards, READMEs, tokens and page specifications follow the contract. |
+| `static/product rules` | static | non-functional | 1 | no | `node scripts/check.local.ts` | A product's own rules, beside Meridian's, where it wrote one. |
+| `static/contrast` | static | non-functional | 1 | no | `node scripts/contrast.ts` | Every specified foreground on its background, in every theme and accent. |
+| `static/types` | static | functional | 1 | no | `next typegen`, `tsc --noEmit` | The routes are generated and the TypeScript compiles. |
+| `static/lint` | static | non-functional | 1 | no | `eslint . --ignore-pattern .meridian/` | The code passes the Next ESLint config. |
+| `tests/tier1` | small, medium | functional | 1 | no | `pnpm test:t1` | Every test under `tests/` outside the Tier 2 convention, selected by the import graph. |
+| `tests/tier1/cli` | small, medium | functional | 1 | no | `pnpm test:t1` | Meridian's repository only. The package's own tests: the CLI, its update and release paths. |
+| `tests/tier2/perf` | small, medium | performance | 2 | yes | `pnpm test:t2` | `*.perf.test.ts(x)`: performance beyond the requirement. |
+| `tests/tier2/deep` | large | functional | 2 | no | `pnpm test:t2` | Meridian's repository only. `tests/deep-*`: the check scripts against browser fixtures, each planted defect found and each corrected twin passing. |
+| `tests/tier2/postgres` | medium | functional | 2 | no | `pnpm test:release` | The Postgres code against a Postgres and a PgBouncer, where their URLs are set; reported not run otherwise. |
 
-Import checks read the live `compilerOptions.paths` and `baseUrl` with the shared Node-only JSONC reader, so comments and trailing commas do not create alias mappings. Invalid JSONC fails with its diagnostic rather than guessing an alias. This reads the local file only; it does not resolve `extends` or follow remote configuration.
+A diagnostic script is not in this table: it has no tier, because nothing in the standard runs it. The scripts a removed tier used to name remain at `scripts/audit.ts`, `scripts/interactions.ts`, `scripts/keyboard.ts`, `scripts/assistant.ts`, `scripts/live.ts`, `scripts/navigate.ts`, `scripts/vitals.ts` and `scripts/sizes.ts`, each read directly when a question calls for it.

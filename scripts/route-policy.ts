@@ -8,7 +8,7 @@
  * It reads the build's own manifests in the configured `distDir`: every app route in app-path-routes-manifest.json, and
  * the prerendered ones in prerender-manifest.json, where `renderingMode` says STATIC or PARTIALLY_STATIC (a partial
  * prerender). A route in the first and absent from the second is dynamic. It also fails a partial route whose shell for a
- * parameter the build did not know is an empty file. `pnpm verify` runs it right after its production build.
+ * parameter the build did not know is an empty file. `pnpm test:release` runs it after its production build.
  */
 import fs from 'node:fs';
 import path from 'node:path';

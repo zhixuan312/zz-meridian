@@ -8,7 +8,7 @@ describe('Next.js telemetry', () => {
     await import('../next.config.ts');
     expect(process.env.NEXT_TELEMETRY_DISABLED).toBe('1');
   });
-  it("is off for every next the gate, verify and the live check run, whatever the project's own config says", async () => {
+  it("is off for every next the test commands and the diagnostics run, whatever the project's own config says", async () => {
     await import('../scripts/lib/bin.ts');
     expect(process.env.NEXT_TELEMETRY_DISABLED).toBe('1');
   });

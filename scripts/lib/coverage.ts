@@ -1,13 +1,6 @@
 /** Smoke route selection and coverage resolution: what is configured is checked, what is not is reported, never passed. */
 import type { NavigationCheck } from './budgets.ts';
 
-/** The suites `--full` adds: what is exhaustive and does not depend on the clock. */
-export const COMPLETE_SUITES = ['audit', 'presses', 'keyboard', 'assistant', 'browserChecks'] as const;
-/** The suites `--timed` adds: what judges a time, the navigation's budgets, the live stream, the product's own timed checks and Web Vitals. */
-export const TIMED_SUITES = ['timing', 'live', 'timedChecks', 'vitals'] as const;
-/** Every suite verify can list, in the order the coverage line prints them; verify keeps those the project has and the run asked for. */
-export const SUITE_NAMES = [...COMPLETE_SUITES, ...TIMED_SUITES, 'perf'] as const;
-
 const PROBES = ['dialog', 'filter', 'sort', 'toggle', 'link'];
 
 /** The rules a check's output says it passed having judged nothing for (`judged nothing: <a>, <b>`, scripts/check.ts). */
@@ -15,37 +8,6 @@ export const judgedNothingIn = (out: string): string[] => [...out.matchAll(/^jud
 
 /** The exit code of a suite that failed nothing but left a case unrun: neither a pass nor a failure. */
 export const NOT_RUN_EXIT = 2;
-
-/**
- * What a suite's exit code means to verify: only 0 is a pass, and a suite that left a case unrun did not run. A pass whose
- * output has a line starting `warn` is a warning (a time that passed leaving less than a fifth of its limit, a product's own
- * check saying so): it passed, and the phase says it was near its line.
- */
-export function suiteOutcome(status: number | null, out = ''): 'ok' | 'warn' | 'not run' | 'FAIL' {
-  return status === 0 ? (/^warn\b/m.test(out) ? 'warn' : 'ok') : status === NOT_RUN_EXIT ? 'not run' : 'FAIL';
-}
-
-/**
- * The suites the coverage line names: those that did not run, and apart from them those that ran and failed. A suite
- * that failed ran; listing it as not run told the reader it had been skipped.
- */
-export function suiteCoverage(suites: string[], passed: ReadonlySet<string>, failed: ReadonlySet<string>): { notRun: string[]; failed: string[] } {
-  return { notRun: suites.filter((s) => !passed.has(s) && !failed.has(s)), failed: suites.filter((s) => failed.has(s)) };
-}
-
-/**
- * The last line of a passing verify. The standard is met only when nothing was left unrun, which takes both tiers. A list of
- * unrun suites that is wholly one tier the run did not ask for names the command that runs it; any other list names none.
- */
-export function finalOutcome({ full, timed }: { full: boolean; timed: boolean }, notRun: string[]): string {
-  if (!full && !timed) return 'every check that ran passed; pnpm verify --full --timed runs the rest';
-  if (!notRun.length) return full && timed ? 'the project meets the Meridian standard' : 'every check that ran passed';
-  const list = `every check that ran passed; not run: ${notRun.join(', ')}`;
-  const only = (tier: readonly string[]) => notRun.every((s) => tier.includes(s));
-  if (full && !timed && only(TIMED_SUITES)) return `${list}; pnpm verify --timed runs them`;
-  if (timed && !full && only(COMPLETE_SUITES)) return `${list}; pnpm verify --full runs them`;
-  return list;
-}
 
 const MAX_SMOKE = 3;
 
@@ -74,7 +36,7 @@ function mappingErrors(check: NavigationCheck, routes: string[]): string[] {
 }
 
 /**
- * Each route's coverage in `mode`; a `--timed` run passes `full`, so it holds every rail route mapped. Every mapping is
+ * Each route's coverage in `mode`; a full run passes `full`, so it holds every rail route mapped. Every mapping is
  * validated against `known`, the project's rail routes, which default to `routes`: the default smoke resolves three routes
  * while the config maps the whole rail.
  */

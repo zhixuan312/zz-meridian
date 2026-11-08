@@ -15,19 +15,15 @@
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "lint": "eslint",
-    "test": "vitest run",
+    "test:t1": "node scripts/test-run.ts t1",
+    "test:t2": "node scripts/test-run.ts t2",
+    "test:release": "node scripts/test-run.ts release",
     "tokens": "node scripts/tokens.ts",
-    "gate": "node scripts/gate.ts",
-    "audit": "node scripts/audit.ts",
     "shot": "node scripts/shot.ts",
     "contrast": "node scripts/contrast.ts",
     "registry": "node scripts/registry.ts",
     "check": "node scripts/check.ts",
-    "verify": "node scripts/verify.ts",
-    "brand": "node scripts/brand.ts",
-    "interactions": "node scripts/interactions.ts",
-    "vitals": "node scripts/vitals.ts",
-    "keyboard": "node scripts/keyboard.ts"
+    "brand": "node scripts/brand.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "4.0.82",

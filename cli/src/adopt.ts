@@ -32,7 +32,7 @@ export function adoptDependencies(pkg: Template, tpl: Template, field: 'dependen
     if (!have) { pkg[field]![n] = want; continue; }
     const order = compareMinimum(have, want);
     if (order === null) {
-      notes.push(`kept ${n} ${have}, which Meridian cannot compare: confirm it meets ${want} before running the gate`);
+      notes.push(`kept ${n} ${have}, which Meridian cannot compare: confirm it meets ${want} before running the tests`);
     } else if (order < 0) {
       const at = pkg.dependencies?.[n] ? 'dependencies' : 'devDependencies';
       pkg[at]![n] = want;
@@ -122,7 +122,7 @@ export function projectConfig(template: string, pages: string[]): string {
 
 /**
  * `scripts/verify.config.ts` as a project gets it. The sample's persona rows are what used `EVERY_ROUTE` and `ROLE_ROUTES`,
- * so replacing the config object leaves them declared and never read — which the gate's own lint fails, in the project
+ * so replacing the config object leaves them declared and never read — which the lint fails, in the project
  * adopt just wrote, 0.7 s after the other steps passed — and names the sample's routes in the team's file. Each goes
  * with its doc line. Exported so a test can hold the rewrite to that.
  */
@@ -153,7 +153,7 @@ function vitestConfig(alias: string | null): string {
 import react from '@vitejs/plugin-react';
 import path from 'node:path';
 
-// Written by zz-meridian adopt: the gate runs these tests; tests/setup.ts stands in for what jsdom lacks.
+// Written by zz-meridian adopt: the test commands run these tests; tests/setup.ts stands in for what jsdom lacks.
 export default defineConfig({
   plugins: [react()],
   resolve: { alias: { ${aliases.join(', ')} } },
@@ -339,28 +339,28 @@ Rename or move them, then run adopt again.`);
   }
 
   if (!['ts', 'mts', 'js', 'mjs'].some((x) => fs.existsSync(path.join(root, `vitest.config.${x}`)))) writes.set('vitest.config.ts', vitestConfig(atAlias));
-  else notes.push('kept your vitest config: add tests/setup.ts to its setupFiles and passWithNoTests for the gate');
+  else notes.push('kept your vitest config: add tests/setup.ts to its setupFiles and passWithNoTests for the test run');
 
-  // The gate's lint step runs `eslint .`, and a project with no configuration fails it 0.7 s in with ESLint's own message
+  // The lint step runs `eslint .`, and a project with no configuration fails it 0.7 s in with ESLint's own message
   // about a missing file — which says nothing about Meridian. Measured on a project created by create-next-app with
-  // --no-eslint and then adopted: every other gate step passed and the lint was the only red.
+  // --no-eslint and then adopted: every other check passed and the lint was the only red.
   const eslint = eslintConfigOf(root);
   if (!eslint) {
     writes.set('eslint.config.ts', readPayload('eslint.config.ts'));
-    notes.push('added eslint.config.ts: the gate runs the lint, and this project had no ESLint configuration');
+    notes.push('added eslint.config.ts: the checks run the lint, and this project had no ESLint configuration');
   } else if (eslint.legacy) {
-    notes.push(`kept ${eslint.file}, which ESLint 9 no longer reads: the gate's lint fails until it becomes an eslint.config.mjs`);
+    notes.push(`kept ${eslint.file}, which ESLint 9 no longer reads: the lint fails until it becomes an eslint.config.mjs`);
   }
 
   if (!fs.readdirSync(path.join(root, dir)).some((f) => /^(icon|favicon)\./.test(f))) writes.set(`${dir}/icon.ts`, exactImports(`${dir}/icon.ts`, readPayload('app/icon.ts'), known));
 
   const ignore = path.join(root, '.gitignore');
   const ignored = fs.existsSync(ignore) ? fs.readFileSync(ignore, 'utf8') : '';
-  // verify's report and screenshots, and an update in progress: Meridian's own, never the team's to commit. The manifest,
+  // local reports and screenshots, and an update in progress: Meridian's own, never the team's to commit. The manifest,
   // keep.json and history/ are committed, since the next update reads them.
   const bare = (l: string) => l.trim().replace(/^\//, '').replace(/\/$/, '');
   const unignored = ['/out/', '/.meridian/update/', '/.meridian/update.lock'].filter((l) => !ignored.split('\n').some((x) => bare(x) === bare(l)));
-  if (unignored.length) writes.set('.gitignore', `${ignored.trimEnd()}\n\n# zz-meridian: verify's report and an update in progress\n${unignored.join('\n')}\n`);
+  if (unignored.length) writes.set('.gitignore', `${ignored.trimEnd()}\n\n# zz-meridian: local reports and an update in progress\n${unignored.join('\n')}\n`);
 
   // ── Write: every target checked first, so a bad one stops it before anything changes ─────────────────
   try { for (const rel of writes.keys()) inside(root, rel); } catch (e) { return fail((e as Error).message); }
@@ -402,7 +402,7 @@ Rename or move them, then run adopt again.`);
   if (o.install) {
     say(`\nInstalling with ${pm}…`);
     if (run(pm, installArgs(pm), root).status !== 0) return fail(`${pm} install failed (above). Fix it, then run ${pm} install and ${pm} run typecheck.`);
-    // Route types first (LayoutProps, PageProps), as the gate does; neither failure may be reported as passing.
+    // Route types first (LayoutProps, PageProps), as the test commands do; neither failure may be reported as passing.
     typed = adoptionTypes(root);
   }
 
@@ -416,7 +416,7 @@ Meridian ${VERSION} is in ${root}.
 Next: follow .agents/skills/zz-meridian/references/existing-project.md, Route A, from step 2 (step 1 was this), to the
 standard in references/standard.md. The
 template to read from is https://github.com/zhixuan312/zz-meridian/tree/v${VERSION}. Import Meridian's components as
-'@meridian/components/…'. Before the first ${pm} run verify, read step 5: verify presses every control, Delete included.`);
+'@meridian/components/…'. Before the first browser diagnostic, read step 5: it presses every control, Delete included.`);
   return 0;
 }
 

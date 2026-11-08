@@ -7,7 +7,7 @@
  * vocabulary modules, no page, view, logic or lib module calls `.query(`, and a `'use client'` module imports no logic
  * module whose imports reach a read. A project that has not adopted them leaves this file out, or assigns `false`.
  *
- * The gate runs this file as a step of its own when it exists (`scripts/gate.ts`). Add the project's own checks below;
+ * Every test command runs this file when it exists (`scripts/test-run.ts`). Add the project's own checks below;
  * they run there, never inside `scripts/check.ts`.
  */
 export const fourLayers = true;

@@ -12,7 +12,7 @@ import { launch, type Page } from '../scripts/lib/chrome.ts';
 /**
  * A check presses every control, and an Export button is a real download (`downloadFile()` in src/lib/csv.ts, a Blob
  * and an `<a download>` click). With no download directory, Chrome saved each file in the person's own Downloads folder,
- * outside the temporary profile the run removes, so every `pnpm verify --full` left Home's, Revenue's and Usage's CSVs
+ * outside the temporary profile the run removes, so every browser run left Home's, Revenue's and Usage's CSVs
  * there. A download belongs inside the profile, and goes with it.
  */
 const name = `meridian-download-probe-${randomBytes(6).toString('hex')}.csv`;

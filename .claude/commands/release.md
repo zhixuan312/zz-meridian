@@ -48,8 +48,8 @@ gh run list --workflow=weekly.yml -L 1   # the full, perf and recovery suites, w
 ## 3. Prove it locally
 
 Nothing is run twice: the release workflow's `gates` job is the proof, so there is no local copy of it to run first.
-Locally, only `pnpm gate` (the fast loop) after the version and changelog edits. Commit (`release: <v>`, after the change
-commits), push to `master`.
+Locally, `pnpm test:release` after the version and changelog edits; the workflow gates on the same command. Commit
+(`release: <v>`, after the change commits), push to `master`.
 
 ## 4. Dispatch
 
