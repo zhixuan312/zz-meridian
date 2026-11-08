@@ -362,6 +362,8 @@ function affected(tier: 't1' | 't2'): number {
     notRun.push(...r.notRun.map((s) => `browser suites (${s})`));
   }
 
+  // test:t2 never judges a time: the timed suites belong to test:release, which alone runs them on a quiet machine.
+  if (withTier2) console.log('not run timed browser suites: test:release runs them on a quiet machine');
   // A Tier 1 run proves nothing about a Tier 2 change: the marker advances only when this run covered every change.
   const tier2Left = withTier2 ? false : ranWhole || pendingTier2(changed, present, deleted);
   const pending = tier2Left || !deepRan || notRun.length > 0;

@@ -134,7 +134,7 @@ jobs:
     # `test:release` builds once and then runs the browser-fixture tests, the browser sweeps and the timed suites on this
     # 4-CPU runner; the consumer smoke follows. The cap sits above the sum, so a run is stopped by a failing step and
     # never by the clock.
-    timeout-minutes: 90
+    timeout-minutes: 120
     env:
       VERSION: ${{ inputs.version }}
       SHA256: ${{ needs.build.outputs.sha256 }}

@@ -1,6 +1,6 @@
 /**
  * Where a data URL points, for the one decision that has to be right before anything starts: whether the presses and the
- * walk-throughs may run against it. `scripts/verify.ts` refuses a backend that is not this machine, because by the time
+ * walk-throughs may run against it. `scripts/browser.ts` refuses a backend that is not this machine, because by the time
  * a press lands the damage is done.
  */
 
@@ -95,7 +95,7 @@ export function dataHost(value: string, defaults?: Readonly<Record<string, strin
 }
 
 /**
- * The data URLs among `values` that are not on this machine, as `NAME → host`, for the refusal `scripts/verify.ts`
+ * The data URLs among `values` that are not on this machine, as `NAME → host`, for the refusal `scripts/browser.ts`
  * prints. A value whose host cannot be read is one of them: skipping it is how this gate failed open, since a DSN
  * written without a scheme, or a libpq line (`host=db.prod.example.com user=…`), has no host it can read — and a press
  * against a backend reaches it whatever the string looked like. An empty value names no backend at all.
