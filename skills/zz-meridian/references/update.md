@@ -219,7 +219,7 @@ each one in the project, then record it as above, with the hashes of the files a
 
 | Id | The old shape it found | The change |
 |----|------------------------|------------|
-| `verify-modes` | a `package.json` script, workflow or shell file that still runs the old `verify` command, with a removed flag or none | use `pnpm test:t1`, `pnpm test:t2` or `pnpm test:release` instead; none takes an argument: `docs/testing.md` |
+| `verify-modes` | a `package.json` script, workflow or shell file that still runs the old `verify` command, with a removed flag or none | use `pnpm test:t1`, `pnpm test:t2` or `pnpm test:release` instead; none takes an argument: `validation.md` |
 | `shell-assistant-promise` | `<AppShell assistant=...>` with a boolean | pass a `Promise<boolean>`: `cache.md`, "The shell's assistant promise" |
 | `assistant-available-promise` | `useAssistantAvailable()` read as a boolean | `use(useAssistantAvailable())` inside a `Suspense` boundary: same section |
 | `clock-now-required` | `Freshness`, `ShellTools` or `AlertsPanel` without `now`, `formatRelative` with one argument | pass the data's clock: "The clock is the data's" |

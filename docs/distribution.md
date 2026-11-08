@@ -170,7 +170,7 @@ Thirty arrived after 0.5.0 and are resolved as the skill's `references/update.md
 
 | Id | Reported when a team-owned file still has | Completion step |
 |----|-------------------------------------------|-----------------|
-| `verify-modes` | a `package.json` script, workflow or shell file that still runs the old `verify` command, with a removed flag or none | `docs/testing.md`: replace each with the current test commands, `pnpm test:t1`, `pnpm test:t2` or `pnpm test:release`; none takes an argument |
+| `verify-modes` | a `package.json` script, workflow or shell file that still runs the old `verify` command, with a removed flag or none | `validation.md`: replace each with the current test commands, `pnpm test:t1`, `pnpm test:t2` or `pnpm test:release`; none takes an argument |
 | `shell-assistant-promise` | `<AppShell` with an `assistant=` prop and no promise (`.then(`, `Promise`, `use(`) | `cache.md`, "The shell's assistant promise": pass a promise and do not await it |
 | `assistant-available-promise` | `useAssistantAvailable()` used as a boolean | same section: `use(useAssistantAvailable())` inside `Suspense` |
 | `clock-now-required` | `<Freshness`, `<ShellTools` or `<AlertsPanel` without `now=`, or `formatRelative(` with one argument | `cache.md`, "The clock is the data's": pass the data's clock |

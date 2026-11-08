@@ -2,7 +2,7 @@
 
 This is the route a product takes from a console that renders every request to one whose shell prerenders, whose pages
 read through an authorized and cached `read()`, and whose writes drop exactly their tenant's collection. Every
-migration `update` reports for 0.5.0 names a section below, but `verify-modes`, which names `docs/testing.md`, and
+migration `update` reports for 0.5.0 names a section below, but `verify-modes`, which names `validation.md`, and
 `live-provider`: `live.md` carries the live stream and its refresh.
 
 The starters are the template's own files. A product keeps their shape and replaces the policy, the session and the
