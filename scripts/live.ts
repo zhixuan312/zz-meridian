@@ -1,7 +1,7 @@
 /**
  * Live data in the browser, checked end to end against the built app: two tabs on /members, a write in one and the other
  * showing it, and every way the stream can go quiet (hints suppressed, a server restart, a hidden tab, a tab offline) or
- * loud (a burst). A diagnostic: no test tier runs it.
+ * loud (a burst). scripts/browser.ts --depth timed runs it, alone on a quiet machine, under `pnpm test:release`.
  *
  *   node scripts/live.ts --base http://127.0.0.1:3000 [--drop-base <url>] [--poll-ms 3000] [--only <case>,<case>]
  *

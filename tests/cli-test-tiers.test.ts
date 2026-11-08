@@ -5,7 +5,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { isCode, isTier2 } from '../scripts/test-run.ts';
+import { isCode, isDeep, isTier2 } from '../scripts/test-run.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const read = (p: string) => fs.readFileSync(path.join(ROOT, p), 'utf8');
@@ -38,11 +38,15 @@ describe('the three test commands', () => {
 });
 
 describe('the tier convention', () => {
-  it('puts the repo suites and the perf convention in Tier 2, and every other test in Tier 1', () => {
-    expect(isTier2('tests/deep-dom.test.ts')).toBe(true);
+  it('puts the perf convention in Tier 2, and every other test in Tier 1', () => {
     expect(isTier2('tests/column-chart.perf.test.tsx')).toBe(true);
     expect(isTier2('tests/column-chart.test.tsx')).toBe(false);
     expect(isTier2('tests/cli-test-tiers.test.ts')).toBe(false);
+    // The browser-fixture tests verify a check script's function: Tier 1, run as their own stage by their size.
+    expect(isTier2('tests/deep-dom.test.ts')).toBe(false);
+    expect(isDeep('tests/deep-dom.test.ts')).toBe(true);
+    expect(isDeep('tests/deep-checks.test.ts')).toBe(true);
+    expect(isDeep('tests/column-chart.test.tsx')).toBe(false);
   });
 
   it('treats code changes as needing a selection, and documents as not', () => {
@@ -53,15 +57,18 @@ describe('the tier convention', () => {
     expect(isCode('README.md')).toBe(false);
   });
 
-  it('collects every test file the convention classifies, Tier 2 included', () => {
+  it('collects every test file the convention classifies', () => {
     const files = fs.readdirSync(path.join(ROOT, 'tests'), { recursive: true, withFileTypes: true })
       .filter((d) => d.isFile() && /\.test\.tsx?$/.test(d.name))
       .map((d) => path.relative(ROOT, path.join(d.parentPath, d.name)));
     expect(files.length).toBeGreaterThan(0);
     // The config collects both tiers; the runner's own `--exclude` is what keeps Tier 2 out of `test:t1`.
     expect(read('vitest.config.ts')).toContain("include: ['tests/**/*.test.{ts,tsx}']");
-    expect(files.some((f) => isTier2(f))).toBe(true);
-    expect(files.some((f) => !isTier2(f))).toBe(true);
+    // There is no `*.perf` file today, and there need not be: `test:t2` still runs the affected Tier 1 tests. Whatever
+    // the convention matches is a performance test by name, and the browser fixtures are the Tier 1 stage of their own.
+    expect(isTier2('tests/example.perf.test.ts')).toBe(true);
+    expect(files.filter((f) => isTier2(f)).every((f) => /\.perf\.test\.tsx?$/.test(f))).toBe(true);
+    expect(files.some(isDeep)).toBe(true);
   });
 });
 

@@ -23,11 +23,11 @@ Each repository has exactly three test commands, and every one takes no argument
 
 | Command | Runs |
 |---|---|
-| `pnpm test:t1` | the Tier 1 tests affected by the changes since the last green run (the import graph's `related` selection) |
-| `pnpm test:t2` | the affected Tier 2 tests too, and the affected Tier 1 tests with them |
-| `pnpm test:release` | every Tier 1 and Tier 2 test, once, with lint and the type check |
+| `pnpm test:t1` | the Tier 1 tests affected by the changes since the last green run (the import graph's `related` selection), and the type check |
+| `pnpm test:t2` | the affected Tier 2 checks too, and the affected Tier 1 tests with them |
+| `pnpm test:release` | every Tier 1 and Tier 2 test, once, with the timed browser suites, lint and the type check |
 
-- **Tier 2 is a file convention.** `*.perf.test.ts(x)` and this repository's `tests/deep-*.test.ts(x)` are Tier 2; every other test under `tests/` is Tier 1. `test:t1` never runs a Tier 2 file.
+- **Tier 2 is a convention.** `*.perf.test.ts(x)` is Tier 2 in any repository; here the broad browser sweeps (`scripts/browser.ts --depth fn`, in `test:t2`) and the timed runs (depth `timed`, in `test:release`) are Tier 2 too. Every other test under `tests/` is Tier 1. `tests/deep-*`, the browser-fixture tests of the checks, are Tier 1; their size keeps them out of the main run, and they run as their own stage. `test:t1` never runs a Tier 2 check.
 - **"Last green" is a marker.** After a passing run the command writes the commit to `out/last-green` (gitignored) and reads it before the next, so a branch's later runs stay small. A missing marker falls back to the diff against master; a checkout with neither marker nor a diff runs the whole tier.
 - **Every plan phase is labelled Tier 1, 2 or 3.** A Tier 1 phase uses `pnpm test:t1`; a Tier 2 phase and a Tier 3 phase use `pnpm test:t2`. Every phase ends with its command passing.
 - **A release in this repository is dispatching `.github/workflows/release.yml` from master**: it publishes the package and tags last. Pushing to master neither publishes nor deploys. `pnpm test:release` passes on the commit being released before the workflow is dispatched.

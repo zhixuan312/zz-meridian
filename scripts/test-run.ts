@@ -2,22 +2,25 @@
  * The three test commands, and the only test commands. Each takes no arguments from the person or the agent; it is the
  * tool that picks the tests.
  *
- *   pnpm test:t1        the Tier 1 tests affected by the changes since the last green run
- *   pnpm test:t2        the same plus the Tier 2 tests those changes affect (the affected Tier 1 tests included)
+ *   pnpm test:t1        the Tier 1 tests affected by the changes since the last green run, with the type check
+ *   pnpm test:t2        the same plus the Tier 2 checks those changes affect (the affected Tier 1 tests included)
  *   pnpm test:release   every Tier 1 and Tier 2 test, once, with lint and the type check
  *
  * "Since the last green run" is the marker in out/last-green, which a command writes after a passing run; out/ is
  * gitignored. A missing marker falls back to the diff against master, and a checkout with neither marker nor a diff
  * (master itself, a fresh CI clone) runs the whole tier, because no green run is evidence for it.
  *
- * Selection is the tool's: Vitest's `related` reads the import graph and runs the tests that reach a changed file; a
- * changed test file is run itself. A tier is a convention over files, never a list someone keeps by hand:
+ * Selection is the tool's, never a list kept by hand:
  *
- *   Tier 1: every test under tests/ that the Vitest config collects.
- *   Tier 2: the repo's `tests/deep-*.test.ts(x)` (the large browser-fixture suites) and any `*.perf.test.ts(x)`.
- *
- * A changed path that reaches no test at all runs the whole tier: an import graph that knows nothing about a file is
- * not evidence that nothing needs testing.
+ * - Tier 1 is every test under tests/ outside the Tier 2 convention. Vitest's `related` reads the import graph and runs
+ *   the tests that reach a changed file; a changed test file is run itself. A document a test reads by name has no
+ *   import edge, so the tests that name it are the group it selects (git grep); a change that reaches no test at all, and
+ *   a deleted file whose importers can no longer be computed, run the whole tier.
+ * - Tier 1's large browser-fixture tests (tests/deep-*) run on their own, never inside the main Vitest run: their size
+ *   decides that, not their tier.
+ * - Tier 2 is the performance convention `*.perf.test.ts(x)` and the browser suites: the broad sweep of every page,
+ *   control and keyboard stop (scripts/browser.ts --depth fn) and, on a quiet machine, the timed runs (--depth timed).
+ *   The 20-sample protocol (--depth perf) runs where CI is true, in the weekly job that calls `pnpm test:t2`.
  */
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
@@ -28,17 +31,27 @@ const ROOT = path.resolve(import.meta.dirname, '..');
 const MARKER = path.join(ROOT, 'out', 'last-green');
 const REPORT = path.join(ROOT, 'out', 'test-run.json');
 
-/** The Tier 2 convention: the repo's large browser-fixture suites, and the performance tests of any repo. */
-const TIER2 = [/^tests\/deep-[^/]*\.test\.tsx?$/, /\.perf\.test\.tsx?$/];
+/** The Tier 2 file convention: performance tests, in any repository. */
+const TIER2 = [/\.perf\.test\.tsx?$/];
 
 /** Whether a project path is a Tier 2 test. */
 export const isTier2 = (file: string): boolean => TIER2.some((rule) => rule.test(file));
+
+/** The repository's large browser-fixture tests: Tier 1 by what they verify, run on their own by their size. */
+const DEEP = /^tests\/deep-[^/]*\.test\.tsx?$/;
+export const isDeep = (file: string): boolean => DEEP.test(file);
 
 /** The paths whose change means any test may be affected: a docs-only change is not one of them. */
 const CODE = /^(app|src|scripts|cli|tests|tokens|journeys|next\.config\.|package\.json$|pnpm-lock\.yaml$|tsconfig|vitest\.config|eslint\.config)/;
 
 /** A path that changes what runs: a test is selected for it, or the whole tier falls back to running. */
 export const isCode = (file: string): boolean => CODE.test(file);
+
+/** The paths the browser suites walk: a change to what a page draws or a control does needs them. */
+const BROWSER = /^(app|src|tokens|journeys|scripts|next\.config\.|package\.json$|pnpm-lock\.yaml$)/;
+export const touchesBrowser = (file: string): boolean => BROWSER.test(file);
+
+const isTestFile = (file: string): boolean => /\.test\.tsx?$/.test(file);
 
 const git = (args: string[]): { ok: boolean; out: string } => {
   const r = spawnSync('git', args, { cwd: ROOT, encoding: 'utf8' });
@@ -62,11 +75,23 @@ export function baseline(): { ref: string; from: 'the last green run' | 'master'
   return { ref: EMPTY_TREE, from: 'master' };
 }
 
-/** The files whose bytes differ from `base`, committed or not, with the untracked ones; deleted paths are left out. */
-function changedSince(base: string): string[] {
-  const tracked = git(['diff', '--name-only', '--diff-filter=ACMR', base, '--']).out.split('\n').filter(Boolean);
+/** The files whose bytes differ from `base`, committed or not, with the untracked ones; a deleted path stays in the change. */
+function changedSince(base: string): { all: string[]; present: string[]; deleted: string[] } {
+  const tracked = git(['diff', '--name-only', '--diff-filter=ACDMR', base, '--']).out.split('\n').filter(Boolean);
   const untracked = git(['ls-files', '--others', '--exclude-standard']).out.split('\n').filter(Boolean);
-  return [...new Set([...tracked, ...untracked])].filter((f) => fs.existsSync(path.join(ROOT, f)));
+  const all = [...new Set([...tracked, ...untracked])];
+  const present = all.filter((f) => fs.existsSync(path.join(ROOT, f)));
+  const deleted = all.filter((f) => !present.includes(f));
+  return { all, present, deleted };
+}
+
+/**
+ * The tests that name a changed path, for the paths no import graph can reach (a document a guard reads with fs). The
+ * group is read from the tests themselves: a name no test holds selects none, and the document changes nothing.
+ */
+export function testsNaming(file: string): string[] {
+  const r = git(['grep', '-lF', '--', file, '--', 'tests']);
+  return r.ok ? r.out.split('\n').filter((f) => isTestFile(f) && fs.existsSync(path.join(ROOT, f))) : [];
 }
 
 /** A passing run records the commit it proved, so the next run reads a smaller diff instead of the branch's whole history. */
@@ -130,6 +155,12 @@ function staticChecks(): number {
   return 0;
 }
 
+/** The type check every tier runs: the routes are generated, then TypeScript compiles the tree. */
+function typecheck(): number {
+  if (run('types: route types', bin('next'), ['typegen']) !== 0) return 1;
+  return run('types: tsc --noEmit', bin('tsc'), ['--noEmit']);
+}
+
 /** The Chrome every browser suite opens (scripts/lib/chrome.ts): `CHROME`, or the platform's usual install. */
 const chromeAvailable = (): boolean => {
   const chrome = process.env.CHROME ?? (process.platform === 'darwin' ? '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' : process.platform === 'win32' ? 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe' : '/usr/bin/google-chrome');
@@ -137,7 +168,7 @@ const chromeAvailable = (): boolean => {
   return spawnSync(chrome, ['--version'], { encoding: 'utf8' }).status === 0;
 };
 
-/** The large browser-fixture suites cannot run without Chrome; say so, never that they passed. */
+/** The large browser-fixture tests cannot run without Chrome; say so, never that they passed. */
 function deepTests(label: string): { status: number; ran: boolean } {
   if (!chromeAvailable()) {
     console.log(`not run ${label}: no Chrome (CHROME is unset and no browser was found)`);
@@ -148,8 +179,26 @@ function deepTests(label: string): { status: number; ran: boolean } {
 
 const hasDeep = (): boolean => fs.existsSync(path.join(ROOT, 'tests')) && fs.readdirSync(path.join(ROOT, 'tests')).some((f) => f.startsWith('deep-') && /\.test\.tsx?$/.test(f));
 
-/** The Tier 2 files that no import graph selects: `tests/deep-*` runs whole when a script or a journey changed. */
-const affectsDeep = (files: string[]): boolean => files.some((f) => /^(scripts|journeys)\//.test(f) || /^tests\/deep-/.test(f));
+/** The Tier 1 files the main run leaves out: `tests/deep-*` runs whole when a script or a journey changed. */
+const affectsDeep = (files: string[]): boolean => files.some((f) => /^(scripts|journeys)\//.test(f) || isDeep(f));
+
+/**
+ * The browser suites (scripts/browser.ts), at the depths asked for. Its own line per suite is passed through; the JSON
+ * line says what ran and what did not, and its exit 2 is a run with something not run, not a failure.
+ */
+function browser(depth: string, built = false): { ok: boolean; notRun: string[]; ran: string[] } {
+  const r = spawnSync(process.execPath, ['scripts/browser.ts', '--depth', depth, ...(built ? ['--built'] : [])], { cwd: ROOT, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+  const out = `${r.stdout ?? ''}\n${r.stderr ?? ''}`;
+  for (const l of out.split('\n').filter((l) => /^(ok|FAIL|not run|n\/a)\s/.test(l) || /^browser: /.test(l))) console.log(l);
+  const json = /^browser: (.*)$/m.exec(out);
+  let state: { ran?: string[]; failed?: boolean; notRun?: string[] } | null = null;
+  try { state = json ? JSON.parse(json[1]) : null; } catch { state = null; }
+  if (r.status === 1 || !state) {
+    console.log(`test: browser suites FAIL (${out.split('\n').filter(Boolean).slice(-1)[0] ?? 'no output'})`);
+    return { ok: false, notRun: [], ran: [] };
+  }
+  return { ok: true, notRun: state.notRun ?? [], ran: state.ran ?? [] };
+}
 
 function release(): number {
   const notRun: string[] = [];
@@ -164,53 +213,60 @@ function release(): number {
   ];
   for (const [, step] of steps) if (step() !== 0) return 1;
 
-  const t1 = vitest('run', [], false, 'tier 1 tests');
+  // Every test file: Tier 1, the performance convention, and this repository's browser fixtures on their own below.
+  const t1 = vitest('run', [], true, 'every test file (the browser fixtures run on their own)');
   if (t1.status !== 0) {
-    console.log('test:release: FAIL: a Tier 1 test failed');
+    console.log('test:release: FAIL: a test failed');
     return 1;
   }
   if (hasDeep()) {
-    const deep = deepTests('tier 2 tests (tests/deep-*)');
+    const deep = deepTests('Tier 1 browser-fixture tests (tests/deep-*)');
     if (deep.status !== 0) {
-      console.log('test:release: FAIL: a Tier 2 test failed');
+      console.log('test:release: FAIL: a browser-fixture test failed');
       return 1;
     }
-    if (!deep.ran) notRun.push('tier 2 tests (tests/deep-*) (no Chrome)');
+    if (!deep.ran) notRun.push('browser-fixture tests (tests/deep-*) (no Chrome)');
   }
-  // The Tier 2 checks of a production build: its routes are declared as their policy says, and each route's first load is
-  // within its budget. The HTML sizes need a served build, so this run reports them not run rather than passing them.
+  // A production build, its routes declared as the policy says and its first load within budget. The HTML sizes need a
+  // served build, so this run reports them not run rather than passing them.
   if (run('build: next build', bin('next'), ['build'], { ...process.env, MERIDIAN_TYPES_CHECKED: '1' }) !== 0
     || run('route policy', process.execPath, ['scripts/route-policy.ts']) !== 0
     || run('sizes: first-load', process.execPath, ['scripts/sizes.ts']) !== 0) {
-    console.log('test:release: FAIL: a Tier 2 build check failed');
+    console.log('test:release: FAIL: a build check failed');
     return 1;
   }
-  // The HTML sizes need a served build; scripts/sizes.ts itself reports them not run without one.
+  // The browser suites against that build: the sweeps first, then the timed runs alone on the quiet machine.
+  const browserRun = browser('fn,timed', true);
+  if (!browserRun.ok) {
+    console.log('test:release: FAIL: a browser suite failed');
+    return 1;
+  }
+  notRun.push(...browserRun.notRun.map((s) => `browser suites (${s})`));
   // The Postgres code the skill's references hand a team lives outside tests/ and needs services: run it only where the
   // owner supplied them, and say it did not run otherwise, never that it passed.
   const missing = ['MERIDIAN_POSTGRES_URL', 'MERIDIAN_POOLER_URL', 'MERIDIAN_PG'].filter((k) => !process.env[k]);
   const postgresConfig = path.join(ROOT, 'scripts', 'fixtures', 'postgres', 'vitest.config.ts');
   if (fs.existsSync(postgresConfig)) {
     if (missing.length) {
-      console.log(`not run tier 2 tests (Postgres): ${missing.join(', ')} is not set`);
-      notRun.push(`tier 2 tests (Postgres) (${missing.join(', ')} not set)`);
+      console.log(`not run Postgres tests: ${missing.join(', ')} is not set`);
+      notRun.push(`Postgres tests (${missing.join(', ')} not set)`);
     }
-    else if (run('tier 2 tests (Postgres)', bin('vitest'), ['run', '--config', postgresConfig]) !== 0) {
-      console.log('test:release: FAIL: a Tier 2 Postgres test failed');
+    else if (run('Postgres tests', bin('vitest'), ['run', '--config', postgresConfig]) !== 0) {
+      console.log('test:release: FAIL: a Postgres test failed');
       return 1;
     }
   }
   if (!notRun.length) recordGreen();
   else console.log(`test:release: the marker is not advanced, because ${notRun.length} check${notRun.length === 1 ? '' : 's'} did not run`);
   console.log(notRun.length
-    ? `test:release: every check that ran passed; not run: ${notRun.join(', ')} (${t1.files} test files, ${t1.tests} tests in Tier 1)`
-    : `test:release: every Tier 1 and Tier 2 test passed, lint passed, types check (${t1.files} test files, ${t1.tests} tests in Tier 1)`);
+    ? `test:release: every check that ran passed; not run: ${notRun.join(', ')} (${t1.files} test files, ${t1.tests} tests)`
+    : `test:release: every Tier 1 and Tier 2 test passed, lint passed, types check (${t1.files} test files, ${t1.tests} tests)`);
   return 0;
 }
 
 function affected(tier: 't1' | 't2'): number {
   const { ref, from } = baseline();
-  const changed = changedSince(ref);
+  const { all: changed, present, deleted } = changedSince(ref);
   const withTier2 = tier === 't2';
   const where = `${changed.length} changed file${changed.length === 1 ? '' : 's'} since ${from}`;
 
@@ -225,17 +281,39 @@ function affected(tier: 't1' | 't2'): number {
     console.log(`test:${tier}: FAIL: a static check failed`);
     return 1;
   }
+  if (typecheck() !== 0) {
+    console.log(`test:${tier}: FAIL: the type check failed`);
+    return 1;
+  }
 
-  const filters = changed.filter((f) => !/\.md$/.test(f));
-  // Only documents changed: no test reads them, and that is a complete answer rather than a reason to run everything.
-  if (changed.length && !filters.length) {
-    recordGreen();
+  // The selection: every changed test and source file is a filter; a document is not, so the tests that name it are.
+  const filters = new Set<string>();
+  for (const f of present) {
+    if (isTestFile(f) || isCode(f)) filters.add(f);
+    else for (const t of testsNaming(f)) filters.add(t);
+  }
+  // A deleted source file has no importers to compute: an import graph that cannot see a change is not evidence that
+  // nothing needs checking, so the whole tier runs. A deleted test is gone, and has nothing to run.
+  const deletedCode = deleted.some((f) => isCode(f) && !isTestFile(f));
+  // The paths a Tier 1 test may reach. A Tier 2 performance file is left out: its change is what test:t2 adds, and a
+  // change to it is not evidence that the Tier 1 suite should run whole.
+  const liveCode = [...present, ...deleted.filter((f) => !isTestFile(f))].filter((f) => isCode(f) && !isTier2(f));
+
+  // Only documents no test names changed: no test reads them, and that is a complete answer rather than a reason to run
+  // everything. A Tier 2 change still leaves the marker alone, so test:t2 is not skipped by a Tier 1 run.
+  if (changed.length && !liveCode.length && !filters.size) {
+    const tier2Left = withTier2 ? false : pendingTier2(changed, present, deleted);
+    if (!tier2Left) recordGreen();
     console.log(`test:${tier}: no test is affected (${where})`);
     return 0;
   }
-  const runRelated = changed.length > 0 && filters.length > 0;
-  const first = runRelated
-    ? vitest('related', filters, withTier2, `tier ${withTier2 ? '2 and 1' : '1'} tests related to the change`)
+
+  const runRelated = filters.size > 0;
+  // The whole tier runs when a deleted source file's importers cannot be computed, or when no selected test reached a
+  // changed code file at all. Both are decided below, after the related run reports what it selected.
+
+  let first = runRelated
+    ? vitest('related', [...filters], withTier2, `tier ${withTier2 ? '2 and 1' : '1'} tests related to the change`)
     : vitest('run', [], withTier2, `tier ${withTier2 ? '2 and 1' : '1'} tests (nothing identifies a smaller set)`);
 
   if (first.status !== 0) {
@@ -243,44 +321,67 @@ function affected(tier: 't1' | 't2'): number {
     return 1;
   }
 
-  // A code change no test reaches runs the whole tier: the import graph is not evidence that nothing needs checking.
-  const uncovered = runRelated && first.files === 0 && changed.some(isCode);
-  // The large browser-fixture suites are outside the main run; they run whole when a script, a journey or their own files
-  // changed, and whenever the whole tier ran.
-  const deepNeeded = withTier2 && hasDeep() && (!runRelated || uncovered || affectsDeep(changed));
-  let deepRan = !deepNeeded;
-  const deepOk = (): boolean => {
-    if (!deepNeeded) return true;
-    const deep = deepTests('tier 2 tests (tests/deep-*)');
-    deepRan = deep.ran;
-    if (deep.status === 0) return true;
-    console.log(`test:${tier}: FAIL: a Tier 2 test affected by ${where} failed`);
-    return false;
-  };
-  if (uncovered) {
-    console.log(`test:${tier}: no test reaches the changed code, so the whole tier runs`);
-    const all = vitest('run', [], withTier2, `tier ${withTier2 ? '2 and 1' : '1'} tests (whole tier)`);
-    if (all.status !== 0) {
+  // A deleted source file, or a code change no test reaches, runs the whole tier: the import graph is not evidence that
+  // nothing needs checking.
+  const uncovered = deletedCode || (runRelated && first.files === 0 && liveCode.length > 0);
+  if (uncovered && runRelated) {
+    console.log(`test:${tier}: ${deletedCode ? 'a deleted source file' : 'no test reaches the changed code'}, so the whole tier runs`);
+    first = vitest('run', [], withTier2, `tier ${withTier2 ? '2 and 1' : '1'} tests (whole tier)`);
+    if (first.status !== 0) {
       console.log(`test:${tier}: FAIL: a test in the whole tier failed`);
       return 1;
     }
-    if (!deepOk()) return 1;
-    const tier2Left = (tier === 't1' && (changed.some(isTier2) || affectsDeep(changed))) || !deepRan;
-    if (!tier2Left) recordGreen();
-    else console.log(`test:${tier}: the marker is not advanced, because a Tier 2 check did not run; pnpm test:t2 covers it`);
-    console.log(`test:${tier}: ${all.files} test files, ${all.tests} tests (whole tier, ${where})`);
-    return 0;
   }
 
-  if (!deepOk()) return 1;
+  // The browser fixtures are outside the main run; they run whole when a script, a journey or their own files changed,
+  // and whenever the whole tier ran.
+  const deepNeeded = hasDeep() && (!runRelated || uncovered || affectsDeep(changed));
+  let deepRan = !deepNeeded;
+  if (deepNeeded) {
+    const deep = deepTests('Tier 1 browser-fixture tests (tests/deep-*)');
+    deepRan = deep.ran;
+    if (deep.status !== 0) {
+      console.log(`test:${tier}: FAIL: a browser-fixture test affected by ${where} failed`);
+      return 1;
+    }
+  }
+
+  // The whole tier ran when nothing identified a smaller set (a fresh clone) or no test reached the changed code.
+  const ranWhole = !runRelated || uncovered;
+
+  // The browser suites are Tier 2: test:t2 runs them when a change can alter what a page draws or a control does, and
+  // the 20-sample protocol where CI is true. test:t1 never runs them, and says so by leaving the marker alone.
+  const notRun: string[] = [];
+  if (withTier2 && (ranWhole || touchesBrowserAll(changed))) {
+    const perf = process.env.CI === 'true' && ranWhole;
+    const r = browser(perf ? 'fn,perf' : 'fn');
+    if (!r.ok) {
+      console.log(`test:${tier}: FAIL: a browser suite failed`);
+      return 1;
+    }
+    notRun.push(...r.notRun.map((s) => `browser suites (${s})`));
+  }
+
   // A Tier 1 run proves nothing about a Tier 2 change: the marker advances only when this run covered every change.
-  const tier2Left = (tier === 't1' && (changed.some(isTier2) || affectsDeep(changed))) || !deepRan;
-  if (!tier2Left) recordGreen();
+  const tier2Left = withTier2 ? false : ranWhole || pendingTier2(changed, present, deleted);
+  const pending = tier2Left || !deepRan || notRun.length > 0;
+  if (!pending) recordGreen();
+  else if (notRun.length) console.log(`test:${tier}: the marker is not advanced, because ${notRun.length} check${notRun.length === 1 ? '' : 's'} did not run`);
   else console.log(`test:${tier}: the marker is not advanced, because a Tier 2 check did not run; pnpm test:t2 covers it`);
   console.log(first.files
     ? `test:${tier}: ${first.files} test file${first.files === 1 ? '' : 's'}, ${first.tests} test${first.tests === 1 ? '' : 's'} (${where})`
     : `test:${tier}: no test is affected (${where})`);
   return 0;
+}
+
+/** Whether the change affects a Tier 2 check: the performance convention, or anything the browser suites walk. */
+function pendingTier2(changed: string[], present: string[], deleted: string[]): boolean {
+  return changed.some(isTier2) || [...present, ...deleted].some(touchesBrowser);
+}
+
+/** Whether any changed path the browser walks: the per-change test:t2 selection, without the file-convention check. */
+function touchesBrowserAll(changed: string[]): boolean {
+  return changed.some((f) => touchesBrowser(f) || isDeep(f));
 }
 
 if (import.meta.main) {

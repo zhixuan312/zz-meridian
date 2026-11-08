@@ -35,35 +35,35 @@ There are exactly three test commands, and none takes an argument. The tool pick
 
 | Command | Runs |
 |---|---|
-| `pnpm test:t1` | The Tier 1 tests affected by the changes since the last green run. |
-| `pnpm test:t2` | The affected Tier 2 tests, and the affected Tier 1 tests with them. |
-| `pnpm test:release` | Every Tier 1 and Tier 2 test, once, plus lint and the type check. |
+| `pnpm test:t1` | The Tier 1 tests affected by the changes since the last green run, and the type check. |
+| `pnpm test:t2` | The affected Tier 2 checks, and the affected Tier 1 tests with them. |
+| `pnpm test:release` | Every Tier 1 and Tier 2 test, once, plus the timed browser suites, lint and the type check. |
 
-**Selection.** Vitest's `related` reads the import graph and runs the tests that reach a changed file; a changed test file is run itself. A changed path that reaches no test at all runs the whole tier: an import graph that knows nothing about a file is not evidence that nothing needs checking. The static checks (the tokens, the registry, the specifications, contrast) read the whole tree and run on every tier.
+**Selection.** Vitest's `related` reads the import graph and runs the tests that reach a changed file; a changed test file is run itself. A document has no import edge, so the tests that name it are its group (`git grep` over `tests/`): `docs/testing.md`, for example, selects the guards that read it. A change that reaches no test at all runs the whole tier, and so does a deleted source file, whose importers can no longer be computed: an import graph that knows nothing about a file is not evidence that nothing needs checking. The static checks (the tokens, the registry, the specifications, contrast) read the whole tree and run on every tier.
 
-**Tier 2 is a file convention, never a list kept by hand.** `*.perf.test.ts(x)` is Tier 2 in any repository; in this repository `tests/deep-*.test.ts(x)`, the large browser-fixture suites, is Tier 2 too. Every other test under `tests/` is Tier 1. `test:t1` excludes the Tier 2 convention, so it never runs a Tier 2 file. A repository with no Tier 2 test still has `test:t2`, and it runs the affected Tier 1 tests.
+**Tier 2 is a convention, never a list kept by hand.** `*.perf.test.ts(x)` is Tier 2 in any repository. This repository's broad browser sweeps are Tier 2 as well: every page at every width in both themes, every control pressed, every keyboard stop, the assistant walk-through and the product's own checks run as `scripts/browser.ts --depth fn`, selected for a change that can alter what a page draws or a control does. The timed checks (navigation budgets, live data, Web Vitals) are the same file's `--depth timed`, and the 20-sample protocol is `--depth perf`, which runs only where `CI` is true. Every other test under `tests/` is Tier 1. `test:t1` never runs a Tier 2 check. A repository with no `*.perf` test still has `test:t2`, and it runs the affected Tier 1 tests.
 
-**Last green.** After a passing run the command writes the commit it proved to `out/last-green`, which is gitignored, and reads it before the next run. That keeps a per-change run to the diff since the last green, not the branch's whole history. A missing marker falls back to the diff against master. A checkout with neither a marker nor a diff (master itself, a fresh CI clone) runs the whole tier, because no green run is evidence for it.
+`tests/deep-*.test.ts(x)`, the large browser-fixture suites of the checks, are Tier 1: they verify a check script's function, not a quality beyond the requirement. Their size, not their tier, keeps them out of the main Vitest run; they run as their own stage when a script, a journey or one of their own files changed, and `test:release` always runs them.
 
-A run that needs Chrome (this repository's `tests/deep-*`) reports `not run: no Chrome` with the reason where it is absent, and never `ok`; the same holds for the Postgres suite with no service URLs. Nothing that did not run is reported as passed.
+**Last green.** After a passing run the command writes the commit it proved to `out/last-green`, which is gitignored, and reads it before the next run. That keeps a per-change run to the diff since the last green, not the branch's whole history. A missing marker falls back to the diff against master. A checkout with neither a marker nor a diff (master itself, a fresh CI clone) runs the whole tier, because no green run is evidence for it. A Tier 1 run leaves the marker alone when the change also needs a Tier 2 check, so `test:t2` is not skipped by the run before it.
 
-The browser scripts under `scripts/` are diagnostics, not a tier command: `node scripts/audit.ts`, `node scripts/interactions.ts`, `node scripts/keyboard.ts`, `node scripts/vitals.ts` and the rest are run directly against a served build when a question needs them, with the flags at the top of each script. They are not called by the three commands, and CI does not run them.
+A run that needs Chrome reports `not run` with the reason where it is absent, and never `ok`: this repository's `tests/deep-*`, the browser sweeps, the timed suites and the Postgres suite with no service URLs. Nothing that did not run is reported as passed, and a run with something not run does not advance the marker.
 
 ## When each runs
 
 A moment is when a person or an agent runs a command. CI runs the same commands at the same moments.
 
 - **While editing**: `pnpm test:t1`, or a narrowed run of the file changed, `pnpm exec vitest run <file>`, and a look at the page with `node scripts/shot.ts <route> --width 1440,390 --theme dark,light`.
-- **After a change** (one complete logical change that can be verified on its own, in any tier): `pnpm test:t1` and the tests the change affects. For visible behaviour, exercise the flow or state that changed.
+- **After a change** (one complete logical change that can be verified on its own, in any tier): `pnpm test:t1` and the tests the change affects. For visible behaviour, exercise the flow or state that changed, and run `pnpm test:t2` when the change can alter what a page draws or a control does.
 - **After a Tier 2 or Tier 3 phase**: `pnpm test:t2`.
-- **Before a release**: `pnpm test:release`, once, after any Tier 3 work. A later relevant change makes part of that evidence stale; re-run only the tests it affects.
-- **On a schedule**: `pnpm test:t2` on master's current commit, in `.github/workflows/weekly.yml` (Meridian's repository only). A marker is absent in a fresh CI clone, so the run covers the whole tier.
+- **Before a release**: `pnpm test:release`, once, after any Tier 3 work, on a quiet machine: its timed suites judge times. A later relevant change makes part of that evidence stale; re-run only the tests it affects.
+- **On a schedule**: `pnpm test:t2` on master's current commit, in `.github/workflows/weekly.yml` (Meridian's repository only). A marker is absent in a fresh CI clone, so the run covers the whole tier and, where `CI` is true, the 20-sample protocol.
 - **Meridian's release** (`.github/workflows/release.yml`, dispatched from master; Meridian's repository only): `pnpm test:release`, then the consumer smoke on the tarball the release publishes. It publishes and tags last.
 - **An update's finalize** (`update --finalize`): `pnpm test:release` and a production build in the updated project.
 
 ## Local runtimes
 
-Browser diagnostics need a Chrome executable, which `CHROME` may name, including official `chrome-headless-shell` for unattended runners. Downloads are explicitly directed into each temporary profile's own `Downloads`, never the user's default folder.
+The browser suites need a Chrome executable, which `CHROME` may name, including official `chrome-headless-shell` for unattended runners. Downloads are explicitly directed into each temporary profile's own `Downloads`, never the user's default folder.
 
 The Postgres suite the skill's references hand a team lives in `scripts/fixtures/postgres/` and needs `MERIDIAN_POSTGRES_URL`, `MERIDIAN_POOLER_URL` and `MERIDIAN_PG`. `pnpm test:release` runs it where those are set and reports it **not run** with the missing names where they are not; it is never reported as passed.
 
@@ -118,8 +118,11 @@ Every test belongs to exactly one tier, by the convention alone: a file matching
 | `static/lint` | static | non-functional | 1 | no | `eslint . --ignore-pattern .meridian/` | The code passes the Next ESLint config. |
 | `tests/tier1` | small, medium | functional | 1 | no | `pnpm test:t1` | Every test under `tests/` outside the Tier 2 convention, selected by the import graph. |
 | `tests/tier1/cli` | small, medium | functional | 1 | no | `pnpm test:t1` | Meridian's repository only. The package's own tests: the CLI, its update and release paths. |
+| `tests/tier1/deep` | large | functional | 1 | no | its own stage of `pnpm test:t1`, `pnpm test:t2` and `pnpm test:release` | Meridian's repository only. `tests/deep-*`: the check scripts against browser fixtures, each planted defect found and each corrected twin passing. |
+| `tests/tier1/postgres` | medium | functional | 1 | no | `pnpm test:release` | The Postgres code against a Postgres and a PgBouncer, where their URLs are set; reported not run otherwise. |
 | `tests/tier2/perf` | small, medium | performance | 2 | yes | `pnpm test:t2` | `*.perf.test.ts(x)`: performance beyond the requirement. |
-| `tests/tier2/deep` | large | functional | 2 | no | `pnpm test:t2` | Meridian's repository only. `tests/deep-*`: the check scripts against browser fixtures, each planted defect found and each corrected twin passing. |
-| `tests/tier2/postgres` | medium | functional | 2 | no | `pnpm test:release` | The Postgres code against a Postgres and a PgBouncer, where their URLs are set; reported not run otherwise. |
+| `browser/sweep` | large | functional, non-functional | 2 | no | `pnpm test:t2` | `scripts/browser.ts --depth fn`: every page at six widths in both themes, every control pressed, every keyboard stop, the assistant walk-through and the product's own checks. |
+| `browser/timed` | large | performance | 2 | yes | `pnpm test:release` | `scripts/browser.ts --depth timed`: every rail route's navigation budgets, live data, the product's timed checks and the Web Vitals floors. |
+| `browser/perf` | large | performance | 2 | yes | `pnpm test:t2` where `CI` is true | `scripts/browser.ts --depth perf`: the 20-sample navigation protocol, p95 against the budgets. |
 
-A diagnostic script is not in this table: it has no tier, because nothing in the standard runs it. The scripts a removed tier used to name remain at `scripts/audit.ts`, `scripts/interactions.ts`, `scripts/keyboard.ts`, `scripts/assistant.ts`, `scripts/live.ts`, `scripts/navigate.ts`, `scripts/vitals.ts` and `scripts/sizes.ts`, each read directly when a question calls for it.
+Each script also runs alone when a question calls for it, against a served build, with the flags at the top of the file: `node scripts/audit.ts`, `node scripts/interactions.ts`, `node scripts/keyboard.ts`, `node scripts/vitals.ts`, `node scripts/shot.ts` and the rest.

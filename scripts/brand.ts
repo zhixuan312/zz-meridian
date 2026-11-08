@@ -255,7 +255,7 @@ The dashboard carries an assistant panel. It is off until \`ASSISTANT_PROVIDER\`
 
 - Collections live in \`src/data/collections.ts\`: replace each \`rows\` with your API and \`clock\` with \`new Date()\`. The assistant reads and proposes changes only through them.
 - Add your sign-in check in the dashboard layout (\`app/(dashboard)/layout.tsx\`), in \`app/api/assistant/route.ts\` before the model is reached, and in every server action (each \`actions.ts\`): an action is a public endpoint the layout does not guard.
-- \`node scripts/assistant.ts\` is the diagnostic that runs the assistant off, then on against a fake model (\`scripts/fake-llm.ts\`); no test tier runs it.
+- \`node scripts/assistant.ts\` runs the assistant off, then on against a fake model (\`scripts/fake-llm.ts\`); \`pnpm test:t2\` runs the same walk-through in its browser sweeps.
 `);
   const agents = read('AGENTS.md');
   const cut = agents.indexOf('# Working in Meridian');

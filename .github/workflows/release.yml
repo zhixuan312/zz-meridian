@@ -131,9 +131,10 @@ jobs:
   gates:
     needs: build
     runs-on: ubuntu-24.04
-    # Measured on this 4-CPU runner: `test:release` 20 to 22m (the browser-fixture tests are most of it), the consumer
-    # smoke 7 to 11m. The cap sits above the sum, so a run is stopped by a failing step and never by the clock.
-    timeout-minutes: 45
+    # `test:release` builds once and then runs the browser-fixture tests, the browser sweeps and the timed suites on this
+    # 4-CPU runner; the consumer smoke follows. The cap sits above the sum, so a run is stopped by a failing step and
+    # never by the clock.
+    timeout-minutes: 90
     env:
       VERSION: ${{ inputs.version }}
       SHA256: ${{ needs.build.outputs.sha256 }}
@@ -156,9 +157,10 @@ jobs:
       # which is the release commit here. `weekly.yml` builds it for the same tests.
       - name: The template snapshot the package carries
         run: node cli/scripts/build-payload.ts
-      # Every Tier 1 and Tier 2 test, once, with lint, the type check and a production build. The browser-fixture tests
-      # are Tier 2 and run one file after another inside it: on this 4-CPU runner a Chrome started beside them missed its
-      # start window. The Postgres suite reports `not run` here, because this job holds no services.
+      # Every Tier 1 and Tier 2 test, once, with the timed browser suites, lint, the type check and a production build.
+      # The browser-fixture tests are Tier 1 and run one file after another inside it: on this 4-CPU runner a Chrome
+      # started beside them missed its start window. The Postgres suite reports `not run` here, because this job holds no
+      # services.
       - name: test:release
         run: |
           set -euo pipefail

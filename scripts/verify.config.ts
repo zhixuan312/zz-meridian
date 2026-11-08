@@ -1,5 +1,5 @@
 /**
- * What the browser diagnostics need to know about this project that they cannot discover from `app/`. Edit it; the
+ * What the browser suites need to know about this project that they cannot discover from `app/`. Edit it; the
  * scripts under `scripts/` read it.
  */
 import { refusal } from '../src/app.config.ts';

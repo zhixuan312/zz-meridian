@@ -8,6 +8,8 @@
  * layer), committed to git as a team's would be. The team's files must come out unchanged, the tests must pass under
  * the team's own eslint config, and next build must succeed.
  * --create: a new dashboard from the tarball, then its pnpm test:release (every test, lint and the type check).
+ * --verify runs the adopted project's own pnpm test:t2 as well: the browser sweeps report the browser not run until the
+ * project says where its presses go, and a scratch copy that sets noLiveApi: true runs them.
  * --keep leaves the fixture projects in the temporary folder for inspection; without it they are removed, pass, fail, error or interrupt.
  * Both sections also check the agent context: adopt keeps AGENTS.md's bytes and adds one managed block and the brief;
  * create writes the block and the brief and keeps the assistant's tracing of docs/brief.md. Both fresh manifests hold
@@ -120,6 +122,22 @@ if (args.includes('--adopt') || !sections.some((s) => args.includes(s))) {
   check(tests.status === 0, 'after the restyle, npm run test:t1 passes in the adopted project', tests.stdout + tests.stderr);
   const build = sh('npx', ['next', 'build'], app);
   check(build.status === 0, 'next build passes in the adopted project', build.stdout + build.stderr);
+  // The project's own commands: test:t2 builds the app and runs its browser sweeps. An adopted project has not said
+  // where its presses go, so the browser is reported not run and never passed; a scratch copy that says `noLiveApi`
+  // lets the sweeps run, as the skill's step 5 asks a team to.
+  if (args.includes('--verify')) {
+    const t2 = sh('npm', ['run', 'test:t2'], app);
+    check(t2.status === 0, 'test:t2 passes in the adopted project', t2.stdout + t2.stderr);
+    check(/kept its own data layer/.test(t2.stdout + t2.stderr), 'test:t2 reports the browser not run until the project says where its presses go', t2.stdout + t2.stderr);
+    const safe = path.join(work, 'adopted-safe');
+    const cp = sh('cp', ['-R', app, safe], work);
+    check(cp.status === 0, 'a scratch copy of the adopted project', cp.stderr);
+    fs.rmSync(path.join(safe, '.next'), { recursive: true, force: true });
+    write(safe, 'scripts/verify.config.ts', read(safe, 'scripts/verify.config.ts').replace(/\n  refusal,\n\};/, '\n  refusal,\n  noLiveApi: true,\n};'));
+    const ran = sh('npm', ['run', 'test:t2'], safe);
+    check(ran.status === 0, 'with noLiveApi, test:t2 passes the browser sweeps', ran.stdout + ran.stderr);
+    check(!/^not run browser/m.test(ran.stdout + ran.stderr), 'the browser sweeps ran under noLiveApi', ran.stdout + ran.stderr);
+  }
   const bad = sh('npx', ['--yes', '--package', tarball, 'zz-meridian', 'adopt', '--allow-dirty', '--name', 'a\\b'], app);
   check(bad.status !== 0 && /backslash/.test(bad.stderr), 'a brand value with a backslash is refused before anything is copied', bad.stderr);
   const again = sh('npx', ['--yes', '--package', tarball, 'zz-meridian', 'adopt'], app);

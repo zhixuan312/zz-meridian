@@ -6,11 +6,12 @@
 # A fresh clone has no `out/last-green` marker and no diff from master, so each command runs its whole tier. That is the
 # point of a scheduled run: nothing is skipped for lack of evidence.
 #
-# - `t2`: `pnpm test:t2`, the scheduled tier run. On this checkout it covers the whole Tier 2 set and the whole Tier 1 set.
-# - `release`: `pnpm test:release` (every Tier 1 and Tier 2 test, lint, the type check, a production build) with the
-#   Postgres services configured, so its Postgres suite runs rather than reporting `not run`.
-# - `consumer`: the consumer smoke from a tarball packed from this commit: the adopted project's tests, the update from
-#   each of the last three releases (adopted and created), and every recovery and failure case of the update.
+# - `t2`: `pnpm test:t2`, the scheduled tier run. On this checkout it covers the whole Tier 2 set and the whole Tier 1
+#   set, the 20-sample protocol included because `CI` is true and no marker narrows the run.
+# - `release`: `pnpm test:release` (every Tier 1 and Tier 2 test, the timed browser suites, lint, the type check, a
+#   production build) with the Postgres services configured, so its Postgres suite runs rather than reporting `not run`.
+# - `consumer`: the consumer smoke from a tarball packed from this commit: the adopted project's own `test:t2`, the update
+#   from each of the last three releases (adopted and created), and every recovery and failure case of the update.
 #
 # Each job keeps its log as an artifact.
 
@@ -58,7 +59,7 @@ jobs:
     needs: named
     if: contains(format(',{0},', inputs.jobs || 't2,release,consumer'), ',t2,')
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    timeout-minutes: 120
     env:
       CHROME: /usr/bin/google-chrome
     steps:
@@ -93,7 +94,7 @@ jobs:
     needs: named
     if: contains(format(',{0},', inputs.jobs || 't2,release,consumer'), ',release,')
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    timeout-minutes: 90
     services:
       postgres:
         image: postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
@@ -182,11 +183,11 @@ jobs:
           mkdir -p /tmp/pack
           (cd cli && npm pack --ignore-scripts --pack-destination /tmp/pack >/dev/null)
           ls /tmp/pack/zz-meridian-*.tgz
-      - name: The adopted project's tests, the update from the last three releases, and its recovery and failure cases
+      - name: The adopted project's own test:t2, the update from the last three releases, and its recovery and failure cases
         run: |
           set -euo pipefail
           mkdir -p out
-          node cli/scripts/smoke.ts --tarball "$(ls /tmp/pack/zz-meridian-*.tgz)" --adopt --update --origins 3 --update-all 2>&1 | tee out/weekly-consumer.txt
+          node cli/scripts/smoke.ts --tarball "$(ls /tmp/pack/zz-meridian-*.tgz)" --adopt --update --origins 3 --update-all --verify 2>&1 | tee out/weekly-consumer.txt
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:

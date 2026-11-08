@@ -93,7 +93,7 @@ words at the end:
 In Claude Code or Codex, send it as a goal (`/goal Run npx zz-meridian@latest skill --global, then …`): the agent keeps
 working until the condition holds, and a separate model checks it after every turn against the hand-over, which quotes
 its evidence. The sentence says what you want; the skill carries how good it has to be. It builds, renders every view at
-phone and desktop width in both themes, scores each one on a scoreboard of floors (measured by the browser diagnostics
+phone and desktop width in both themes, scores each one on a scoreboard of floors (measured by the browser suites
 `scripts/vitals.ts` and `scripts/navigate.ts`) and craft (judged on the renders), and improves it round by round until nothing is weak,
 deciding what it can find out and recording each decision it made for you. You get the finished product, the renders,
 and the few questions only you can answer.
@@ -113,8 +113,8 @@ your `AGENTS.md` (your own text there is kept byte for byte) and an empty `docs/
 context, and installs the skill into the project. `create` writes a new, branded project with the same skill. The agent
 then does the judgement: building each page on Meridian, and running `pnpm test:t1` after each change and
 `pnpm test:t2` after a change to shared components, the shell or data, until the project meets the standard. It needs
-Node 22.18+, and Google Chrome for the browser diagnostics. If your pages call a live API, say so in the sentence: the
-diagnostics press every control, Delete included, so the agent builds a fake API first. The package (`cli/`, decision 0009) copies files and nothing depends on it afterwards; its commands are
+Node 22.18+, and Google Chrome for the browser suites. If your pages call a live API, say so in the sentence: the
+sweeps press every control, Delete included, so the agent builds a fake API first. The package (`cli/`, decision 0009) copies files and nothing depends on it afterwards; its commands are
 in `cli/README.md`.
 
 ## Model your data before a page is built

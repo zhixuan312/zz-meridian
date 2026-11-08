@@ -29,8 +29,9 @@
  * A p95 over its budget is a `warn`, a report and never a failure: the protocol is statistical evidence. A sample that
  * never got ready or whose control did nothing is a FAIL. Exit non-zero on a FAIL, on a missing mapping (named before
  * anything is sampled) and on a missing Chrome: this diagnostic reports, and a lack of Chrome is never a pass.
- * `--samples` and `--routes` narrow a run; a narrowed run reports `warn`, never `ok`. This is a diagnostic, never a test
- * tier: no test command runs it. The mappings and budgets come from scripts/verify.config.ts.
+ * `--samples` and `--routes` narrow a run; a narrowed run reports `warn`, never `ok`. The test commands run it through
+ * scripts/browser.ts --depth perf, only where `CI` is true: the weekly job calls `pnpm test:t2` on a fresh clone, and the
+ * protocol measures a quiet runner. The mappings and budgets come from scripts/verify.config.ts.
  */
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
