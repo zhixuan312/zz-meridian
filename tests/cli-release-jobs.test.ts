@@ -72,4 +72,13 @@ describe('the release workflow', () => {
     expect(j.get('publish')).toContain('id-token: write');
     expect(j.get('publish')).toMatch(/^    environment: npm\b/m);
   });
+
+  it("keeps a failed consumer run's own output, so a red names its cause", () => {
+    const consumer = jobs().get('consumer')!;
+    expect(consumer).toMatch(/^      - uses: actions\/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7\.0\.1$/m);
+    expect(consumer).toMatch(/^        if: always\(\)$/m);
+    expect(consumer).toMatch(/^          name: consumer-test$/m);
+    expect(consumer).toMatch(/^          path: out\/$/m);
+    expect(consumer).toMatch(/^          if-no-files-found: ignore$/m);
+  });
 });

@@ -37,6 +37,7 @@ import path from 'node:path';
 
 import { BEGIN, BRIEF_TEMPLATE, END, managedBlock } from '../src/context.ts';
 import { MANAGED_PATH, NEVER_MANAGED } from '../src/ownership.ts';
+import { causeLines, writeNestedRun } from './nested-run.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '../..');
 const VERSION: string = JSON.parse(fs.readFileSync(path.join(ROOT, 'cli/package.json'), 'utf8')).version;
@@ -852,7 +853,14 @@ if (args.includes('--create')) {
   const t0 = performance.now();
   const t = sh(pm, ['run', 'test:release'], dir);
   console.log(`     test:release (created, ${secs(performance.now() - t0)}s)`);
-  check(t.status === 0, `${pm} run test:release passes in the new dashboard`, t.stdout + t.stderr);
+  // The cause, not the tail: the last 40 lines of stderr hid it in run 42646698631. The whole output goes to out/,
+  // which the release and weekly consumer jobs upload; the verdict and FAIL lines go to the job log.
+  if (t.status === 0) check(true, `${pm} run test:release passes in the new dashboard`);
+  else {
+    const files = writeNestedRun(path.join(ROOT, 'out'), 'consumer-test-release', t);
+    check(false, `${pm} run test:release passes in the new dashboard`, `the full output is in ${files.map((f) => `out/${f}`).join(' and ')}`);
+    console.log(causeLines(t.stdout, t.stderr).join('\n') || 'no test:release verdict or FAIL line in the output');
+  }
 }
 
 console.log(failures ? `\nsmoke: ${failures} failed${keep ? ` (work kept in ${work})` : ''}` : '\nsmoke: the consumer path works');

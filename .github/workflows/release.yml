@@ -212,6 +212,15 @@ jobs:
           T="/tmp/pack/zz-meridian-$VERSION.tgz"
           [ "$(sha256sum "$T" | cut -d' ' -f1)" = "$SHA256" ] || { echo "::error::the tarball is not the one build made"; exit 1; }
           node cli/scripts/smoke.ts --tarball "$T" --adopt --create --update
+      # A red here names its cause: when the created dashboard's own test:release fails, the smoke writes its whole
+      # stdout and stderr here (`out/consumer-test-release.*.txt`) and prints its verdict and FAIL lines to the log.
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: consumer-test
+          path: out/
+          if-no-files-found: ignore
+          retention-days: 30
 
   publish:
     needs: [build, gates, consumer]

@@ -10,8 +10,9 @@
 #   set, the 20-sample protocol included because `CI` is true and no marker narrows the run.
 # - `release`: `pnpm test:release` (every Tier 1 and Tier 2 test, the timed browser suites, lint, the type check, a
 #   production build) with the Postgres services configured, so its Postgres suite runs rather than reporting `not run`.
-# - `consumer`: the consumer smoke from a tarball packed from this commit: the adopted project's own `test:t2`, the update
-#   from each of the last three releases (adopted and created), and every recovery and failure case of the update.
+# - `consumer`: the consumer smoke from a tarball packed from this commit: the adopted project's own `test:t2`, a
+#   dashboard created from the tarball running its own `test:release`, the update from each of the last three releases
+#   (adopted and created), and every recovery and failure case of the update.
 #
 # Each job keeps its log as an artifact.
 
@@ -183,11 +184,11 @@ jobs:
           mkdir -p /tmp/pack
           (cd cli && npm pack --ignore-scripts --pack-destination /tmp/pack >/dev/null)
           ls /tmp/pack/zz-meridian-*.tgz
-      - name: The adopted project's own test:t2, the update from the last three releases, and its recovery and failure cases
+      - name: The adopted project's own test:t2, a created dashboard's test:release, the update from the last three releases, and its recovery and failure cases
         run: |
           set -euo pipefail
           mkdir -p out
-          node cli/scripts/smoke.ts --tarball "$(ls /tmp/pack/zz-meridian-*.tgz)" --adopt --update --origins 3 --update-all --verify 2>&1 | tee out/weekly-consumer.txt
+          node cli/scripts/smoke.ts --tarball "$(ls /tmp/pack/zz-meridian-*.tgz)" --adopt --create --update --origins 3 --update-all --verify 2>&1 | tee out/weekly-consumer.txt
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
