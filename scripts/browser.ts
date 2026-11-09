@@ -113,7 +113,7 @@ function unsafeBackend(): { reason: string; fix: string } | null {
   if (fs.existsSync(manifest) && JSON.parse(fs.readFileSync(manifest, 'utf8')).route === 'adopt' && !config.fakeApi && !config.noLiveApi) {
     return {
       reason: 'no fakeApi or noLiveApi',
-      fix: 'this project kept its own data layer: say in scripts/verify.config.ts where the presses go, a fakeApi that answers every route the pages call, or noLiveApi: true when the pages read and write nothing outside this repository',
+      fix: 'this project kept its own data layer: set fakeApi or noLiveApi in scripts/verify.config.ts — fakeApi: { script, env } starts a fake API the browser stage builds and serves the app against, and noLiveApi: true says the pages read and write nothing outside this repository',
     };
   }
   const fromFiles = envFiles();
@@ -126,7 +126,7 @@ function unsafeBackend(): { reason: string; fix: string } | null {
   if (offenders.length && !config.allowRemoteData) {
     return {
       reason: `data URL not proven local: ${offenders.join(', ')}`,
-      fix: `a data destination is not proven local (${offenders.join(', ')}): use an explicit loopback address or an owned local socket; forward an owned container to loopback rather than trusting its DNS name`,
+      fix: `a data destination is not proven local (${offenders.join(', ')}): point the data URL at a local backend — an explicit loopback address or an owned local socket, forwarding an owned container to loopback rather than trusting its DNS name`,
     };
   }
   return null;
@@ -200,9 +200,9 @@ function report(name: string, r: Ran): void {
   if (status === 'ok' && r.out) beneath(r.out, 6);
 }
 
-/** The `notRun` list a suite's own summary printed (`navigate: {...}`), or nothing when it printed no summary. */
+/** The `notRun` list a suite's own summary printed (`navigate: {...}`, `perf: {...}`), or nothing when it printed none. */
 function notRunEntries(out: string): string[] {
-  const line = /^navigate: (\{.*\})$/m.exec(out)?.[1];
+  const line = /^(?:navigate|perf): (\{.*\})$/m.exec(out)?.[1];
   if (!line) return [];
   try { return (JSON.parse(line) as { notRun?: string[] }).notRun ?? []; } catch { return []; }
 }

@@ -78,6 +78,16 @@ export function resolveCoverage(
 }
 
 /**
+ * The routes of a run the project has configured no navigation check for. The navigation walk judges their shell and
+ * reports data and interaction not configured; the 20-sample protocol has nothing to sample there at all. Both are
+ * declared configuration, never passes, and neither holds the last-green marker.
+ */
+export function unconfiguredRoutes(routes: string[], checks: { path: string }[] = []): string[] {
+  const mapped = new Set(checks.map((c) => c.path));
+  return routes.filter((r) => !mapped.has(r));
+}
+
+/**
  * Whether a prefetch budget is the project's own promise. The phone-closed cap holds only where the rail is in a drawer on
  * a phone — the template's design, where nothing prefetches until the drawer opens. A project whose rail is in the page
  * prefetches what its visible links point at, so the cap is not its promise: it is reported not-configured, with this

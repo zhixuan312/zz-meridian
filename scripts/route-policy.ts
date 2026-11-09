@@ -68,6 +68,14 @@ if (import.meta.main) {
   }
   let bad: string[];
   const routes = routesOf(dist);
+  // A build made without `cacheComponents` and `partialPrefetching` writes no `renderingMode` at all, and every route then
+  // reads dynamic: the policy presupposes the flags. That is the project's own configuration, not a failure — an update's
+  // finalize already reports it not run — so it is reported with the reason and exits 2, never counted as passed.
+  const judged = routes.filter((r) => !r.path.startsWith('/api/'));
+  if (judged.length && !judged.some((r) => r.kind !== 'dynamic')) {
+    console.log("not run route-policy: the build writes no renderingMode: the project's next.config sets no cacheComponents and partialPrefetching, which the policy presupposes");
+    process.exit(2);
+  }
   try {
     // verify.config.ts is the team's, so a product set up by an earlier release has a config type without the field.
     bad = offenders(routes, (config as { requestDependentRoutes?: Declared[] }).requestDependentRoutes ?? []);

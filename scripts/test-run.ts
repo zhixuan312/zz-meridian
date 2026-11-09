@@ -248,8 +248,15 @@ async function release(): Promise<number> {
   }
   // A production build, its routes declared as the policy says. The size checks need the built app served, so they run
   // inside the browser suites below, once, against the app they start.
-  if (run('build: next build', bin('next'), ['build'], { ...process.env, MERIDIAN_TYPES_CHECKED: '1' }) !== 0
-    || run('route policy', process.execPath, ['scripts/route-policy.ts']) !== 0) {
+  if (run('build: next build', bin('next'), ['build'], { ...process.env, MERIDIAN_TYPES_CHECKED: '1' }) !== 0) {
+    console.log('test:release: FAIL: a build check failed');
+    return 1;
+  }
+  // A build without the two flags writes no renderingMode, and the policy presupposes them: the project's configuration,
+  // reported not run with the reason (exit 2) and never a failure; any other non-zero is a red.
+  const policy = run('route policy', process.execPath, ['scripts/route-policy.ts']);
+  if (policy === 2) declared.push("route policy (the build writes no renderingMode: the project's next.config sets no cacheComponents and partialPrefetching)");
+  else if (policy !== 0) {
     console.log('test:release: FAIL: a build check failed');
     return 1;
   }

@@ -416,7 +416,8 @@ Meridian ${VERSION} is in ${root}.
 Next: follow .agents/skills/zz-meridian/references/existing-project.md, Route A, from step 2 (step 1 was this), to the
 standard in references/standard.md. The
 template to read from is https://github.com/zhixuan312/zz-meridian/tree/v${VERSION}. Import Meridian's components as
-'@meridian/components/…'. Before the first browser diagnostic, read step 5: it presses every control, Delete included.`);
+'@meridian/components/…'. Before the first browser diagnostic, read step 5: it presses every control, Delete included —
+set fakeApi or noLiveApi in scripts/verify.config.ts first, and point a database URL at a local backend.`);
   return 0;
 }
 

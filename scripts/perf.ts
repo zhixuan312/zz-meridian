@@ -37,7 +37,7 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { budgetsOf, limitsFor } from './lib/budgets.ts';
 import { launch, type Page } from './lib/chrome.ts';
-import { resolveCoverage } from './lib/coverage.ts';
+import { declaredNotRun, resolveCoverage, unconfiguredRoutes } from './lib/coverage.ts';
 import { railRoutes } from './lib/routes.ts';
 import { summary } from './lib/timing.ts';
 import { DEVICES, Fail, drawerRoutes, journey, journeyStart, liveRefresh, METRICS, prepare, type Condition, type Device, type Metric, type NavConfig, workspaceHomes } from './lib/journey.ts';
@@ -148,13 +148,19 @@ async function main(): Promise<number> {
     return 1;
   }
 
-  // The protocol covers the whole rail; a missing or broken mapping is named before a browser starts.
+  // The protocol covers the whole rail; a missing or broken mapping is named before a browser starts. A route the
+  // project has configured no navigation check for has nothing for the protocol to sample: that is declared
+  // configuration, reported not run with the reason and never a pass — the suite exits 2, so it does not hold the marker.
   const coverage = resolveCoverage('perf', rail.routes, checks, rail.routes);
-  if (coverage.errors.length) {
-    for (const e of coverage.errors) console.log(`FAIL    ${e}`);
-    out({ status: 'FAIL', errors: coverage.errors });
+  const unconfigured = unconfiguredRoutes(rail.routes, checks);
+  const errors = coverage.errors.filter((e) => !declaredNotRun(`${e.split(',')[0]}`));
+  if (errors.length) {
+    for (const e of errors) console.log(`FAIL    ${e}`);
+    out({ status: 'FAIL', errors });
     return 1;
   }
+  const unrun = unconfigured.map((r) => `${r}: no navigation check is configured`);
+  for (const l of unrun) console.log(`not run ${l}`);
   const narrowed = opt('--routes')?.split(',').filter(Boolean);
   const unknown = (narrowed ?? []).filter((r) => !rail.routes.includes(r));
   if (unknown.length) {
@@ -163,8 +169,13 @@ async function main(): Promise<number> {
     out({ status: 'FAIL', errors });
     return 1;
   }
-  const routes = narrowed ?? rail.routes;
+  const routes = (narrowed ?? rail.routes).filter((r) => !unconfigured.includes(r));
   const partial = narrowed !== undefined || samples !== PROTOCOL_SAMPLES;
+  if (!routes.length) {
+    console.log('not run perf: no rail route in this run has a navigation check configured');
+    out({ status: 'not-run', routes, notRun: unrun });
+    return 2;
+  }
 
   let live: string[];
   let starts: string[];
@@ -247,11 +258,11 @@ async function main(): Promise<number> {
   const failed = results.some((r) => r.status === 'FAIL');
   const took = (Date.now() - started) / 1000;
   const over = results.filter((r) => r.status === 'warn').length;
-  const status = failed ? 'FAIL' : partial || over ? 'warn' : 'ok';
+  const status = failed ? 'FAIL' : partial || over || unrun.length ? 'warn' : 'ok';
   if (partial) console.log(`warn    a narrowed run (${samples} samples, ${routes.length} of ${rail.routes.length} routes) is not the protocol`);
   console.log(`${failed ? 'FAIL   ' : over ? 'warn   ' : 'ok     '} perf ${results.length} combinations · ${results.filter((r) => r.status === 'FAIL').length} failed · ${over} over a p95 budget (reported) · ${took.toFixed(0)} s`);
-  out({ status, samples, routes, live, took, partial, results });
-  return failed ? 1 : 0;
+  out({ status, samples, routes, live, took, partial, results, notRun: unrun });
+  return failed ? 1 : unrun.length ? 2 : 0;
 }
 
 process.exit(await main());

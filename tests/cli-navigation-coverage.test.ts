@@ -4,7 +4,7 @@
 // an adopted project whose rail is not the template's, and red here, where this test holds the coverage (run 42659606501:
 // an adopted project's own test:t2 failed every route with `never-ready: the rail has no other route to start from`).
 import { describe, expect, it } from 'vitest';
-import { prefetchJudged, resolveCoverage } from '../scripts/lib/coverage.ts';
+import { prefetchJudged, resolveCoverage, unconfiguredRoutes } from '../scripts/lib/coverage.ts';
 import { railRoutes } from '../scripts/lib/routes.ts';
 import { prefetchProblems } from '../scripts/lib/sizes.ts';
 import config from '../scripts/verify.config.ts';
@@ -15,6 +15,19 @@ describe("this repository's navigation coverage", () => {
     const coverage = resolveCoverage('full', rail.routes, config.navigationChecks ?? [], rail.routes);
     expect(coverage.errors).toEqual([]);
     expect(coverage.routes.filter((r) => r.data !== 'configured').map((r) => r.path)).toEqual([]);
+  });
+});
+
+describe('the routes a project has configured no check for', () => {
+  it('names every rail route when it configures none, only the missing ones when it configures some', () => {
+    expect(unconfiguredRoutes(['/', '/orders'], [])).toEqual(['/', '/orders']);
+    expect(unconfiguredRoutes(['/', '/orders', '/members'], [{ path: '/' }])).toEqual(['/orders', '/members']);
+    expect(unconfiguredRoutes(['/', '/orders'], [{ path: '/' }, { path: '/orders' }])).toEqual([]);
+  });
+
+  it('leaves this repository with none, so the 20-sample protocol samples every rail route exactly as before', async () => {
+    const rail = await railRoutes();
+    expect(unconfiguredRoutes(rail.routes, config.navigationChecks ?? [])).toEqual([]);
   });
 });
 

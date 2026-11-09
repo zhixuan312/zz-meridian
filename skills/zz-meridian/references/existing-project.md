@@ -118,6 +118,9 @@ Migrate in place, page by page, keeping their data layer.
    `.env` (or any other data URL: name it in `dataUrls`), a `next build` and `next start` in their folder carry it, so
    Approve and Delete land on whatever it names. Point it at a local copy for the run. Restore the data afterwards — the walk-through
    flags rows and a press can delete, even on a run where every check passes.
+   **Or say the pages touch nothing.** When they call no API and read no database — fixtures in the repository only — set
+   `noLiveApi: true` in `scripts/verify.config.ts`: the same statement the browser stage reads, and without it an adopted
+   project's sweeps are reported not run and the browser evidence is missing for every route.
 6. List their detail pages worth seeing (a normal record, a failed one) in `detailRoutes` in
    `scripts/verify.config.ts`, with ids from the fake API's fixtures, and a record that does not exist in
    `missingRoutes`: a detail route must render its page and a missing one the not-found screen, so a mistyped id fails
