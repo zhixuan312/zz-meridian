@@ -81,7 +81,7 @@ describe('finalize', () => {
     const m = manifest(root);
     expect(m.version).toBe('0.5.0');
     expect(m.files).toEqual(Object.fromEntries(Object.entries(TARGET).map(([p, c]) => [p, sha256(c)])));
-    expect(done.lines.join('\n')).toMatch(/tests: every Tier 1 and Tier 2 test passed, lint passed, types check/);
+    expect(done.lines.join('\n')).toMatch(/tests: the Tier 1 tests affected by the change, the static checks and the type check passed/);
     expect(has(root, '.meridian/update/0.5.0')).toBe(false);
     const [archived] = fs.readdirSync(path.join(root, '.meridian/history/0.5.0'));
     const h = path.join(root, '.meridian/history/0.5.0', archived);
@@ -255,7 +255,7 @@ describe('finalize', () => {
     const { c, lines } = ctx(root);
     expect(start(c, opts)).toBe(0);
     expect(manifest(root).version).toBe('0.5.0');
-    expect(lines.join('\n')).toMatch(/tests: every Tier 1 and Tier 2 test passed, lint passed, types check/);
+    expect(lines.join('\n')).toMatch(/tests: the Tier 1 tests affected by the change, the static checks and the type check passed/);
   });
 });
 

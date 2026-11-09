@@ -85,8 +85,9 @@ writes nothing; run it first.
 - Team-owned sample files are checked again on every forward upgrade, even after their migration's introduction, so newer managed tests do not silently outrun the sample they exercise. They remain team-owned: the migration asks for review and never overwrites them.
 - Everything it did and everything left to do is in `.meridian/update/<version>/MERGE.md`. Resolve the items, then run
   the pinned `npx zz-meridian@<version> update --finalize`; `--resume` continues an interrupted run and `--abort` restores
-  what it changed. Only finalize records the new version: it runs `test:release` (every Tier 1 and Tier 2 test, lint and
-  the type check) and one production build.
+  what it changed. Only finalize records the new version: it runs `test:t1` (the Tier 1 tests affected by the change,
+  the static checks and the type check), one production build, the route policy and the size checks. `test:release`
+  remains the project's own gate before it ships.
 - Failure and coverage metadata is recorded literally in the report, including `$` sequences; it is not interpreted as report-template syntax.
 - It refuses, writing nothing, on a dirty git tree (unless `--allow-dirty`) or while another update is open. `--verbose`
   lists every file.

@@ -87,7 +87,7 @@ export function renderMergeReport(i: ReportInput): string {
   for (const o of j.operations) out.push(`${o.disposition.padEnd(15)}  ${o.action.padEnd(6)}  ${o.path}`);
   out.push('```', '', '</details>', '');
 
-  out.push('## Verify', '', 'Finalizing runs `test:release` — every Tier 1 and Tier 2 test, the timed browser suites, lint, the type check and a build — and one more build. To check by hand first:', '', '```', `${i.pm} run test:release`, 'node node_modules/next/dist/bin/next build', '```', '');
+  out.push('## Verify', '', 'Finalizing runs `test:t1` — the Tier 1 tests affected by the change, the static checks and the type check — then a production build, the route policy and the size checks. The last two judge the project, not the release: the route policy needs `cacheComponents` and `partialPrefetching` in your Next config, and the size growth needs a `scripts/verify.baseline.json` you recorded (`node scripts/sizes.ts --write-baseline`); without them finalize reports that check `not run` with the reason, and never fails on it. `test:release` is the team\'s own gate before a release. To check by hand first:', '', '```', `${i.pm} run test:t1`, 'node node_modules/next/dist/bin/next build', 'node scripts/route-policy.ts', 'node scripts/sizes.ts', '```', '');
 
   const sections = changelogSections(i.changelog, j.sourceVersion);
   out.push('## Changelog', '', sections.length ? `The target release's changelog sections above ${j.sourceVersion}:` : `The target release has no changelog section above ${j.sourceVersion}.`, '');

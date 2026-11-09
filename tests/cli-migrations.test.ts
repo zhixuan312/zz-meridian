@@ -63,6 +63,15 @@ describe("this release's migrations", () => {
     const root = project({ 'package.json': '{}' });
     for (const id of IDS.filter((i) => i !== 'cache-components-config')) expect(byId(id).applies(root, '0.35.0'), id).toBeNull();
   });
+  // An adopted project keeps its own Next config, so a project adopted after 0.5.0 can lack the two flags that make a
+  // build write the prerender modes route-policy reads: the update reports the migration on every later upgrade, not
+  // only when crossing 0.5.0 (run 42600180906: an adopted 0.38.0 project finalized red on `dynamic route /`).
+  it('report the missing cache-components flags on an upgrade past 0.5.0', () => {
+    const lacking = releaseMigrations(project({ 'next.config.ts': 'export default { reactStrictMode: true };\n' }), '0.38.0', '0.39.0');
+    expect(lacking.find((m) => m.id === 'cache-components-config')).toEqual(expect.objectContaining({ paths: ['next.config.ts'], checks: ['test:t1', 'build'] }));
+    const set = releaseMigrations(project({ 'next.config.ts': 'export default { cacheComponents: true, partialPrefetching: true };\n' }), '0.38.0', '0.39.0');
+    expect(set.some((m) => m.id === 'cache-components-config')).toBe(false);
+  });
 });
 
 describe('App Router migration paths', () => {

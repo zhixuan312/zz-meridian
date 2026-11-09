@@ -18,7 +18,9 @@
  * `--write-baseline` records the build's sizes as the team's baseline, `scripts/verify.baseline.json`, and checks
  * nothing: first-load for every route and, with `--base`, the HTML of every page (no API, no dynamic segment, not the
  * not-found screen). Without `--base` the HTML baseline already there is kept. The file is the team's: commit it on its
- * own, from a build whose sizes were reviewed.
+ * own, from a build whose sizes were reviewed. It carries `recordedBy: "sizes.ts"`, the mark of a baseline the team
+ * recorded: an update's finalize judges growth only against such a baseline that also differs from the release's, never
+ * against the baseline a created project inherited from the release it was made with.
  *
  * One line per check, and a JSON summary on the last line:
  *
@@ -69,7 +71,7 @@ function measured(dist: string): { route: string; bytes: number }[] {
   } catch (e) { return fail((e as Error).message); }
 }
 
-type Baseline = { firstLoad: Record<string, number>; html: Record<string, number> | null; htmlNode?: number };
+type Baseline = { firstLoad: Record<string, number>; html: Record<string, number> | null; htmlNode?: number; recordedBy?: string };
 const SHAPE = '{ "method": string, "routes": { "<route>": <bytes> }, "html"?: { "method": string, "node"?: number, "routes": { "<route>": <bytes> } } }';
 /** The Node major that built this run's pages: the HTML figures are comparable only within one, so the baseline records it. */
 const NODE_MAJOR = Number(process.versions.node.split('.')[0]);
@@ -85,7 +87,7 @@ function baselineOf(): Baseline | null {
   if (!sized(raw?.routes) || (raw.html !== undefined && (!sized(raw.html?.routes) || (node !== undefined && !(Number.isInteger(node) && (node as number) > 0))))) {
     return fail(`${rel} must be ${SHAPE}; write it with node scripts/sizes.ts --write-baseline --base <url>`);
   }
-  return { firstLoad: raw.routes, html: raw.html ? (raw.html.routes as Record<string, number>) : null, htmlNode: node as number | undefined };
+  return { firstLoad: raw.routes, html: raw.html ? (raw.html.routes as Record<string, number>) : null, htmlNode: node as number | undefined, recordedBy: typeof (raw as { recordedBy?: unknown }).recordedBy === 'string' ? (raw as { recordedBy: string }).recordedBy : undefined };
 }
 
 /** Each page's complete response, read through the end of the stream and gzipped: what a person downloads. */
@@ -126,7 +128,9 @@ async function main(): Promise<number> {
       html = got.sizes;
       node = NODE_MAJOR;
     }
-    const written = { method: METHOD, routes: Object.fromEntries(routes.map((r) => [r.route, r.bytes])), ...(html ? { html: { method: HTML_METHOD, ...(node === undefined ? {} : { node }), routes: html } } : {}) };
+    // `recordedBy` marks a baseline the team recorded: an update judges size growth only against one of these that
+    // also differs from the release's, never against the baseline a created project inherited (update --finalize).
+    const written = { method: METHOD, recordedBy: 'sizes.ts', routes: Object.fromEntries(routes.map((r) => [r.route, r.bytes])), ...(html ? { html: { method: HTML_METHOD, ...(node === undefined ? {} : { node }), routes: html } } : {}) };
     fs.writeFileSync(BASELINE, JSON.stringify(written, null, 2) + '\n');
     console.log(`ok      wrote ${path.relative(ROOT, BASELINE)}: first-load of ${routes.length} routes, ${base ? `the HTML of ${Object.keys(html ?? {}).length} pages` : html ? 'the HTML baseline kept as it was (no --base to measure)' : 'no HTML (pass --base <url> of the running build to record it)'}`);
     return 0;

@@ -46,7 +46,7 @@ Every real update creates `optional:.meridian/update/<version>/`, even when noth
 | `MERGE.md` | the report to read |
 | `base/<path>`, `ours/<path>`, `new/<path>` | the three sides of each staged file; a side that does not exist has no file, and `MERGE.md` says `absent` |
 | `backup/<path>` | the preimage of every path the update changed, and only those |
-| `evidence/` | the output of the install and, when finalizing, `test:release` and the build |
+| `evidence/` | the output of the install and, when finalizing, `test:t1`, the build, the route policy and the size checks |
 
 `optional:.meridian/update.lock` exists while a run is in progress. A lock that is left behind refuses every new update
 and names itself and the session phase; an update never deletes it for you.
@@ -123,9 +123,12 @@ left by a process that is no longer running, after it has read the journal.
 3. The installed dependencies must match the plan: each entry the update added or raised, and `next`, `react` and
    `react-dom`, must be installed at a version that satisfies the planned specification; the framework must be
    exactly the planned version.
-4. It runs `node scripts/test-run.ts release` (every Tier 1 and Tier 2 test, lint and the type check) and then one
-   `next build`, in place. The output goes to `evidence/`. Before and after each command it compares the protected
-   inputs.
+4. It runs `node scripts/test-run.ts t1` (the Tier 1 tests affected by the change, the static checks and the type
+   check), then one `next build`, in place. `node scripts/route-policy.ts` follows when the project's Next config sets
+   `cacheComponents` and `partialPrefetching`; `node scripts/sizes.ts` follows when `optional:scripts/verify.baseline.json` is
+   one that the team recorded (it carries `recordedBy: "sizes.ts"`) and differs from the release's. A check that does not run
+   is reported `not run` with the reason, never as passed. The output goes to `evidence/`. Before and after each
+   command it compares the protected inputs.
 5. When both pass and the inputs still match, it writes the target manifest atomically, marks the session complete and
    moves it to `.meridian/history/<version>/<id>/`, keeping `state.json`, `MERGE.md`, `resolutions.json` and
    `evidence/` and dropping the temporary `base/`, `ours/`, `new/` and `backup/`. A rename that was interrupted is
@@ -144,11 +147,13 @@ project, overlaps a managed or kept file or is a folder holding tracked files is
 conflict. A protected file a check rewrites, such as a `tsconfig.json` that Next updates, also fails: review and
 commit the change, then finalize again.
 
-**What "complete" means.** Every Tier 1 and Tier 2 test, lint and the type check passed, one production build passed
-on the live project, the files are the target release's (plus the team's resolutions), and
-`optional:.meridian/manifest.json` now records the target as the baseline for the next update. The Postgres suite, where
-its URLs are not set, is reported `not run`; the browser diagnostics are not part of finalize. A failing test or build
-fails the session.
+**What "complete" means.** The Tier 1 tests affected by the change, the static checks and the type check passed, one
+production build passed on the live project, the route policy and the size checks passed where the project supplies
+what they read (and were reported `not run` with the reason where it does not), the files are the target release's
+(plus the team's resolutions), and
+`optional:.meridian/manifest.json` now records the target as the baseline for the next update. `test:release`, the
+browser diagnostics and the Postgres suite are the team's own gate before it ships, not part of finalize. A failing
+check or build fails the session.
 
 A zero-conflict update finalizes in the same command: `update` prints the conflict summary and then the finalize
 output, exit `0`.
@@ -176,11 +181,11 @@ Moving a project to 0.9.0 can report two more `migration:<id>` items, to 0.10.0 
 | `assistant-view-tools` (0.10.0) | an assistant route, `optional:src/lib/assistant/tools.ts` or `optional:src/lib/assistant/respond.ts` kept from before view tools | bring the two files over from the release and pass `views` to `respond` (the template's `viewTools`, your own, or none): `example:docs/assistant.md`, "Adding an MCP server later" |
 | `nav-needs` (0.13.0) | an item of `nav` in `src/app.config.ts` with no `needs`, or a `NavItem` type declared without the property | add `needs: 'public'` where everyone may open the page, or `needs: FEATURES.<id>.needs`: `customize.md`, "Navigation", and "5. Decide who may do what" in `optional:docs/start-a-dashboard.md`; checked by `pnpm test:t1` |
 | `agent-reads-own-group` (0.15.0) | a page README under a route group of the project's own at the top of its app folder (`example:app/(dash)/`) with no `### What the agent reads`: the checks asked only under `optional:app/(dashboard)/` before | add the part under `## Agents`: `customize.md`, "A page spec"; checked by `pnpm test:t1`. A copy of the rule in `optional:scripts/check.local.ts` can go |
-| `refusal-declared` (0.16.0) | a `src/app.config.ts` with no `export const refusal` | declare `refusal` beside `facts`, `'explain'` to keep the no-access page a refused page draws today or `'absent'`; a project that keeps the sample's access seam brings `optional:src/data/access.ts` and `optional:src/data/refusal.ts` over from the release: `customize.md`, "Navigation: `src/app.config.ts`"; checked by `pnpm test:release` |
-| `managed-exports-removed` (0.16.0) | a file of the team's importing `deviations`, `largest`, `runs` or `weekendRatio` from `src/lib/insight.ts`, or `queryInput` from `src/lib/collection.ts` | a file of the sample's comes over from the release (Home's context replaces Overview's; `optional:src/lib/assistant/tools.ts` and `optional:src/lib/assistant/respond.ts` read through `view_<name>` and `explore_<view>`, and the route passes `readable` to `respond`), as does a shipped test that imports one; a file of your own writes the function it needs itself: `agents.md`, "Prepared queries"; checked by `pnpm test:release` |
-| `view-tool-page-explore` (0.16.0) | a `defineViewTool` call without `page` or `explore` | add `page`, the console route the view renders, and `explore`, its prepared query (`PreparedQuery` in `src/lib/explore.ts`), beside the view as `example:src/logic/<view>-explore.ts`: `agents.md`, "Prepared queries"; checked by `pnpm test:release` |
+| `refusal-declared` (0.16.0) | a `src/app.config.ts` with no `export const refusal` | declare `refusal` beside `facts`, `'explain'` to keep the no-access page a refused page draws today or `'absent'`; a project that keeps the sample's access seam brings `optional:src/data/access.ts` and `optional:src/data/refusal.ts` over from the release: `customize.md`, "Navigation: `src/app.config.ts`"; checked by `pnpm test:t1` and the build |
+| `managed-exports-removed` (0.16.0) | a file of the team's importing `deviations`, `largest`, `runs` or `weekendRatio` from `src/lib/insight.ts`, or `queryInput` from `src/lib/collection.ts` | a file of the sample's comes over from the release (Home's context replaces Overview's; `optional:src/lib/assistant/tools.ts` and `optional:src/lib/assistant/respond.ts` read through `view_<name>` and `explore_<view>`, and the route passes `readable` to `respond`), as does a shipped test that imports one; a file of your own writes the function it needs itself: `agents.md`, "Prepared queries"; checked by `pnpm test:t1` and the build |
+| `view-tool-page-explore` (0.16.0) | a `defineViewTool` call without `page` or `explore` | add `page`, the console route the view renders, and `explore`, its prepared query (`PreparedQuery` in `src/lib/explore.ts`), beside the view as `example:src/logic/<view>-explore.ts`: `agents.md`, "Prepared queries"; checked by `pnpm test:t1` and the build |
 | `agent-does-here-section` (0.16.0) | the README of a page a view tool's `page` names, with no `### What the agent does here`; while a tool names no page, every console page README without it | add the part under `## Agents`: `Protagonist: <name>.` and at least three `- "<question>" — <what the prepared query is asked>`, the card marked `data-protagonist`: `agents.md`, "Prepared queries"; checked by `pnpm test:t1` |
-| `sample-pages-renamed` (0.16.0) | the sample's Overview, Analytics and Operations pages and views under their 0.15.0 folders and files, and every file that names them: the view tools, the nav's feature ids, the verify config's routes, a shipped test | a project that kept them as they were brings the release's Home, Usage and Services over with the rest of the sample and its tests, keeping its own `app` in `src/app.config.ts`, and deletes a listed file the release no longer has; a project that made them its own keeps its names and makes the other 0.16.0 changes in them; checked by `pnpm test:release` |
+| `sample-pages-renamed` (0.16.0) | the sample's Overview, Analytics and Operations pages and views under their 0.15.0 folders and files, and every file that names them: the view tools, the nav's feature ids, the verify config's routes, a shipped test | a project that kept them as they were brings the release's Home, Usage and Services over with the rest of the sample and its tests, keeping its own `app` in `src/app.config.ts`, and deletes a listed file the release no longer has; a project that made them its own keeps its names and makes the other 0.16.0 changes in them; checked by `pnpm test:t1` and the build |
 | `marker-measured-on-observe` (0.16.2) | a test that mounts the rail over a `ResizeObserver` whose `observe` answers nothing, such as `optional:tests/rail-marker.test.tsx` as the template wrote it | the rail reads no offset of its own since 0.16.2 — a rail mounts inside the tap that opens the phone drawer, and a read there lays the page out inside that tap — so the marker's first position is the one `observe` delivers, as the platform delivers it, after the effect that called it: bring `optional:tests/rail-marker.test.tsx` over from the release as it has it, whose fake answers `observe` with the callback (`observe() { for (const cb of observers) queueMicrotask(cb); }`), and answer a fake of your own the same way, reading the marker after that delivery; checked by `pnpm test:t1` |
 | `view-page-matched-as-next` (0.16.3) | `optional:app/api/assistant/route.ts` with a local `function onPage(` | delete `onPage` and find the view with `viewAt` from `@/lib/shared-context`, which matches a catch-all `page` as Next.js does: `const at = viewAt(viewTools, path); const view = at && views.includes(at) ? at : undefined;`; checked by `pnpm test:t1` |
 | `journey-moved` (0.16.3) | a file of the team's importing anything but `workspaceHomes` from `scripts/navigate.ts`, such as a copy of `optional:tests/navigate-start.test.ts` | the journey moved to `scripts/lib/journey.ts`: bring `optional:tests/navigate-start.test.ts` and `optional:tests/navigate-menu-start.test.ts` over from the release as it has them, and import the journey from `scripts/lib/journey.ts` in a file of your own; checked by `pnpm test:t1` |
@@ -230,7 +235,7 @@ each one in the project, then record it as above, with the hashes of the files a
 | `live-provider` | collections without `optional:src/data/live-actions.ts`, or a console layout without the provider | add the live files: `live.md`, "The live starters" and "Refreshing" |
 | `authorized-endpoints` | the assistant route or an actions file that never calls `resolveAccess` | resolve the caller first, and bring `optional:src/lib/assistant/tools.ts` and `optional:src/lib/assistant/respond.ts` over, which take the guard: "The assistant route" |
 
-Every migration names the command that proves it: `pnpm test:release` where the change reaches the build, `pnpm test:t1` where a test run is enough, and `pnpm test:release` for `missing-routes`, whose subject is the browser suites. None takes an argument: the command selects the tests.
+Every migration names the command that proves it: `pnpm test:t1` alone where a test run is enough, `pnpm test:t1` and the build where the change reaches the build, and `pnpm test:release` where the browser suites are its subject. None takes an argument: the command selects the tests.
 
 How to make the change depends on whose file it is:
 
@@ -254,8 +259,8 @@ How to make the change depends on whose file it is:
 - **A change that does not apply** (a page that awaits `connection()` on purpose, a `.query(` that is not a collection):
   record the migration as `not-applicable` with the reason, in one sentence.
 
-Then run `<pm> run test:release` yourself before the pinned `--finalize`, which runs it again, with one build, and
-refuses anything that still fails.
+Then run `<pm> run test:t1` and `node node_modules/next/dist/bin/next build` yourself before the pinned `--finalize`,
+which runs them again, with the route policy and the size checks, and refuses anything that still fails.
 
 ## What to do with it
 

@@ -7,11 +7,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { managedBlock } from './context.js';
-import { inside, installArgs, manifestText, packageManager, run as spawn, sha256 } from './files.js';
+import { inside, installArgs, manifestText, packageManager, payloadBytes, run as spawn, sha256 } from './files.js';
 import { aliasesOf, canonicalImports } from './imports.js';
 import { changedPaths, takeInventory } from './inventory.js';
 import { renderMergeReport } from './merge-report.js';
 import { releaseMigrations } from './migrations.js';
+import { hasPprFlags } from './next-config.js';
 import { classify, managedPaths, parseManifest } from './ownership.js';
 import { FRAMEWORK, legacySection, needOf, planAgents, reconcilePackage, satisfies } from './reconcile.js';
 import { dirtyNote, formatReport, isNewer, supportsSource } from './update.js';
@@ -669,10 +670,32 @@ function finalizeLoaded(ctx: Context, l: Loaded): number {
   const paths = j.operations.map((o) => o.path);
   let seen = takeInventory(root, paths);
   if (seen.conflicts.length) return fail('an output path cannot be exempted:', seen.conflicts);
+  // The bounded scope (docs/testing.md, "An update's finalize"): the affected Tier 1 tests with the static checks and
+  // the type check, then a production build and the checks that read it. `test:release` belongs to the team before its
+  // own release, not to every update: on a 4-CPU runner it runs the browser sweeps and the timed suites, an hour.
+  //
+  // Two of the build's checks judge the project, not the release, so each is reported `not run` with its reason rather
+  // than passed or failed when the project cannot supply what it reads:
+  // - The route policy presupposes the two flags that make a build write its prerender modes (next-config.ts). A
+  //   project that has them off — an adopted app keeps its own config — is told so, and never made to switch
+  //   rendering on just to get a green update.
+  // - The size growth is judged against `scripts/verify.baseline.json`, a team-owned file: a created project inherits
+  //   the release's baseline, and a product with pages of its own would go red on its first update against figures
+  //   that are not its. Only a baseline the team recorded (`sizes.ts --write-baseline`, which stamps it) and that
+  //   differs from the release's is the project's own.
+  const ppr = hasPprFlags(root);
+  const sizeBaseline = sizeBaselineOf(root);
+  if (!ppr) log('not run route policy: the project\'s next.config sets no cacheComponents and partialPrefetching, which the route policy presupposes (see the cache-components-config item in MERGE.md)');
+  if (sizeBaseline === 'absent') log('not run sizes: the project has no scripts/verify.baseline.json; record the project\'s own with node scripts/sizes.ts --write-baseline --base <url>');
+  if (sizeBaseline === 'release') log('not run sizes: scripts/verify.baseline.json is the release\'s, not the project\'s; record the project\'s own with node scripts/sizes.ts --write-baseline --base <url>');
+  if (sizeBaseline === 'unmarked') log('not run sizes: scripts/verify.baseline.json carries no sizes.ts recording, so it is not known to be the project\'s; record the project\'s own with node scripts/sizes.ts --write-baseline --base <url>');
   const steps: Array<{ name: string; args: string[]; shown: string }> = [
-    { name: 'tests', args: ['scripts/test-run.ts', 'release'], shown: 'node scripts/test-run.ts release' },
+    { name: 'tests', args: ['scripts/test-run.ts', 't1'], shown: 'node scripts/test-run.ts t1' },
     { name: 'build', args: ['node_modules/next/dist/bin/next', 'build'], shown: 'node node_modules/next/dist/bin/next build' },
+    ...(ppr ? [{ name: 'route-policy', args: ['scripts/route-policy.ts'], shown: 'node scripts/route-policy.ts' }] : []),
+    ...(sizeBaseline === 'own' ? [{ name: 'sizes', args: ['scripts/sizes.ts'], shown: 'node scripts/sizes.ts' }] : []),
   ];
+  const ran: string[] = [];
   const took: string[] = [];
   let n = 1;
   for (const step of steps) {
@@ -690,6 +713,8 @@ function finalizeLoaded(ctx: Context, l: Loaded): number {
     }
     if (r.status !== 0) return fail(`${step.name} exited with ${r.status}; see ${l.rel}/${evidence}`);
     seen = after;
+    if (step.name === 'route-policy') ran.push('the route policy');
+    if (step.name === 'sizes') ran.push('the size checks');
   }
 
   writeAtomic(manifestFile, targetText);
@@ -698,10 +723,45 @@ function finalizeLoaded(ctx: Context, l: Loaded): number {
   patchReport(l, 'complete');
   const where = archive(root, l);
   log(`time: ${took.join(' · ')}`);
-  log('tests: every Tier 1 and Tier 2 test passed, lint passed, types check');
+  log('tests: the Tier 1 tests affected by the change, the static checks and the type check passed');
+  log(`build: ${list(['the production build', ...ran])} passed`);
   log(`archived: ${where}`);
   log('outcome: complete');
   return 0;
+}
+
+/** `a`, `a and b`, `a, b and c`: a sentence's list. */
+function list(parts: string[]): string {
+  return parts.length <= 1 ? (parts[0] ?? '') : `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}`;
+}
+
+/**
+ * Whether the project's size baseline is its own: `own` when the team recorded it (sizes.ts stamps `recordedBy`) and
+ * it differs from the release's, `release` when it is the release's byte for byte, `unmarked` when it differs but
+ * carries no recording, `absent` when there is none (docs/testing.md, "An update's finalize").
+ */
+function sizeBaselineOf(root: string): 'own' | 'release' | 'unmarked' | 'absent' {
+  const rel = 'scripts/verify.baseline.json';
+  let bytes: Buffer;
+  try {
+    bytes = fs.readFileSync(path.join(root, rel));
+  } catch {
+    return 'absent';
+  }
+  // The running CLI is the target release: `--finalize` never loads it as a Release (`update.ts` refuses), but its own
+  // payload is on disk, and the baseline is a team-owned file the payload still ships.
+  let released: Buffer | null = null;
+  try {
+    released = payloadBytes(rel);
+  } catch {
+    released = null;
+  }
+  if (released && released.equals(bytes)) return 'release';
+  try {
+    return (JSON.parse(bytes.toString('utf8')) as { recordedBy?: unknown }).recordedBy === 'sizes.ts' ? 'own' : 'unmarked';
+  } catch {
+    return 'unmarked';
+  }
 }
 
 /** Finalizes the session of this project: validates it and, when every check passes, makes the target the baseline. */

@@ -130,13 +130,16 @@ three edits named below. It needs a project that adopted or created Meridian 0.3
    fails and names it.
 5. **Finalize.** `npx zz-meridian@<version> update --finalize` (the version named in `MERGE.md`) checks that every
    item has one current resolution, automatically written or removed managed files still match what the update applied,
-   and the installed dependencies match the plan, then runs `test:release` and one `next build` in place. A later
+   and the installed dependencies match the plan, then runs `test:t1` (the Tier 1 tests affected by the change, the
+   static checks and the type check) and one `next build`, followed by `node scripts/route-policy.ts` and
+   `node scripts/sizes.ts` when the project supplies what they read — the two cache flags in its Next config, and a size
+   baseline the team recorded itself — each reported `not run` with the reason otherwise. A later
    edit to an automatic managed write must be restored from the session's `new/` copy; a removed file must remain absent.
    To have a deliberate edit reviewed in a new plan, save it separately, restore the planned bytes, abort, then reapply
    it and restart. Shared team-owned files and kept files remain the team's. It compares every protected input before
    and after each check, so a check that rewrites source fails it. Only when both pass and nothing changed does it
    write the target manifest, atomically, and archive the
-   session under `.meridian/history/<version>/<id>/`. It prints the stage times. Finalize runs `test:release` and one production build, and the Postgres suite is reported not run where its services are absent; the consumer smoke holds it to plain finalize.
+   session under `.meridian/history/<version>/<id>/`. It prints the stage times. Finalize runs the bounded scope above — not `test:release`, whose browser sweeps and timed suites belong to the team's own release — and the consumer smoke holds each case to plain finalize and to a time limit.
 6. **Resume.** `update --resume` continues an update that was interrupted, failed to apply or install, or was started
    with `--no-install`. It applies only what is still the recorded original, never overwrites a later edit, and ends as
    a plain update does.
@@ -184,7 +187,7 @@ Thirty arrived after 0.5.0 and are resolved as the skill's `references/update.md
 The consumer smoke (`--update`) updates a project adopted and a project created with each of the newest releases before this one (`--origins`: one at release, three weekly). It resolves the migrations the update reports, as `references/update.md` tells an agent: a created origin, whose files are the template's,
 takes the release's versions of the affected team-owned files and the files that arrived with them; an adopted origin,
 whose pages are the team's own, makes the minimal edit the instruction names. It then records the resolutions and
-finalizes, so `test:release` and the build run on the result, and checks the team's own files kept their bytes.
+finalizes, so `test:t1`, the build and its route and size checks run on the result, and checks the team's own files kept their bytes.
 
 ### The keep register
 
@@ -245,7 +248,7 @@ Modelled on the release pipeline of the owner's earlier packages, one package in
      install, `tsc --noEmit` and `next build`, all green. This is the test that keeps the Route A list complete.
    - `create` into a clean folder, then its `pnpm test:release`.
    - `update` from the release before (adopted and created, read from the registry): a dry-run that writes nothing, the
-     update, what it reports resolved, finalize with the tests and the build, and the team's bytes unchanged. One origin
+     update, what it reports resolved, finalize with the Tier 1 checks, the build and its route and size checks, and the team's bytes unchanged. One origin
      at release and the last three weekly, so the time stays the same however many releases there are; the updater's
      own stages and each migration have their tests (`--update-all`, `tests/cli-*`).
 5. **Publish** the tarball with `npm` 11.5.1 or newer through trusted publishing (OIDC), with `--provenance`. `pnpm

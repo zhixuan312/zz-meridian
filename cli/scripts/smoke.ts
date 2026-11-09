@@ -48,6 +48,22 @@ const tarball = path.resolve(opt('--tarball') ?? path.join(ROOT, 'cli', `zz-meri
 if (!fs.existsSync(tarball)) throw new Error(`no tarball at ${tarball}: run npm pack in cli/ first, or pass --tarball`);
 
 const work = fs.mkdtempSync(path.join(os.tmpdir(), 'zz-meridian-smoke-'));
+/**
+ * An update's finalize runs a bounded scope (docs/testing.md, "An update's finalize time"): the Tier 1 tests affected
+ * by the change with the static checks and the type check, a production build, and the route policy and the size checks
+ * when the project supplies what they read — nothing of the release's browser sweeps or timed suites. The limits are
+ * that work with headroom, one per case:
+ * an adopted project has no shipped tests, so its finalize is the static checks, the type check and the build —
+ * 0.38.0's finalize ran that scope in 37.0 s on the 4-CPU release runner (its build 13.8 s of it, run 42600180906),
+ * and 90 s is the standing limit it was held to, kept rather than loosened.
+ * A created project's finalize runs its whole shipped Tier 1 set, 340 files and 2338 tests: 33 s plus the type check
+ * and the build, about 1.3 min on this Mac, and about 3 min on the 4-CPU runner, where the 496-file set of the template
+ * itself took 188 s; 240 s holds that with headroom for the runner's variance. A finalize that grows past these is red
+ * here, in `gates`, before every adopter pays for it.
+ */
+const FINALIZE_LIMIT_MS = 90_000;
+const FINALIZE_CREATED_LIMIT_MS = 240_000;
+const checkFinalizeTime = (label: string, wall: number, limit: number, detail = '') => check(wall <= limit, `${label}: finalize completes within ${secs(limit)}s (took ${secs(wall)}s)`, detail);
 const keep = args.includes('--keep');
 // The fixtures are whole installed projects, gigabytes each: they go on every way out, a thrown error and an interrupt
 // included, unless --keep asks to look inside them. The log is the record of what failed.
@@ -192,7 +208,7 @@ const filesUnder = (dir: string, rel = ''): string[] => {
  * release moved goes. An adopted project's pages are the team's own: the smallest edit the instruction names, here the
  * two flags in its Next config.
  */
-function bringReleaseOver(proj: string, route: string, reported: string[] = []) {
+function bringReleaseOver(proj: string, route: string, reported: string[] = [], keepConfig = false) {
   // The smallest edit each reported migration's instruction names, in the team's own file. `nav-needs` is 0.13.0's: an item
   // whose line names no `needs` gets `needs: 'public'`, the default that instruction gives, and the project's own
   // `NavItem` type — 0.12.3's declares none — gains the property with the `Need` import that names it. The capture ends at
@@ -242,8 +258,11 @@ function bringReleaseOver(proj: string, route: string, reported: string[] = []) 
   if (reported.includes('nav-item-fields')) {
     edit(proj, 'src/app.config.ts', (t) => t.replace(/^(export type NavItem = \{[\s\S]*?)\s*\};$/m, (type, head: string) => (/\bunder\?:/.test(type) && /\bprefetch\?:/.test(type) ? type : `${head.replace(/;?\s*prefetch\?: true|;?\s*under\?: string/g, '')}; prefetch?: true; under?: string };`)));
   }
+  // The 0.5.0 migration asks an adopted project to set the two flags. A team that keeps its config is resolving it as
+  // it may — an update never switches a project's rendering on to get a green finalize — and finalize then reports the
+  // route policy `not run` for it (the origin cases below exercise that; the walking skeleton makes the edit).
   if (route === 'adopt') {
-    edit(proj, 'next.config.ts', (t) => t.replace(/\/\* config options here \*\//, 'cacheComponents: true,\n  partialPrefetching: true,'));
+    if (!keepConfig) edit(proj, 'next.config.ts', (t) => t.replace(/\/\* config options here \*\//, 'cacheComponents: true,\n  partialPrefetching: true,'));
     return;
   }
   // Each file as a project created with this release holds it: the template after `create`'s product pass, which has no
@@ -304,11 +323,11 @@ function createdRelease(): string {
 }
 
 /** `references/update.md`: resolve in the project's own file, then one object per item with its reason and the files' current hashes. */
-function resolveAll(proj: string, version: string, reason: string) {
+function resolveAll(proj: string, version: string, reason: string, keepConfig = false) {
   const dir = path.join(proj, '.meridian/update', version);
   const stubs = [...read(dir, 'MERGE.md').matchAll(/```json\n([\s\S]*?)\n```/g)].map((m) => JSON.parse(m[1]!)).filter((s) => typeof s.id === 'string' && /^(file|migration):/.test(s.id));
   const reported = RELEASE_IDS.filter((id) => stubs.some((s) => s.id === `migration:${id}`));
-  if (reported.length > 0) bringReleaseOver(proj, finalManifest(proj).route, reported);
+  if (reported.length > 0) bringReleaseOver(proj, finalManifest(proj).route, reported, keepConfig);
   const resolutions = stubs.map((s) => ({
     id: s.id,
     status: s.id.startsWith('migration:') && !reported.includes(s.id.slice('migration:'.length)) ? 'not-applicable' : 'resolved',
@@ -451,7 +470,7 @@ function mainUpgrade(): Upgraded {
   check(resolutions.some((r) => r.id === `file:${CARD}`), `the resolutions name file:${CARD}`);
   const fin = zz(tarball, proj, ['update', '--finalize'], 'finalize');
   check(fin.status === 0 && /^outcome: complete/m.test(fin.out), 'update --finalize exits 0 and completes', said(fin));
-  check(fin.wall / 1000 <= 90, `finalize took ${secs(fin.wall)}s (limit 90s)`);
+  checkFinalizeTime('the walking skeleton', fin.wall, FINALIZE_LIMIT_MS, said(fin));
 
   // The manifest.
   const manifest = finalManifest(proj);
@@ -526,10 +545,10 @@ function projectState(proj: string) {
 
 /**
  * A published origin brought to this release as an agent following references/update.md would: the team's work
- * committed, a dry-run that writes nothing, the update, every reported item resolved, finalize with the tests and the
- * build, and the team's bytes unchanged. Every assertion holds whatever the origin; what a release's migrations change
- * is tested in tests/cli-migrations.test.ts. resolveAll knows RELEASE_IDS: a release that adds a migration adds it
- * there and to bringReleaseOver, or the origins before it fail at finalize.
+ * committed, a dry-run that writes nothing, the update, every reported item resolved, finalize with the Tier 1 checks
+ * and the build, and the team's bytes unchanged. Every assertion holds whatever the origin; what a release's migrations
+ * change is tested in tests/cli-migrations.test.ts. resolveAll knows RELEASE_IDS: a release that adds a migration adds
+ * it there and to bringReleaseOver, or the origins before it fail at finalize.
  */
 function originUpgrade(version: string, route: 'adopt' | 'create') {
   const label = `${version} ${route === 'adopt' ? 'adopted' : 'created'}`;
@@ -568,9 +587,19 @@ function originUpgrade(version: string, route: 'adopt' | 'create') {
   check(!/ is declared as "[^"]*", a specification Meridian cannot compare/.test(merge), `${label}: the update reads every dependency range the project holds`, merge);
   if (up.status === 2) {
     check(/^outcome: migration-required/m.test(up.out) && /^Next: .*update --finalize/m.test(up.out), `${label}: the update applies and stops on what it lists, with the pinned next command`, up.out + up.err);
-    resolveAll(proj, VERSION, 'Kept ours; the project works as it is.');
+    resolveAll(proj, VERSION, 'Kept ours; the project works as it is.', true);
     const fin = zz(tarball, proj, ['update', '--finalize'], `${label} finalize`);
-    check(fin.status === 0 && /^outcome: complete/m.test(fin.out), `${label}: finalize passes the tests and the build and completes in ${secs(fin.wall)}s`, said(fin));
+    check(fin.status === 0 && /^outcome: complete/m.test(fin.out), `${label}: finalize passes the Tier 1 checks and the build, and completes in ${secs(fin.wall)}s`, said(fin));
+    checkFinalizeTime(label, fin.wall, route === 'create' ? FINALIZE_CREATED_LIMIT_MS : FINALIZE_LIMIT_MS, said(fin));
+    // The build's checks judge the project, not the release. The adopted fixture keeps its own next.config, so the
+    // route policy is not run for it; neither case has a size baseline of its own, so size growth is not judged for
+    // either — both are reported, never counted as passed.
+    if (route === 'adopt') {
+      check(/^not run route policy: the project's next\.config sets no cacheComponents and partialPrefetching/m.test(fin.out), `${label}: finalize reports the route policy not run, the project's config setting neither flag`, said(fin));
+    } else {
+      check(!/^not run route policy:/m.test(fin.out), `${label}: finalize judges the route policy, the created project's config setting both flags`, said(fin));
+    }
+    check(/^not run sizes: /m.test(fin.out), `${label}: finalize reports the size check not run, the baseline not being the project's own`, said(fin));
   } else {
     check(up.status === 0 && /^outcome: complete/m.test(up.out), `${label}: with nothing to resolve, the update completes in one command`, said(up));
     if (up.status !== 0) { done(proj); return; }
@@ -604,6 +633,7 @@ if (args.includes('--update-all') && adoptedBase()) {
     resolveAll(proj, version, 'Kept ours; the project works as it is.');
     const fin = zz(pkg, proj, ['update', '--finalize'], `${label} finalize`, env);
     check(fin.status === 0 && /^outcome: complete/m.test(fin.out), `${label}: finalize completes`, said(fin));
+    checkFinalizeTime(label, fin.wall, FINALIZE_LIMIT_MS, said(fin));
     return fin;
   };
 
@@ -616,6 +646,7 @@ if (args.includes('--update-all') && adoptedBase()) {
     resolveAll(proj, VERSION, 'Kept ours; the project works as it is.');
     const fin = zz(tarball, proj, ['update', '--finalize'], 'finalize');
     check(fin.status === 0 && /^outcome: complete/m.test(fin.out), 'finalize: finalize completes', said(fin));
+    checkFinalizeTime('finalize', fin.wall, FINALIZE_LIMIT_MS, said(fin));
     done(proj);
   }
 
@@ -665,6 +696,7 @@ if (args.includes('--update-all') && adoptedBase()) {
     write(proj, 'lib/broken.ts', 'export const total: number = 1;\n');
     const fin = zz(tarball, proj, ['update', '--finalize'], 'finalize (fixed)');
     check(fin.status === 0 && /^outcome: complete/m.test(fin.out), 'with it fixed, finalize succeeds', said(fin));
+    checkFinalizeTime('type error, fixed', fin.wall, FINALIZE_LIMIT_MS, said(fin));
     done(proj);
   }
 
