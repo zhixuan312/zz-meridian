@@ -1,7 +1,10 @@
 // A period tap re-rendered the page and the segmented control then read its option's offsetLeft inside the same commit,
 // forcing a whole-page layout that dropped a frame on the runner's phone (run 39132502117). A read in the next frame's
 // callback forces it too, since that callback runs before the frame's layout; a ResizeObserver's callback runs after
-// layout, so the control measures there, observing the newly selected option afresh on a change.
+// layout, so the control measures there. It observes the options once, and not again on every change: a fresh observer
+// re-observes each option, and the browser lays the whole page out to deliver a first observation — which, in the task
+// the tap commits in, is the dropped frame this fixes (run 42533551701). A change of the options, or their order, is
+// what re-observes, since that is when a position moves.
 import { act, render } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
 import { Segmented } from '@/components/ui/segmented';
@@ -11,9 +14,11 @@ const frame = () => new Promise((r) => requestAnimationFrame(() => r(null)));
 
 /** A ResizeObserver as a browser delivers it: a first observation of each observed element, after the next layout. */
 let inObserver = false;
+let observed = 0;
 class AfterLayout {
   constructor(private readonly callback: ResizeObserverCallback) {}
   observe(target: Element) {
+    observed++;
     requestAnimationFrame(() => {
       inObserver = true;
       try { this.callback([{ target } as ResizeObserverEntry], this as unknown as ResizeObserver); } finally { inObserver = false; }
@@ -22,7 +27,7 @@ class AfterLayout {
   unobserve() {}
   disconnect() {}
 }
-afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); });
+afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); observed = 0; });
 
 it('reads layout only in a ResizeObserver callback, and draws the thumb on the selection a frame after a change', async () => {
   vi.stubGlobal('ResizeObserver', AfterLayout);
@@ -34,6 +39,8 @@ it('reads layout only in a ResizeObserver callback, and draws the thumb on the s
   act(() => { view.rerender(<Segmented label="Reporting period" options={options} value="30d" onChange={() => {}} />); });
   await act(async () => { await frame(); await frame(); });
   expect(outside).toEqual([]);
+  // One observation per option, and a change of the selection starts none: the press commits no layout of its own.
+  expect(observed).toBe(options.length);
   const thumb = view.container.querySelector<HTMLElement>('[role="radiogroup"] > span[aria-hidden]');
   expect(thumb?.style.width).toBe('60px');
   expect(thumb?.style.transform).toBe('translateX(38px)');
