@@ -251,6 +251,26 @@ export async function openStart(page: Page, device: Device, start: string, origi
   if (!ready) throw new Fail('never-ready', `the starting page ${start} did not load in ${PATIENCE[device]} ms`);
 }
 
+/**
+ * Loads a route directly and times its shell: from the navigation to the page's first heading. A route with no navigation
+ * check has no journey to time, but the shell it arrives on can still be judged — it must load, draw no error state and
+ * raise no console error. Returns the problem instead of a time when it cannot be judged a working shell.
+ */
+export async function loadShell(page: Page, device: Device, route: string, origin: string): Promise<{ ms: number } | { fail: Fail }> {
+  await throttle(page, device);
+  const t = Date.now();
+  await page.open(origin + route, { ...(device === 'phone' ? PHONE : DESKTOP), theme: 'dark', wait: 200 });
+  const ready = await poll(() => page.eval<boolean>(`document.readyState === 'complete' && !!document.querySelector('h1')`), Date.now() + PATIENCE[device]);
+  if (!ready) return { fail: new Fail('never-ready', `${route} did not load in ${PATIENCE[device]} ms`) };
+  const shown = await page.eval<{ error: boolean; missing: boolean }>(`({ error: !!deepQuery('[data-empty="error"]'), missing: !!deepQuery('[data-missing-page]') })`);
+  if (shown.error) return { fail: new Fail('wrong-result', `${route} shows its error state`) };
+  if (shown.missing) return { fail: new Fail('wrong-result', `${route} shows the missing page`) };
+  if (page.status() >= 400) return { fail: new Fail('wrong-result', `${route} answered ${page.status()}`) };
+  // page.errors holds what this open raised: uncaught exceptions and console errors, since the last open().
+  if (page.errors.length) return { fail: new Fail('wrong-result', `${route} raised ${page.errors.length} console error(s): ${page.errors[0]}`) };
+  return { ms: Date.now() - t };
+}
+
 /** How long a warm press waits for the prefetches and the chunks they bring in, from the link being shown. */
 export const PREFETCH_WAIT = 6000;
 /** How long the router has, once a link is shown, to start prefetching its destination before the page is taken as one that does not. */

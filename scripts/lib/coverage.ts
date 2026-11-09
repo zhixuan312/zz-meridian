@@ -78,6 +78,29 @@ export function resolveCoverage(
 }
 
 /**
+ * Whether a prefetch budget is the project's own promise. The phone-closed cap holds only where the rail is in a drawer on
+ * a phone — the template's design, where nothing prefetches until the drawer opens. A project whose rail is in the page
+ * prefetches what its visible links point at, so the cap is not its promise: it is reported not-configured, with this
+ * reason, never dropped silently.
+ */
+export function prefetchJudged(device: 'desktop' | 'phoneClosed', starts: string[]): { judged: boolean; reason?: string } {
+  if (device === 'desktop') return { judged: true };
+  return starts.length ? { judged: true } : { judged: false, reason: "the project's rail is not in a drawer on a phone" };
+}
+
+/**
+ * A case a project left unrun by its own configuration — no navigation check for a rail route, a rail not in a drawer
+ * on a phone — rather than because the evidence was missing. A rerun can never change it: it is reported as not run with
+ * its reason on every run, and it does not hold the last-green marker.
+ */
+export function declaredNotRun(entry: string): boolean {
+  return /: no navigation check is configured$/.test(entry)
+    || /^prefetch phone with the drawer closed: the project's rail is not in a drawer on a phone$/.test(entry)
+    || /^the size baseline is the release's, not the project's;/.test(entry)
+    || /^the project has no scripts\/verify\.baseline\.json;/.test(entry);
+}
+
+/**
  * A failed suite's output without the audit's design-metrics table: one line per route, printed last, so on a product of
  * fifty routes the lines kept beneath a failure were nearly all metrics and the FAIL blocks above them were cut off.
  */

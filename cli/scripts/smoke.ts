@@ -152,8 +152,12 @@ if (args.includes('--adopt') || !sections.some((s) => args.includes(s))) {
     fs.rmSync(path.join(safe, '.next'), { recursive: true, force: true });
     write(safe, 'scripts/verify.config.ts', read(safe, 'scripts/verify.config.ts').replace(/\n  refusal,\n\};/, '\n  refusal,\n  noLiveApi: true,\n};'));
     const ran = sh('npm', ['run', 'test:t2'], safe);
-    check(ran.status === 0, 'with noLiveApi, test:t2 passes the browser sweeps', ran.stdout + ran.stderr);
-    check(!/^not run browser/m.test(ran.stdout + ran.stderr), 'the browser sweeps ran under noLiveApi', ran.stdout + ran.stderr);
+    const out = ran.stdout + ran.stderr;
+    // The sweeps run, and the navigation has no check to run — the project has not said where its presses go — so it is
+    // reported not run with that reason on every run, never as a pass, and does not hold the project's last-green
+    // marker. The line below is what the suite says; the ok line says the same, not "passes the browser sweeps".
+    check(ran.status === 0 && !/^not run browser/m.test(out) && /^not run \(declared by the project's configuration\): browser suites \(navigation: /m.test(out) && /no navigation check is configured/.test(out),
+      'with noLiveApi, the browser sweeps run and the navigation is reported not run (no navigation check is configured)', out);
   }
   const bad = sh('npx', ['--yes', '--package', tarball, 'zz-meridian', 'adopt', '--allow-dirty', '--name', 'a\\b'], app);
   check(bad.status !== 0 && /backslash/.test(bad.stderr), 'a brand value with a backslash is refused before anything is copied', bad.stderr);

@@ -186,7 +186,7 @@ const affectsDeep = (files: string[]): boolean => files.some((f) => /^(scripts|j
  * The browser suites (scripts/browser.ts), at the depths asked for. Its own line per suite is passed through; the JSON
  * line says what ran and what did not, and its exit 2 is a run with something not run, not a failure.
  */
-function browser(depth: string, built = false): Promise<{ ok: boolean; notRun: string[]; ran: string[] }> {
+function browser(depth: string, built = false): Promise<{ ok: boolean; notRun: string[]; declared: string[]; ran: string[] }> {
   // Streamed as it arrives, not collected and printed when the child exits: a suite that stops making progress must be
   // visible in the log while it is stuck, never only after it finally returns or times out.
   return new Promise((resolve) => {
@@ -204,20 +204,22 @@ function browser(depth: string, built = false): Promise<{ ok: boolean; notRun: s
     child.on('close', (status) => {
       if (rest.trim()) console.log(rest);
       const json = /^browser: (.*)$/m.exec(out);
-      let state: { ran?: string[]; failed?: boolean; notRun?: string[] } | null = null;
+      let state: { ran?: string[]; failed?: boolean; notRun?: string[]; declared?: string[] } | null = null;
       try { state = json ? JSON.parse(json[1]) : null; } catch { state = null; }
       if (status === 1 || !state) {
         console.log(`test: browser suites FAIL (${out.split('\n').filter(Boolean).slice(-1)[0] ?? 'no output'})`);
-        resolve({ ok: false, notRun: [], ran: [] });
+        resolve({ ok: false, notRun: [], declared: [], ran: [] });
         return;
       }
-      resolve({ ok: true, notRun: state.notRun ?? [], ran: state.ran ?? [] });
+      resolve({ ok: true, notRun: state.notRun ?? [], declared: state.declared ?? [], ran: state.ran ?? [] });
     });
   });
 }
 
 async function release(): Promise<number> {
   const notRun: string[] = [];
+  /** What the project's own configuration left unrun: printed with its reason, and never holding the marker, because a rerun cannot change it. */
+  const declared: string[] = [];
   if (staticChecks() !== 0) {
     console.log('test:release: FAIL: a static check failed');
     return 1;
@@ -257,6 +259,7 @@ async function release(): Promise<number> {
     return 1;
   }
   notRun.push(...browserRun.notRun.map((s) => `browser suites (${s})`));
+  declared.push(...browserRun.declared.map((s) => `browser suites (${s})`));
   // The Postgres code the skill's references hand a team lives outside tests/ and needs services: run it only where the
   // owner supplied them, and say it did not run otherwise, never that it passed.
   const missing = ['MERIDIAN_POSTGRES_URL', 'MERIDIAN_POOLER_URL', 'MERIDIAN_PG'].filter((k) => !process.env[k]);
@@ -271,11 +274,15 @@ async function release(): Promise<number> {
       return 1;
     }
   }
+  for (const d of declared) console.log(`not run (declared by the project's configuration): ${d}`);
   if (!notRun.length) recordGreen();
   else console.log(`test:release: the marker is not advanced, because ${notRun.length} check${notRun.length === 1 ? '' : 's'} did not run`);
+  const declaredText = declared.length ? `; not run by the project's configuration: ${declared.join(', ')}` : '';
   console.log(notRun.length
-    ? `test:release: every check that ran passed; not run: ${notRun.join(', ')} (${t1.files} test files, ${t1.tests} tests)`
-    : `test:release: every Tier 1 and Tier 2 test passed, lint passed, types check (${t1.files} test files, ${t1.tests} tests)`);
+    ? `test:release: every check that ran passed; not run: ${notRun.join(', ')}${declaredText} (${t1.files} test files, ${t1.tests} tests)`
+    : declared.length
+      ? `test:release: every check that ran passed${declaredText} (${t1.files} test files, ${t1.tests} tests)`
+      : `test:release: every Tier 1 and Tier 2 test passed, lint passed, types check (${t1.files} test files, ${t1.tests} tests)`);
   return 0;
 }
 
@@ -375,6 +382,8 @@ async function affected(tier: 't1' | 't2'): Promise<number> {
       return 1;
     }
     notRun.push(...r.notRun.map((s) => `browser suites (${s})`));
+    const declared = r.declared.map((s) => `browser suites (${s})`);
+    for (const d of declared) console.log(`not run (declared by the project's configuration): ${d}`);
   }
 
   // test:t2 never judges a time: the timed suites belong to test:release, which alone runs them on a quiet machine.

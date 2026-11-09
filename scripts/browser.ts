@@ -36,7 +36,7 @@ import path from 'node:path';
 import { answers, bin, freePort, spawnNext } from './lib/bin.ts';
 import { CHROME, launch } from './lib/chrome.ts';
 import { fakeModelArgs, fakeModelProblems, type FakeModelStep } from './lib/config-hooks.ts';
-import { selectSmokeRoutes } from './lib/coverage.ts';
+import { declaredNotRun, selectSmokeRoutes } from './lib/coverage.ts';
 import { unsafeDataUrls } from './lib/data-url.ts';
 import { APP_DIR, railRoutes } from './lib/routes.ts';
 import { sampleSurfaces } from './lib/sample.ts';
@@ -75,6 +75,8 @@ const secs = (since: number) => (Date.now() - since) / 1000;
 const lines: string[] = [];
 const log = (s: string) => { console.log(s); lines.push(s); };
 const notRun: string[] = [];
+/** What a project left unrun by configuration (no navigation check, no drawer on a phone): reported, never holding the marker. */
+const declared: string[] = [];
 let failed = false;
 const ran: string[] = [];
 
@@ -187,13 +189,27 @@ function report(name: string, r: Ran): void {
   phase(status, name, r.took);
   if (status === 'ok') ran.push(name);
   else if (status === 'FAIL') { failed = true; beneath(`${r.out}\n${r.err}`); }
-  else notRun.push(name);
+  else {
+    // A suite left unrun only by the project's own configuration — a rail route with no navigation check, a rail not in
+    // a drawer on a phone — is not waiting on evidence a rerun could bring. It is reported as not run with its reason and
+    // does not hold the last-green marker; anything else not run is evidence missing, and does.
+    const entries = notRunEntries(r.out);
+    if (entries.length && entries.every(declaredNotRun)) declared.push(`${name}: ${entries.join('; ')}`);
+    else notRun.push(name);
+  }
   if (status === 'ok' && r.out) beneath(r.out, 6);
+}
+
+/** The `notRun` list a suite's own summary printed (`navigate: {...}`), or nothing when it printed no summary. */
+function notRunEntries(out: string): string[] {
+  const line = /^navigate: (\{.*\})$/m.exec(out)?.[1];
+  if (!line) return [];
+  try { return (JSON.parse(line) as { notRun?: string[] }).notRun ?? []; } catch { return []; }
 }
 
 function finish(): never {
   stopAll();
-  const state = { ran, failed, notRun, seconds: Number(secs(started).toFixed(1)) };
+  const state = { ran, failed, notRun, declared, seconds: Number(secs(started).toFixed(1)) };
   log(`browser: ${JSON.stringify(state)}`);
   process.exit(failed ? 1 : notRun.length ? 2 : 0);
 }
@@ -275,7 +291,12 @@ const sized = await run('scripts/sizes.ts', ['--base', `http://127.0.0.1:${serve
       const why = /growth not judged \((.*)\)/.exec(v.detail)?.[1];
       notRun.push(`sizes: html${why ? ` (${why})` : ''}`);
     }
-    else if (v.status === 'not run') notRun.push(`sizes: ${v.name}`);
+    else if (v.status === 'not run') {
+      // A size check left unrun because the baseline is the release's, not the project's, is the project's own
+      // configuration (declaredNotRun): reported with the reason, and not holding the marker any more than navigation is.
+      const entry = `sizes: ${v.name}${v.detail ? ` (${v.detail})` : ''}`;
+      (declaredNotRun(v.detail) ? declared : notRun).push(entry);
+    }
     else ran.push(`sizes: ${v.name}`);
   }
   if (sized.status !== 0) failed = true;

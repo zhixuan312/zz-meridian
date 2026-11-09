@@ -49,6 +49,8 @@ There are exactly three test commands, and none takes an argument. The tool pick
 
 A run that needs Chrome reports `not run` with the reason where it is absent, and never `ok`: this repository's `tests/deep-*`, the browser sweeps, the timed suites and the Postgres suite with no service URLs. Nothing that did not run is reported as passed, and a run with something not run does not advance the marker.
 
+**A not-run is either evidence missing or a project's own configuration.** Absent Chrome, absent service URLs and a browser that did not start are missing evidence: the check is reported not run with the reason and the run does not advance the marker, because a later run on a machine that has them can. A case a project leaves unrun by its own configuration — a rail route with no navigation check, a prefetch cap that is not its promise because its rail is not in a drawer on a phone (`scripts/navigate.ts`), or a size baseline the project inherited from the release instead of recording its own (`sizeBaselineOwned` in `scripts/lib/sizes.ts`) — is reported not run with the reason on every run, never as a pass, and does not hold the marker: a rerun can never change it, and holding it would rerun the whole tier, browser sweeps included, on every run of every project that has not configured navigation. `declaredNotRun` in `scripts/lib/coverage.ts` draws the line; `scripts/browser.ts` reports such cases under `declared`, and `scripts/test-run.ts` prints them as `not run (declared by the project's configuration)`.
+
 ## When each runs
 
 A moment is when a person or an agent runs a command. CI runs the same commands at the same moments.

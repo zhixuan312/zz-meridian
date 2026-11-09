@@ -99,6 +99,17 @@ const ARM = (name: string, nth: number, key: string, keyNth: number) => `(() => 
   if (!top) return { covered: hit ? hit.tagName.toLowerCase() + '.' + String(hit.className).slice(0, 40) : 'nothing' };
   window.__changes = 0; window.__href = location.href;
   window.open = () => { window.__changes++; return null; };
+  // A control that writes a file answers by downloading it, and the page changes nothing when it works: a link with
+  // 'download' pressed by the control (an Export builds one and clicks it) is that answer. A press on a link in the page
+  // is seen by the listener; one the control makes with .click() on a detached element never reaches the document, so
+  // the anchor's own click is counted too. Installed once per document, counting into the counter the press armed.
+  if (!window.__download) {
+    window.__download = true;
+    const counted = (a) => { if (a && a.hasAttribute('download')) window.__changes++; };
+    document.addEventListener('click', (e) => counted(e.target instanceof Element ? e.target.closest('a[download]') : null), true);
+    const click = HTMLAnchorElement.prototype.click;
+    HTMLAnchorElement.prototype.click = function () { counted(this); return click.call(this); };
+  }
   const tipOnly = (n) => { const e = n.nodeType === 1 ? n : n.parentElement; return !!e && !!(e.closest('[role="tooltip"]') || e.closest('[data-radix-popper-content-wrapper]')?.querySelector('[role="tooltip"]')); };
   const roots = () => [document.body, ...deepAll(document.body).filter((n) => n.shadowRoot).map((n) => n.shadowRoot)];
   window.__mo?.disconnect();

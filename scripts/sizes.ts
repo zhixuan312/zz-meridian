@@ -39,7 +39,7 @@ import { gzipSync } from 'node:zlib';
 
 import { FIRST_LOAD_CAP_KB, budgetsOf, type BudgetsConfig } from './lib/budgets.ts';
 import { distDirOf } from './lib/next-config.ts';
-import { firstLoad, firstLoadProblems, htmlGrowthProblems, htmlNodeMismatch, htmlProblems, htmlRoutes, KIB, kib } from './lib/sizes.ts';
+import { firstLoad, firstLoadProblems, htmlGrowthProblems, htmlNodeMismatch, htmlProblems, htmlRoutes, KIB, kib, sizeBaselineOwned } from './lib/sizes.ts';
 import verifyConfig from './verify.config.ts';
 import { holdArgs } from './lib/args.ts';
 
@@ -138,6 +138,16 @@ async function main(): Promise<number> {
 
   const budgets = budgetsOf(verifyConfig as BudgetsConfig);
   const baseline = baselineOf();
+  // A project Meridian manages inherits the release's baseline; only a baseline the team recorded is its own promise.
+  // Both checks judge growth against it, so both are reported not run with the reason — declared configuration, never a
+  // pass, and not left to a Node-major accident.
+  const owned = sizeBaselineOwned({ baseline, managed: fs.existsSync(path.join(ROOT, '.meridian/manifest.json')) });
+  if (!owned.owned) {
+    console.log(`not run first-load ${owned.reason}`);
+    console.log(`not run html ${owned.reason}`);
+    summary({ status: 'not-run', reason: owned.reason });
+    return 0;
+  }
   const capKiB = budgets.firstLoadKb ?? FIRST_LOAD_CAP_KB;
   const size = firstLoadProblems(routes, { capKiB, growthPct: budgets.firstLoadGrowthPct, baseline: baseline?.firstLoad ?? null, capUnheldOnly: budgets.firstLoadKb === null });
   const largest = routes.reduce((a, b) => (b.bytes > a.bytes ? b : a), routes[0]);

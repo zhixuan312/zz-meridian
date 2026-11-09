@@ -135,8 +135,11 @@ type VerifyConfig = {
     prefetchKb?: { desktop: number; phoneClosed: number };
   };
   /**
-   * One check for every route in the rail (`nav` in src/app.config.ts). A full navigation run fails on a rail route that
-   * has none; a narrowed run reports its data and interaction as not configured. Probes never write.
+   * One check for every route in the rail (`nav` in src/app.config.ts). In this repository `tests/cli-navigation-coverage.test.ts`
+   * fails when a rail route has none, so a new page cannot ship unchecked. The suite judges a route without a check by
+   * loading it directly (its shell) and reports its journey, data and interaction as not configured, exiting 2 — a case
+   * left unrun, never a pass. That is what an adopted project gets while its config still names the template's routes.
+   * Probes never write.
    * Selectors resolve inside open shadow roots as well as the light DOM; a descendant combinator does not cross a shadow
    * boundary, so name an element inside a root with a selector written for that root. When `controlSelector` matches more than
    * one element the first visible one is pressed and a `note: <selector> matches <n> elements; the first visible one was used`

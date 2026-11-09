@@ -111,12 +111,27 @@ export function isPrefetch(request: { headers: Record<string, string> }): boolea
   return /^[1-9]\d*$/.test(request.headers['next-router-prefetch'] ?? '');
 }
 
+/**
+ * Whether the size baseline is the project's own recording. A project Meridian manages inherits the release's
+ * `scripts/verify.baseline.json` until the team records its own, and `--write-baseline` stamps `recordedBy: 'sizes.ts'`:
+ * figures the release's build produced are not the project's promise on any Node, so growth is not judged against them
+ * and the check is declared unrun rather than left to a Node-major accident. The template's own repository has no
+ * manifest, and its baseline is the team's own.
+ */
+export function sizeBaselineOwned({ baseline, managed }: { baseline: { recordedBy?: string } | null; managed: boolean }): { owned: boolean; reason?: string } {
+  if (!managed) return { owned: true };
+  if (!baseline) return { owned: false, reason: "the project has no scripts/verify.baseline.json; record the project's own with node scripts/sizes.ts --write-baseline --base <url>" };
+  if (baseline.recordedBy !== 'sizes.ts') return { owned: false, reason: "the size baseline is the release's, not the project's; record the project's own with node scripts/sizes.ts --write-baseline --base <url>" };
+  return { owned: true };
+}
+
 export function prefetchProblems(
   { desktopBytes, phoneClosedBytes }: { desktopBytes: number; phoneClosedBytes: number },
   capsKiB: { desktop: number; phoneClosed: number },
+  judge: { desktop?: boolean; phoneClosed?: boolean } = {},
 ): string[] {
   const problems: string[] = [];
-  if (desktopBytes > capsKiB.desktop * KIB) problems.push(`desktop: prefetch ${kib(desktopBytes)} KiB over its ${capsKiB.desktop} KiB cap`);
-  if (phoneClosedBytes > capsKiB.phoneClosed * KIB) problems.push(`phone with the drawer closed: prefetch ${kib(phoneClosedBytes)} KiB over its ${capsKiB.phoneClosed} KiB cap`);
+  if (judge.desktop !== false && desktopBytes > capsKiB.desktop * KIB) problems.push(`desktop: prefetch ${kib(desktopBytes)} KiB over its ${capsKiB.desktop} KiB cap`);
+  if (judge.phoneClosed !== false && phoneClosedBytes > capsKiB.phoneClosed * KIB) problems.push(`phone with the drawer closed: prefetch ${kib(phoneClosedBytes)} KiB over its ${capsKiB.phoneClosed} KiB cap`);
   return problems;
 }
