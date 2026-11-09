@@ -23,7 +23,7 @@ const shell = () => (
 describe('the phone drawer', () => {
   // Undone after the test, so a failed assertion does not leave the focus spy on for the next one.
   afterEach(() => vi.restoreAllMocks());
-  it('focuses nothing inside the tap, and focus is in the sheet a frame later', async () => {
+  it('focuses nothing inside the tap, and focus reaches the first destination a frame later', async () => {
     await act(async () => { render(shell()); });
     const focus = vi.spyOn(HTMLElement.prototype, 'focus');
     act(() => { fireEvent.click(screen.getByRole('button', { name: 'Open navigation' })); });
@@ -31,8 +31,11 @@ describe('the phone drawer', () => {
     // that moves focus has not run. An await here (findByRole polls) can outlast a frame on a loaded machine.
     const dialog = screen.getByRole('dialog', { name: 'Navigation' });
     expect(focus).not.toHaveBeenCalled();
+    // The rail is a deferred render (the Drawer), so the sheet's first frame holds only the close button: focus waits
+    // for the destinations and lands on the first of them, never on the close button that is there before them.
     await act(async () => { await new Promise((r) => requestAnimationFrame(() => r(null))); });
     expect(dialog.contains(document.activeElement)).toBe(true);
+    expect(document.activeElement?.textContent).toBe('Home');
   });
   it('stays modal: the page behind is hidden from assistive technology and Escape returns focus to the trigger', async () => {
     await act(async () => { render(shell()); });
