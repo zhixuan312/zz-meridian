@@ -199,26 +199,26 @@ function StillOnNavigation({ main }: { main: RefObject<HTMLElement | null> }) {
  * there is answered when it arrives, and each press is answered once.
  */
 function Drawer({ rail, asked, root }: { rail: ReactNode; asked: number; root: RefObject<HTMLElement | null> }) {
-  const nav = useNavDrawer(asked, root);
+  const { open, setOpen, content, focusFirst, setSheet } = useNavDrawer(asked, root);
   // The sheet opens in the press; the rail follows in the next render. The rail is a second render of the navigation
   // tree, and committing it with the sheet put script and style of both in one frame: 51 to 63 ms at the runner's
   // profile in run 42646698631, against a 50 ms floor (`/`, `buttonOpen navigation`). Split, neither frame passes 33 ms.
   // The sheet is a frame with its ground and its close button; the destinations arrive under them a frame later.
-  const shown = useDeferredValue(nav.open);
+  const shown = useDeferredValue(open);
   // Focus the first destination once it is in the sheet, not the close button that is there before it.
   useLayoutEffect(() => {
-    if (!nav.open || !shown) return;
-    const id = requestAnimationFrame(nav.focusFirst);
+    if (!open || !shown) return;
+    const id = requestAnimationFrame(focusFirst);
     return () => cancelAnimationFrame(id);
-  }, [nav.open, shown, nav.focusFirst]);
+  }, [open, shown, focusFirst]);
   return (
-    <Dialog.Root open={nav.open} onOpenChange={nav.setOpen}>
+    <Dialog.Root open={open} onOpenChange={setOpen}>
       <Dialog.Portal>
         <Dialog.Overlay className="scrim-in fixed inset-0 z-(--layer-rail) bg-scrim lg:hidden" />
         <Dialog.Content
-          ref={nav.sheet}
+          ref={setSheet}
           aria-describedby={undefined}
-          {...nav.content}
+          {...content}
           className="sheet-in fixed inset-y-0 left-0 z-(--layer-rail) flex w-(--rail-width) max-w-[86vw] border-r border-line bg-ground shadow-overlay lg:hidden"
         >
           <Dialog.Title className="sr-only">Navigation</Dialog.Title>

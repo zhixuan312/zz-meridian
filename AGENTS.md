@@ -23,7 +23,7 @@ Each repository has exactly three test commands, and every one takes no argument
 
 | Command | Runs |
 |---|---|
-| `pnpm test:t1` | the Tier 1 tests affected by the changes since the last green run (the import graph's `related` selection), and the type check |
+| `pnpm test:t1` | the Tier 1 tests affected by the changes since the last green run (the import graph's `related` selection), eslint on the changed source files, and the type check |
 | `pnpm test:t2` | the affected Tier 2 checks too, and the affected Tier 1 tests with them |
 | `pnpm test:release` | every Tier 1 and Tier 2 test, once, with the timed browser suites, lint and the type check |
 

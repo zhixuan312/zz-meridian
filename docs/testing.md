@@ -35,7 +35,7 @@ There are exactly three test commands, and none takes an argument. The tool pick
 
 | Command | Runs |
 |---|---|
-| `pnpm test:t1` | The Tier 1 tests affected by the changes since the last green run, and the type check. |
+| `pnpm test:t1` | The Tier 1 tests affected by the changes since the last green run, eslint over the source files the change touches, and the type check. |
 | `pnpm test:t2` | The affected Tier 2 checks, and the affected Tier 1 tests with them. |
 | `pnpm test:release` | Every Tier 1 and Tier 2 test, once, plus the timed browser suites, lint and the type check. |
 
@@ -44,6 +44,8 @@ There are exactly three test commands, and none takes an argument. The tool pick
 **Tier 2 is a convention, never a list kept by hand.** `*.perf.test.ts(x)` is Tier 2 in any repository. This repository's broad browser sweeps are Tier 2 as well: every page at every width in both themes, every control pressed, every keyboard stop, the assistant walk-through and the product's own checks run as `scripts/browser.ts --depth fn`, selected for a change that can alter what a page draws or a control does. The timed checks (navigation budgets, live data, Web Vitals) are the same file's `--depth timed`, and the 20-sample protocol is `--depth perf`, which runs only where `CI` is true. `test:t2` reports the timed suites not run: `test:release` runs them alone on a quiet machine. Every other test under `tests/` is Tier 1. `test:t1` never runs a Tier 2 check. A repository with no `*.perf` test still has `test:t2`, and it runs the affected Tier 1 tests.
 
 `tests/deep-*.test.ts(x)`, the large browser-fixture suites of the checks, are Tier 1: they verify a check script's function, not a quality beyond the requirement. Their size, not their tier, keeps them out of the main Vitest run; they run as their own stage when a script, a journey or one of their own files changed, and `test:release` always runs them.
+
+**A change is linted as it is checked.** `test:t1` runs the same eslint `test:release` runs (linting the whole repository) over the source files a change touches — a lint error once reached master through a run that checked types but never linted (the drawer's `react-hooks/refs`, `b54c5d7b`). Documents and generated output are left out (`lintTargets` in `scripts/lib/lint.ts`).
 
 **Last green.** After a passing run the command writes the commit it proved to `out/last-green`, which is gitignored, and reads it before the next run. That keeps a per-change run to the diff since the last green, not the branch's whole history. A missing marker falls back to the diff against master. A checkout with neither a marker nor a diff (master itself, a fresh CI clone) runs the whole tier, because no green run is evidence for it. A Tier 1 run leaves the marker alone when the change also needs a Tier 2 check, so `test:t2` is not skipped by the run before it.
 

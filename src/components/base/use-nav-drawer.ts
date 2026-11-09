@@ -46,6 +46,9 @@ export function useNavDrawer(asked: number, root: RefObject<HTMLElement | null>)
   }, [open, root]);
   const opener = useRef<HTMLElement | null>(null);
   const sheet = useRef<HTMLDivElement | null>(null);
+  // The ref is the hook's own: handing it out in the returned object made every one of its properties read as a ref
+  // during render to the compiler's `react-hooks/refs` rule. The frame attaches the sheet through this callback instead.
+  const setSheet = useCallback((el: HTMLDivElement | null) => { sheet.current = el; }, []);
   const focusFirst = useCallback(() => {
     const at = sheet.current;
     if (at) (at.querySelector<HTMLElement>('a[href], button:not([disabled])') ?? at).focus({ preventScroll: true });
@@ -61,5 +64,5 @@ export function useNavDrawer(asked: number, root: RefObject<HTMLElement | null>)
       opener.current = null;
     },
   };
-  return { open, setOpen: (next: boolean) => setOpenOn(next ? path : null), content, sheet, focusFirst };
+  return { open, setOpen: (next: boolean) => setOpenOn(next ? path : null), content, focusFirst, setSheet };
 }

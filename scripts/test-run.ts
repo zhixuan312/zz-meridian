@@ -26,6 +26,7 @@ import { spawn, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { bin } from './lib/bin.ts';
+import { lintTargets } from './lib/lint.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const MARKER = path.join(ROOT, 'out', 'last-green');
@@ -305,6 +306,13 @@ async function affected(tier: 't1' | 't2'): Promise<number> {
   }
   if (typecheck() !== 0) {
     console.log(`test:${tier}: FAIL: the type check failed`);
+    return 1;
+  }
+  // The same lint test:release runs, over the files this change touches: a lint error must not reach master through a
+  // run that checked types but never linted (one did: the drawer's `react-hooks/refs`, b54c5d7b).
+  const lintFiles = lintTargets(present);
+  if (lintFiles.length && run(`lint: eslint on ${lintFiles.length} changed file${lintFiles.length === 1 ? '' : 's'}`, bin('eslint'), [...lintFiles, '--ignore-pattern', '.meridian/']) !== 0) {
+    console.log(`test:${tier}: FAIL: a lint check failed`);
     return 1;
   }
 
