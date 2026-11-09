@@ -111,6 +111,9 @@ function Columns({
   ...form
 }: Ungrouped) {
   const [box, { width }] = useSize<HTMLElement>();
+  // The bars' row measures itself too: the dense form is drawn as an inline SVG in pixels, so it needs the row's
+  // height as well as the plot's width.
+  const [row, rowSize] = useSize<HTMLDivElement>();
   const { columns, parts } = form;
   const { drawn, bars } = useMemo(
     () => (parts ? stack(columns, parts) : { drawn: null, bars: columns.map((c): Bar => ({ key: c.key, label: c.label, values: [c.value], total: c.value ?? 0, none: c.value === null, est: Boolean(c.estimate) && c.value !== null })) }),
@@ -133,6 +136,35 @@ function Columns({
   const column = n ? (width - left - gap * (n - 1)) / n : 0;
   const rest = column >= REST;
   const dense = n > DENSE && !signed;
+  // Past 30 columns a plain chart draws its bars as one path per fill inside an inline SVG, not a div a column: a chart
+  // of fifty columns committed about three hundred layout objects in the frame a period switch lands in, and the browser
+  // styled, laid out and painted every one. The geometry is the one the columns had — the slot each one has under the
+  // same gap rule, its share of the scale from the zero line, the 4px rounded top and the 2px floor — so the chart
+  // looks the same. A column that is not a plain fill (no data, an estimate, the running period, a stacked part) keeps
+  // its own element, placed over its slot, and the pointer reads the column under it by x.
+  const denseSVG = (() => {
+    if (!dense || drawn || !rowSize.height || !n) return null;
+    const H = rowSize.height;
+    const W = Math.max(1, width - left);
+    const slot = Math.max(0, (W - gap * (n - 1)) / n);
+    const zero = H * (1 - at100(0) / 100);
+    const RADIUS = 4, FLOOR = 2;
+    const f = (v: number) => Math.round(v * 100) / 100;
+    const bar = (i: number, share: number) => {
+      const x = i * (slot + gap);
+      const h = Math.max(FLOOR, (share / 100) * H);
+      const y = zero - h;
+      const r = Math.min(RADIUS, h / 2, slot / 2);
+      return `M${f(x)} ${f(zero)}V${f(y + r)}Q${f(x)} ${f(y)} ${f(x + r)} ${f(y)}H${f(x + slot - r)}Q${f(x + slot)} ${f(y)} ${f(x + slot)} ${f(y + r)}V${f(zero)}Z`;
+    };
+    let neutral = '', hotPath = '';
+    bars.forEach((b, i) => {
+      if (b.none || !b.total) return;
+      const seg = bar(i, (Math.abs(b.total) / (top - low)) * 100);
+      if (active === i || (active === null && b.key === highlight)) hotPath += seg; else neutral += seg;
+    });
+    return { W, H, slot, neutral, hotPath };
+  })();
   /** A value as it reads; a period with no data reads the product's word, and "so far" with it while it is running. */
   const value = useCallback((v: number | null, running = false) => (v === null ? (running ? `${noData} so far` : noData) : format(v)), [format, noData]);
   const totalOf = useCallback((b: Bar, i: number) => value(b.none ? null : b.total, i === soFar), [value, soFar]);
@@ -200,7 +232,27 @@ function Columns({
             focus ring, 4px outside the box, crosses nothing the plot draws, and nothing moves when the width arrives. */}
         <div className={cn('absolute inset-x-0 top-7', signed ? 'bottom-7' : 'bottom-2')}>
           <Ticks ticks={ticks} at100={at100} af={af} left={left} />
-          <div className={cn('absolute inset-y-0 right-0 flex', dense && 'grow-y')} style={{ left, columnGap: gapOf(n) }}>
+          <div ref={row} className={cn('absolute inset-y-0 right-0 flex', dense && 'grow-y')} style={{ left, columnGap: gapOf(n) }}>
+            {denseSVG ? (
+              <svg
+                aria-hidden
+                viewBox={`0 0 ${denseSVG.W} ${denseSVG.H}`}
+                preserveAspectRatio="none"
+                className="absolute inset-0 h-full w-full"
+                onPointerMove={(e) => {
+                  const r = e.currentTarget.getBoundingClientRect();
+                  set(Math.min(n - 1, Math.max(0, Math.floor((e.clientX - r.left) / (denseSVG.slot + gap)))));
+                }}
+                onPointerDown={(e) => {
+                  const r = e.currentTarget.getBoundingClientRect();
+                  set(Math.min(n - 1, Math.max(0, Math.floor((e.clientX - r.left) / (denseSVG.slot + gap)))));
+                }}
+                onPointerLeave={() => set(null)}
+              >
+                {denseSVG.neutral ? <path d={denseSVG.neutral} fill="var(--chart-neutral)" /> : null}
+                {denseSVG.hotPath ? <path d={denseSVG.hotPath} fill="var(--accent)" /> : null}
+              </svg>
+            ) : null}
             {bars.map((b, i) => {
               const pointed = active === i;
               const hot = pointed || (active === null && b.key === highlight);
@@ -236,6 +288,14 @@ function Columns({
                       </span>
               ) : null;
               const share = `${(Math.abs(b.total) / (top - low)) * 100}%`;
+              if (denseSVG && plainFill && !b.est) {
+                // The SVG draws this bar. The pointed one keeps its value, which is a box of its own over the column.
+                return pointed ? (
+                  <div key={b.key} className="absolute" style={{ left: i * (denseSVG.slot + gap), width: denseSVG.slot, top: 0, bottom: 0 }}>
+                    {valueLabel}
+                  </div>
+                ) : null;
+              }
               if (dense && plainFill && !b.est) {
                 // One element: the bar is its ::before, its share of the scale and never under 2px; the value, when it shows,
                 // stands on a box of the bar's height.
@@ -265,10 +325,11 @@ function Columns({
                   data-active={pointed ? '' : undefined}
                   data-running={unfinished ? '' : undefined}
                   data-no-data={b.none ? '' : undefined}
+                  style={denseSVG ? { position: 'absolute', top: 0, bottom: 0, left: i * (denseSVG.slot + gap), width: denseSVG.slot } : undefined}
                   // A figure wider than its column is cut at rest, and keeps the whole of itself where the pointer finds it.
                   // The accented column says what makes it the one the card is about, beside its figure.
                   title={[rest && text.length * 7 > column ? text : null, b.key === highlight ? highlightLabel : null].filter(Boolean).join(' · ') || undefined}
-                  className="group/col relative h-full min-w-0 flex-1"
+                  className={denseSVG ? 'group/col' : 'group/col relative h-full min-w-0 flex-1'}
                   onPointerEnter={() => set(i)}
                   onPointerDown={() => set(i)}
                 >
