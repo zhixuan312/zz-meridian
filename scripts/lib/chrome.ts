@@ -11,6 +11,13 @@ export const CHROME = process.env.CHROME ?? (process.platform === 'darwin' ? '/A
 const SANDBOX = process.platform === 'linux' && process.env.CI === 'true' ? ['--no-sandbox'] : [];
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 /**
+ * How long one DevTools command may stay unanswered: a transport guard, not a product bound. It only ends a connection
+ * that has nothing else to end it, and the deep fixture that plants a hang blocks the page for 40 s so that this guard,
+ * never a budget, ends it. A caller whose page deliberately waits longer than this inside one command says so and passes
+ * its own bound (`scripts/live.ts` waits 30 s for a change to arrive, and asks for 35 s here).
+ */
+const COMMAND_TIMEOUT_MS = 30_000;
+/**
  * The device pixel ratio a page is opened at: 1 unless `DPR` asks for another. A check measures geometry, and for as long
  * as this default was 2 while a test run set 1, one suite gave two answers for one page (a
  * table 368px wide in a 356px frame at 2x that fits at 1x). A picture for the eye asks for 2 itself (scripts/shot.ts).
@@ -27,8 +34,9 @@ export type Page = {
    * error page is a page like any other to every measurement, so a suite that does not read this measures it as the route.
    */
   status: () => number;
-  send: (method: string, params?: Record<string, unknown>) => Promise<any>;
-  eval: <T = unknown>(expression: string) => Promise<T>;
+  /** `timeoutMs` overrides the transport guard for one command whose page deliberately waits; it defaults to `COMMAND_TIMEOUT_MS`. */
+  send: (method: string, params?: Record<string, unknown>, timeoutMs?: number) => Promise<any>;
+  eval: <T = unknown>(expression: string, timeoutMs?: number) => Promise<T>;
   open: (url: string, opts: { width: number; height?: number; theme?: 'light' | 'dark'; reduced?: boolean; wait?: number; cookie?: { name: string; value: string } }) => Promise<void>;
   shot: (file: string, opts?: { full?: boolean; width?: number; height?: number }) => Promise<number>;
   close: () => void;
@@ -145,11 +153,11 @@ async function attach(proc: ChildProcess, dir: string, handle: Launched): Promis
   // A Chrome that crashed fails every command waiting on it, and every later one, at once and by name, not each after its own 30 s.
   const GONE = { error: { message: 'Chrome closed the connection' } };
   ws.addEventListener('close', () => { for (const answer of [...pending.values()]) answer(GONE); pending.clear(); });
-  const send = (method: string, params: Record<string, unknown> = {}) =>
+  const send = (method: string, params: Record<string, unknown> = {}, timeoutMs = COMMAND_TIMEOUT_MS) =>
     new Promise<any>((r, reject) => {
       if (ws.readyState >= WebSocket.CLOSING) return reject(new Error(`${method}: ${GONE.error.message}`));
       const i = ++id;
-      const t = setTimeout(() => { pending.delete(i); reject(new Error(`${method} timed out`)); }, 30000);
+      const t = setTimeout(() => { pending.delete(i); reject(new Error(`${method} timed out`)); }, timeoutMs);
       // A protocol error rejects: a silently refused command (a bad parameter) would leave the page in the wrong state.
       pending.set(i, (m) => { clearTimeout(t); if (m.error) reject(new Error(`${method}: ${m.error.message}`)); else r(m); });
       ws.send(JSON.stringify({ id: i, method, params }));
@@ -169,8 +177,8 @@ async function attach(proc: ChildProcess, dir: string, handle: Launched): Promis
     fileChoosers: () => choosers,
     status: () => status,
     send,
-    async eval(expression) {
-      const r = await send('Runtime.evaluate', { expression, returnByValue: true, awaitPromise: true });
+    async eval(expression, timeoutMs) {
+      const r = await send('Runtime.evaluate', { expression, returnByValue: true, awaitPromise: true }, timeoutMs);
       if (r.result?.exceptionDetails) throw new Error(r.result.exceptionDetails.exception?.description ?? 'evaluation failed');
       return r.result?.result?.value;
     },

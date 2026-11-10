@@ -186,6 +186,16 @@ async function seedValues(): Promise<Seed> {
     'perf.shell': warm.shellMs.desktop,
     'perf.data': warm.dataMs.desktop,
     'perf.interactive': warm.interactiveMs.desktop,
+    // The live cases' arrival (`scripts/live.ts`): a change a hint carries, and one only the safety refresh repairs.
+    'live.two-tabs': 2000,
+    'live.burst': 2000,
+    'live.burst-send': 2000,
+    'live.restart-before': 2000,
+    'live.visibility': 5000,
+    'live.offline': 5000,
+    'live.suppressed': 5000,
+    'live.restart-gone': 5000,
+    'live.restart-after': 5000,
   };
 }
 
