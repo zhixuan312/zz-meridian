@@ -202,6 +202,9 @@ export const Combobox = forwardRef<HTMLInputElement, ComboboxProps>(function Com
           {name ? <input type="hidden" name={name} value={current ?? ''} /> : null}
         </div>
       </PopoverAnchor>
+      {/* The list is at most the panel height of a Select (18rem) AND no taller than the room on the side it opens on:
+          Radix reports that room in the variable, and taking all of it drew the list over the whole dialog when the
+          field sat low on the screen. */}
       <PopoverContent
         id={listId}
         role="listbox"
@@ -209,7 +212,7 @@ export const Combobox = forwardRef<HTMLInputElement, ComboboxProps>(function Com
         aria-busy={loading || undefined}
         align="start"
         sideOffset={6}
-        className="max-h-(--radix-popover-content-available-height) w-(--radix-popover-trigger-width) overflow-y-auto p-1"
+        className="max-h-[min(18rem,var(--radix-popover-content-available-height))] w-(--radix-popover-trigger-width) overflow-y-auto p-1"
         onOpenAutoFocus={(e) => e.preventDefault()}
         onCloseAutoFocus={(e) => e.preventDefault()}
       >
