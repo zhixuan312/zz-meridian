@@ -2,12 +2,13 @@
 // Tier 2 is reported, never a gate: a value is judged against the previous release (and the spread of the last releases,
 // once three exist), the flag names the line, and nothing here fails anything — the exit is test:release's, and always 0
 // for Tier 2.
+import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { summaryLine } from '../scripts/lib/summary.ts';
-import { changeText, clearParts, compare, HISTORY_FILE, readHistory, readParts, recordPart, RECORD_FILE, staleBaseline, table, writeRecord, type History, type Value } from '../scripts/lib/tier2.ts';
+import { changeText, clearParts, compare, HISTORY_FILE, readHistory, readParts, recordPart, RECORD_FILE, reportOrWarn, reportRun, staleBaseline, table, writeRecord, type History, type Value } from '../scripts/lib/tier2.ts';
 
 const release = (version: string, values: Value[]): History['releases'][number] => ({ version, commit: 'abc', date: '2026-11-09', host: 'runner', rate: 3.6, values });
 const seed = { 'vitals.frames': 50, 'vitals.lcp': 2.5, 'sizes.first-load': 830 };
@@ -124,6 +125,42 @@ describe('the table after a deep-fixture run', () => {
     // And the command clears them right before it starts the browser, where the fixtures' own runs stop mattering.
     const runner = fs.readFileSync(path.join(import.meta.dirname, '..', 'scripts', 'test-run.ts'), 'utf8');
     expect(runner.indexOf('clearParts(ROOT);\n  const browserRun = await browser(')).toBeGreaterThan(0);
+  });
+});
+
+describe('reporting inside a project, where there is no cli/', () => {
+  it('writes the table and the record from a project-shaped directory, version from the manifest', async () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'tier2-project-'));
+    try {
+      fs.writeFileSync(path.join(root, 'package.json'), JSON.stringify({ name: 'acme', version: '0.1.0' }));
+      fs.mkdirSync(path.join(root, '.meridian'), { recursive: true });
+      fs.writeFileSync(path.join(root, '.meridian', 'manifest.json'), JSON.stringify({ version: '0.39.0' }));
+      fs.mkdirSync(path.join(root, 'app'), { recursive: true });
+      fs.writeFileSync(path.join(root, 'app', 'page.tsx'), 'export default function Page() { return null; }\n');
+      execFileSync('git', ['init', '-q'], { cwd: root });
+      execFileSync('git', ['-c', 'user.email=t@example.com', '-c', 'user.name=t', 'add', '-A'], { cwd: root });
+      execFileSync('git', ['-c', 'user.email=t@example.com', '-c', 'user.name=t', 'commit', '-qm', 'base'], { cwd: root });
+      const { lines, flagged } = await reportRun({ root, values: [{ check: 'vitals.lcp', page: '/', unit: 's', value: 1 }], seed });
+      expect(lines[0]).toContain("Meridian's seed values, not this project's measurement");
+      expect(flagged).toEqual([]);
+      expect(JSON.parse(fs.readFileSync(path.join(root, RECORD_FILE), 'utf8'))).toMatchObject({ version: '0.39.0', values: [{ check: 'vitals.lcp', page: '/' }] });
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('turns a reporting error into a warn line, never a thrown failure', async () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'tier2-project-'));
+    try {
+      fs.writeFileSync(path.join(root, 'package.json'), '{}');
+      fs.mkdirSync(path.join(root, 'scripts'), { recursive: true });
+      fs.writeFileSync(path.join(root, HISTORY_FILE), '{ not json');
+      const { lines, flagged } = await reportOrWarn({ root, values: [{ check: 'vitals.lcp', page: '/', unit: 's', value: 1 }], seed });
+      expect(flagged).toEqual([]);
+      expect(lines[0]).toMatch(/^warn tier2: could not report: /);
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
   });
 });
 

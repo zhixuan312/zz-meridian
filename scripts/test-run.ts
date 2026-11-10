@@ -24,15 +24,13 @@
  */
 import { spawn, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { pageGraph, commitsTouching, byChange } from './lib/attribution.ts';
 import { bin } from './lib/bin.ts';
 import { FIRST_LOAD_CAP_KB, budgetsOf, type BudgetsConfig } from './lib/budgets.ts';
 import { consumerSmokeKind } from './lib/consumer-smoke.ts';
 import { lintTargets } from './lib/lint.ts';
-import { clearParts, compare, readHistory, staleBaseline, table, writeRecord, type Seed, type Value } from './lib/tier2.ts';
+import { clearParts, reportOrWarn, type Seed, type Value } from './lib/tier2.ts';
 import { summaryLine } from './lib/summary.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
@@ -197,25 +195,12 @@ async function seedValues(): Promise<Seed> {
  * branch of it fails the run — and it writes `out/perf-record.json` for the next release's baseline.
  */
 async function reportTier2(values: Value[]): Promise<string[]> {
-  if (!values.length) return [];
-  const history = readHistory(ROOT);
-  const { rows, baselineVersion, seeded } = compare(history, values, await seedValues());
-  for (const line of table(rows, baselineVersion, seeded)) console.log(line);
-  const stale = staleBaseline(history, process.env.PREVIOUS_TAG);
-  if (stale) console.log(`warn tier2: ${stale}`);
-  const graph = pageGraph(ROOT);
-  const since = history?.releases[0]?.commit;
-  const deltas = rows.filter((r) => r.changePct !== null).map((r) => ({ page: r.page.split(' ')[0]!, check: r.check, unit: r.unit, delta: Math.round((r.now - (r.previous ?? r.now)) * 100) / 100 }));
-  const commits = since ? commitsTouching(ROOT, since, [...new Set(graph.pages.flatMap((p) => graph.modules.get(p) ?? []))]) : [];
-  const section = byChange(graph, commits, deltas);
-  if (section.length) {
-    console.log("tier 2 by change — each row is the page's delta, not this commit's share:");
-    for (const c of section) console.log(`  ${c.sha} ${c.subject}: ${c.pages.map((p) => `${p.page}${p.shared ? ' (shared attribution)' : ''}`).join(', ')}`);
-  }
-  const version = JSON.parse(fs.readFileSync(path.join(ROOT, 'cli/package.json'), 'utf8')).version as string;
-  const commit = spawnSync('git', ['rev-parse', 'HEAD'], { cwd: ROOT, encoding: 'utf8' }).stdout.trim();
-  writeRecord(ROOT, { version, commit, date: new Date().toISOString(), host: os.hostname(), values, table: table(rows, baselineVersion, seeded), byChange: section });
-  return rows.filter((r) => r.flagged).map((r) => `${r.check} ${r.page}`);
+  const seed = await seedValues();
+  // Reporting is not a check: the values and the table are printed, and nothing it meets can fail the run (no project has
+  // `cli/`, not every project is a git repository).
+  const { lines, flagged } = await reportOrWarn({ root: ROOT, values, seed, previousTag: process.env.PREVIOUS_TAG });
+  for (const line of lines) console.log(line);
+  return flagged;
 }
 
 /** What a local Node major other than CI's leaves unjudged, said before any step runs. */
@@ -341,7 +326,7 @@ async function release(): Promise<number> {
 }
 
 /** Packs this working tree and runs the consumer smoke a change owes, with CI's flags: the path an adopter walks. */
-function consumerSmoke(kind: 'update' | 'verify'): number {
+function consumerSmoke(kind: 'create' | 'update' | 'verify'): number {
   const pack = path.join(ROOT, 'out', 'smoke-pack');
   fs.rmSync(pack, { recursive: true, force: true });
   fs.mkdirSync(pack, { recursive: true });
@@ -350,7 +335,7 @@ function consumerSmoke(kind: 'update' | 'verify'): number {
   const packed = spawnSync('npm', ['pack', '--ignore-scripts', '--pack-destination', pack], { cwd: path.join(ROOT, 'cli'), encoding: 'utf8' });
   const tarball = (packed.stdout ?? '').trim().split('\n').filter(Boolean).at(-1);
   if (packed.status !== 0 || !tarball) return 1;
-  const args = ['cli/scripts/smoke.ts', '--tarball', path.join(pack, tarball), ...(kind === 'update' ? ['--adopt', '--update', '--verify'] : ['--adopt', '--verify'])];
+  const args = ['cli/scripts/smoke.ts', '--tarball', path.join(pack, tarball), ...(kind === 'create' ? ['--create', '--created-report'] : kind === 'update' ? ['--adopt', '--update', '--verify'] : ['--adopt', '--verify'])];
   return run(`smoke: the consumer path (${kind})`, process.execPath, args, { ...process.env, CI: 'true' });
 }
 

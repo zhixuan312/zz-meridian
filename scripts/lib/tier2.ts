@@ -4,8 +4,12 @@
  * `out/perf-record.json`; the committed history, `scripts/perf-history.json`, holds the last five releases and is what a
  * run compares against. Without it (a project, or this repository before its first release) the seed is today's budgets.
  */
+import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
+
+import { byChange, commitsTouching, pageGraph } from './attribution.ts';
 
 /** What a value measures, which decides the line it is flagged against. */
 export type Kind = 'timing' | 'second' | 'cls' | 'size';
@@ -146,3 +150,55 @@ export function staleBaseline(history: History | null, previousTag: string | und
   const tag = previousTag.replace(/^v/, '');
   return latest === tag ? undefined : `baseline is ${latest}, the previous release is ${previousTag}; the comparison is against an older release`;
 }
+
+/** The Meridian version a project runs: the manifest's, else the project's own package.json. Never `cli/`, which a project does not have. */
+export function projectVersion(root: string): string {
+  try {
+    const manifest = path.join(root, '.meridian', 'manifest.json');
+    if (fs.existsSync(manifest)) {
+      const v = (JSON.parse(fs.readFileSync(manifest, 'utf8')) as { version?: string }).version;
+      if (v) return v;
+    }
+    return (JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8')) as { version?: string }).version ?? 'unknown';
+  } catch { return 'unknown'; }
+}
+
+/**
+ * Writes the run's record (out/perf-record.json) and returns the table and by-change lines. It is reporting, not a check:
+ * the caller wraps it so nothing it meets — a project that is not a git repository, a missing app folder, an unreadable
+ * history — can fail the run.
+ */
+export async function reportRun({ root, values, seed, previousTag }: { root: string; values: Value[]; seed: Seed; previousTag?: string }): Promise<{ lines: string[]; flagged: string[] }> {
+  if (!values.length) return { lines: [], flagged: [] };
+  const history = readHistory(root);
+  const { rows, baselineVersion, seeded } = compare(history, values, seed);
+  const lines = table(rows, baselineVersion, seeded);
+  const stale = staleBaseline(history, previousTag);
+  if (stale) lines.push(`warn tier2: ${stale}`);
+  let section: unknown[] = [];
+  try {
+    const graph = pageGraph(root);
+    const since = history?.releases[0]?.commit;
+    const deltas = rows.filter((r) => r.changePct !== null).map((r) => ({ page: r.page.split(' ')[0]!, check: r.check, unit: r.unit, delta: Math.round((r.now - (r.previous ?? r.now)) * 100) / 100 }));
+    const commits = since ? commitsTouching(root, since, [...new Set(graph.pages.flatMap((p) => graph.modules.get(p) ?? []))]) : [];
+    section = byChange(graph, commits, deltas);
+    if (section.length) {
+      lines.push("tier 2 by change — each row is the page's delta, not this commit's share:");
+      for (const c of section as { sha: string; subject: string; pages: { page: string; shared: boolean }[] }[]) lines.push(`  ${c.sha} ${c.subject}: ${c.pages.map((p) => `${p.page}${p.shared ? ' (shared attribution)' : ''}`).join(', ')}`);
+    }
+  } catch { /* a project that is not a git repository has no commits to attribute; the table still stands */ }
+  writeRecord(root, { version: projectVersion(root), commit: commitOf(root), date: new Date().toISOString(), host: host(), values, table: table(rows, baselineVersion, seeded), byChange: section });
+  return { lines, flagged: rows.filter((r) => r.flagged).map((r) => `${r.check} ${r.page}`) };
+}
+
+/** The run's report, and never a failure: an error becomes a warn line and the Tier 1 verdict stands. */
+export async function reportOrWarn(opts: Parameters<typeof reportRun>[0]): Promise<{ lines: string[]; flagged: string[] }> {
+  try { return await reportRun(opts); }
+  catch (e) { return { lines: [`warn tier2: could not report: ${(e as Error).message}`], flagged: [] }; }
+}
+
+/** The commit the run measured, when the checkout is a repository. */
+function commitOf(root: string): string {
+  try { return execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(); } catch { return ''; }
+}
+const host = (): string => os.hostname();

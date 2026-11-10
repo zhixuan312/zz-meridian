@@ -854,16 +854,30 @@ if (args.includes('--create')) {
   check(text('next.config.ts').includes("'/api/assistant': ['./docs/brief.md']"), "next.config.ts still traces docs/brief.md for /api/assistant");
   const createOffenders = unmanaged(JSON.parse(text('.meridian/manifest.json')));
   check(JSON.parse(text('.meridian/manifest.json')).version === VERSION && createOffenders.length === 0, 'the create manifest is the running version and holds only managed paths', createOffenders.join('\n'));
-  const t0 = performance.now();
-  const t = sh(pm, ['run', 'test:release'], dir);
-  console.log(`     test:release (created, ${secs(performance.now() - t0)}s)`);
-  // The cause, not the tail: the last 40 lines of stderr hid it in run 42646698631. The whole output goes to out/,
-  // which the release and weekly consumer jobs upload; the verdict and FAIL lines go to the job log.
-  if (t.status === 0) check(true, `${pm} run test:release passes in the new dashboard`);
-  else {
-    const files = writeNestedRun(path.join(ROOT, 'out'), 'consumer-test-release', t);
-    check(false, `${pm} run test:release passes in the new dashboard`, `the full output is in ${files.map((f) => `out/${f}`).join(' and ')}`);
-    console.log(causeLines(t.stdout, t.stderr).join('\n') || 'no test:release verdict or FAIL line in the output');
+  // A created project's own release suite by default. `--created-report` runs the shipped reporting in this project
+  // instead — the step that once read `cli/package.json` and crashed every project's release — in about a second rather
+  // than the created dashboard's whole suite, or the 20-sample protocol a CI=true `test:t2` adds (32 minutes).
+  if (args.includes('--created-report')) {
+    const t = Date.now();
+    const report = sh(process.execPath, ['--experimental-strip-types', '-e', `import('./scripts/lib/tier2.ts').then(async (m) => { const r = await m.reportOrWarn({ root: process.cwd(), values: [{ check: 'vitals.lcp', page: '/', unit: 's', value: 1 }], seed: { 'vitals.lcp': 2.5 }, previousTag: process.env.PREVIOUS_TAG }); console.log(r.lines.join('\\n')); if (r.lines.some((l) => l.startsWith('warn tier2: could not report'))) process.exit(1); })`], dir);
+    console.log(`     report (created, ${secs(Date.now() - t)}s)`);
+    const record = (() => { try { return JSON.parse(read(dir, 'out/perf-record.json')); } catch { return null; } })();
+    check(report.status === 0, 'the created project\'s shipped reporting writes its table and record', report.stdout + report.stderr);
+    check(record !== null && typeof record.version === 'string' && Array.isArray(record.values) && record.values.length === 1, 'the created report names this project\'s Meridian version', JSON.stringify(record)?.slice(0, 400));
+  }
+  const createdSuite = args.includes('--created-t2') ? 'test:t2' : args.includes('--created-report') ? '' : 'test:release';
+  if (createdSuite) {
+    const t0 = performance.now();
+    const t = sh(pm, ['run', createdSuite], dir);
+    console.log(`     ${createdSuite} (created, ${secs(performance.now() - t0)}s)`);
+    // The cause, not the tail: the last 40 lines of stderr hid it in run 42646698631. The whole output goes to out/,
+    // which the release and weekly consumer jobs upload; the verdict and FAIL lines go to the job log.
+    if (t.status === 0) check(true, `${pm} run ${createdSuite} passes in the new dashboard`);
+    else {
+      const files = writeNestedRun(path.join(ROOT, 'out'), 'consumer-test-release', t);
+      check(false, `${pm} run ${createdSuite} passes in the new dashboard`, `the full output is in ${files.map((f) => `out/${f}`).join(' and ')}`);
+      console.log(causeLines(t.stdout, t.stderr).join('\n') || 'no test:release verdict or FAIL line in the output');
+    }
   }
 }
 

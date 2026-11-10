@@ -27,7 +27,10 @@ describe('the consumer smoke a change owes', () => {
     const root = project(true);
     try {
       expect(consumerSmokeKind({ root, changed: ['cli/src/migrations.ts'] })).toBe('update');
-      expect(consumerSmokeKind({ root, changed: ['scripts/lib/update-session.ts'] })).toBe('update');
+      // The shipped runner and its libraries run inside every project's test:release: only a created project proves them.
+      expect(consumerSmokeKind({ root, changed: ['scripts/test-run.ts'] })).toBe('create');
+      expect(consumerSmokeKind({ root, changed: ['scripts/lib/tier2.ts'] })).toBe('create');
+      expect(consumerSmokeKind({ root, changed: ['scripts/lib/update-session.ts'] })).toBe('create');
       expect(consumerSmokeKind({ root, changed: ['scripts/navigate.ts'] })).toBe('verify');
       expect(consumerSmokeKind({ root, changed: ['docs/testing.md', 'CHANGELOG.md'] })).toBeNull();
       expect(consumerSmokeKind({ root, changed: [] })).toBeNull();
