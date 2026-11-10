@@ -7,6 +7,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ArrowRight, CornerDownLeft, Monitor, Moon, Search, Sun } from 'lucide-react';
 import type { NavGroup } from '@/app.config';
 import { cn } from '@/lib/cn';
+import { rank } from '@/lib/rank';
 import { usePreferences } from '@/components/base/providers';
 import { Kbd } from '@/components/ui/kbd';
 import { parentOf } from '@/components/patterns/rail/trail';
@@ -16,7 +17,7 @@ export type Command = { id: string; group: string; label: string; hint?: string;
 
 /**
  * Every destination and every global action behind one keystroke (⌘K or Ctrl K). Type to filter; the arrow keys
- * move, Enter runs, Escape closes. Matches are ranked by where the query starts, then by order.
+ * move, Enter runs, Escape closes. Matches are ranked by `rank` (src/lib/rank.ts), the same function the Combobox uses.
  */
 export function CommandPalette({ nav }: { /** Every destination the rail offers, one "Go to" each: pass the same groups as the Rail. */ nav: NavGroup[] }) {
   const [open, setOpen] = useState(false);
@@ -61,15 +62,8 @@ export function CommandPalette({ nav }: { /** Every destination the rail offers,
     [nav, router, leave, set],
   );
 
-  const shown = useMemo(() => {
-    const s = q.trim().toLowerCase();
-    if (!s) return commands;
-    return commands
-      .map((c, i) => ({ c, i, p: c.label.toLowerCase().indexOf(s) }))
-      .filter((x) => x.p >= 0 || (x.c.hint ?? '').toLowerCase().includes(s))
-      .sort((a, b) => (a.p < 0 ? 99 : a.p) - (b.p < 0 ? 99 : b.p) || a.i - b.i)
-      .map((x) => x.c);
-  }, [q, commands]);
+  // The same filter and rank the Combobox uses (src/lib/rank.ts), so a person who types in either finds the same order.
+  const shown = useMemo(() => rank(commands, q), [q, commands]);
 
   useEffect(() => {
     list.current?.querySelector(`[data-index="${at}"]`)?.scrollIntoView({ block: 'nearest' });

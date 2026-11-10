@@ -68,4 +68,4 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 </Popover>
 ```
 
-`PopoverClose` is also exported, for a control that closes the panel as it acts: the preview's Apply is one (`<PopoverClose asChild>`). `POPOVER_CONTENT` is the surface's class list, for static mocks.
+`PopoverClose` is also exported, for a control that closes the panel as it acts: the preview's Apply is one (`<PopoverClose asChild>`). `POPOVER_CONTENT` is the surface's class list, for static mocks. `PopoverAnchor` positions a panel against a control that is not a toggling trigger — the Combobox's field, which opens on typing and keeps focus while the list is open.

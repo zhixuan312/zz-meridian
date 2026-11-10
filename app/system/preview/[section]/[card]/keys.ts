@@ -16,6 +16,7 @@ export const PREVIEW_KEYS: string[] = [
   'components/button',
   'components/card',
   'components/checkbox',
+  'components/combobox',
   'components/copy-field',
   'components/delta',
   'components/dialog',

@@ -11,6 +11,7 @@ import { Records } from '@/components/templates/records';
 import { Badge, type Tone } from '@/components/ui/badge';
 import { Banner } from '@/components/ui/banner';
 import { Button } from '@/components/ui/button';
+import { Combobox } from '@/components/ui/combobox';
 import { Dialog, DialogClose, DialogContent } from '@/components/ui/dialog';
 import { Field } from '@/components/ui/field';
 import { IconButton } from '@/components/ui/icon-button';
@@ -259,7 +260,7 @@ export function TicketsView({ rows, now, revisions, may = { create: true, update
               {(p) => <Select {...p} value={draft.priority} onValueChange={(priority) => setDraft({ ...draft, priority: priority as Ticket['priority'] })} options={choices(['high', 'normal', 'low'])} />}
             </Field>
             <Field label="Assignee">
-              {(p) => <Select {...p} value={draft.assigneeId ?? NOBODY} onValueChange={(id) => setDraft({ ...draft, assigneeId: id === NOBODY ? null : id })} options={[{ value: NOBODY, label: 'Nobody' }, ...assignees.map((a) => ({ value: a.id, label: a.name }))]} />}
+              {(p) => <Combobox {...p} value={draft.assigneeId ?? NOBODY} onValueChange={(id) => setDraft({ ...draft, assigneeId: id === NOBODY ? null : id })} options={[{ value: NOBODY, label: 'Nobody' }, ...assignees.map((a) => ({ value: a.id, label: a.name }))]} placeholder="Find a person" />}
             </Field>
             <Field label="Summary" optional>
               {(p) => <Textarea {...p} value={draft.summary} onChange={(e) => setDraft({ ...draft, summary: e.target.value })} placeholder="What is wrong, and what is known so far" />}

@@ -20,6 +20,7 @@ export const CARDS: Card[] = [
   { id: 'button', layer: 2, section: 'components', dir: 'src/components/ui/button', Preview: dynamic(() => import('@/components/ui/button/preview')) },
   { id: 'card', layer: 2, section: 'components', dir: 'src/components/ui/card', Preview: dynamic(() => import('@/components/ui/card/preview')) },
   { id: 'checkbox', layer: 2, section: 'components', dir: 'src/components/ui/checkbox', Preview: dynamic(() => import('@/components/ui/checkbox/preview')) },
+  { id: 'combobox', layer: 2, section: 'components', dir: 'src/components/ui/combobox', Preview: dynamic(() => import('@/components/ui/combobox/preview')) },
   { id: 'copy-field', layer: 2, section: 'components', dir: 'src/components/ui/copy-field', Preview: dynamic(() => import('@/components/ui/copy-field/preview')) },
   { id: 'delta', layer: 2, section: 'components', dir: 'src/components/ui/delta', Preview: dynamic(() => import('@/components/ui/delta/preview')) },
   { id: 'dialog', layer: 2, section: 'components', dir: 'src/components/ui/dialog', Preview: dynamic(() => import('@/components/ui/dialog/preview')) },

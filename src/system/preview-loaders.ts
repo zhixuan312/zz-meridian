@@ -20,6 +20,7 @@ export const PREVIEW_LOADERS: Record<string, () => Promise<{ default: ComponentT
   'components/button': () => import('@/components/ui/button/preview'),
   'components/card': () => import('@/components/ui/card/preview'),
   'components/checkbox': () => import('@/components/ui/checkbox/preview'),
+  'components/combobox': () => import('@/components/ui/combobox/preview'),
   'components/copy-field': () => import('@/components/ui/copy-field/preview'),
   'components/delta': () => import('@/components/ui/delta/preview'),
   'components/dialog': () => import('@/components/ui/dialog/preview'),
