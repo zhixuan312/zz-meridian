@@ -12,7 +12,7 @@ const doc = fs.readFileSync(path.join(ROOT, 'docs/testing.md'), 'utf8');
 
 const SECTIONS = ['The kinds', 'The tiers', 'When each runs', 'Rules', 'Basis', 'The classification'];
 const COMMANDS = ['pnpm test:t1', 'pnpm test:t2', 'pnpm test:release'];
-const RULES = ['Quiet machine', 'Fixed means', 'Limits', 'Once per commit', 'Flaky is red', 'Releases'];
+const RULES = ['Quiet machine', 'Fixed means', 'Limits, and the flag line', 'Once per commit', 'Flaky is red', 'Releases'];
 const WORKFLOWS = ['.github/workflows/release.yml', '.github/workflows/weekly.yml'];
 const TIERS = ['1', '2', '3'];
 

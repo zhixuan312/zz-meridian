@@ -73,6 +73,13 @@ describe('the release workflow', () => {
     expect(j.get('publish')).toMatch(/^    environment: npm\b/m);
   });
 
+  it('carries the gates\' Tier 2 record to the Release and names its baseline', () => {
+    const j = jobs();
+    expect(j.get('gates')).toContain('PREVIOUS_TAG');
+    expect(j.get('release')).toMatch(/^          name: release-test$/m);
+    expect(j.get('release')).toContain('/tmp/release-out/perf-record.json');
+  });
+
   it("keeps a failed consumer run's own output, so a red names its cause", () => {
     const consumer = jobs().get('consumer')!;
     expect(consumer).toMatch(/^      - uses: actions\/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7\.0\.1$/m);

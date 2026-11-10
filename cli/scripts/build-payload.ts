@@ -21,7 +21,7 @@ const worktree = process.argv.includes('--worktree');
 // which a product replaces: shipped, either would fail its type check or its tests. Every top-level tests/cli-* and
 // tests/deep-* file stays out, .ts and .tsx alike. The fixtures under scripts/fixtures/ serve those tests alone and import
 // the template's own team-owned starters. The deep-* tests drive those fixtures in headless Chrome.
-export const PAYLOAD_EXCLUDE = /^(cli\/|\.github\/|\.claude\/|\.agents\/|\.mma\/|out\/|node_modules\/|scripts\/fixtures\/|tests\/(cli|deep)-[^/]*\.tsx?$|.*\.tsbuildinfo$|(Dockerfile|captain-definition|\.dockerignore)$)|(?:^|\/)\.env(?!\.example$)[^/]*(?:\/|$)/;
+export const PAYLOAD_EXCLUDE = /^(cli\/|\.github\/|\.claude\/|\.agents\/|\.mma\/|out\/|node_modules\/|scripts\/fixtures\/|tests\/(cli|deep)-[^/]*\.tsx?$|scripts\/perf-history\.json$|\.nvmrc$|.*\.tsbuildinfo$|(Dockerfile|captain-definition|\.dockerignore)$)|(?:^|\/)\.env(?!\.example$)[^/]*(?:\/|$)/;
 
 if (import.meta.main) {
   fs.rmSync(OUT, { recursive: true, force: true });
@@ -34,7 +34,11 @@ if (import.meta.main) {
   let from = ROOT;
   let files: string[];
   if (worktree) {
-    files = execFileSync('git', ['ls-files', '-z'], { cwd: ROOT }).toString('utf8').split('\0').filter(Boolean);
+    // The tracked files and the new, untracked source files: a change under review has both, and a release built from
+    // HEAD has every file committed before its tarball is made.
+    const tracked = execFileSync('git', ['ls-files', '-z'], { cwd: ROOT }).toString('utf8').split('\0').filter(Boolean);
+    const fresh = execFileSync('git', ['ls-files', '--others', '--exclude-standard', '-z'], { cwd: ROOT }).toString('utf8').split('\0').filter(Boolean);
+    files = [...new Set([...tracked, ...fresh])];
   } else {
     const tar = path.join(STAGE, 'head.tar');
     fs.writeFileSync(tar, execFileSync('git', ['archive', '--format=tar', 'HEAD'], { cwd: ROOT, maxBuffer: 256 * 1024 * 1024 }));

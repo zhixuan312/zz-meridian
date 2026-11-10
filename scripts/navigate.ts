@@ -57,6 +57,7 @@ import { DEVICES, Fail, METRICS, PREFETCH_WAIT, drawerRoutes, journey, journeySt
 import { isPrefetch, prefetchProblems } from './lib/sizes.ts';
 import { headroom, judge, thin } from './lib/timing.ts';
 import { holdArgs } from './lib/args.ts';
+import { recordPart } from './lib/tier2.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const args = process.argv.slice(2);
@@ -70,7 +71,7 @@ const KIB = 1024;
 // ---- the retake rule, per route and device ----
 
 type Verdict = 'pass' | 'fail' | 'not-configured' | 'not-run';
-type Reported = { ms: number | null; limit?: number; verdict: Verdict; reason?: string };
+type Reported = { ms: number | null; limit?: number; verdict: Verdict; reason?: string; samples?: number[] };
 type Line = {
   route: string;
   device: Device;
@@ -82,6 +83,8 @@ type Line = {
   prefetchCapped: boolean;
   noisy: boolean;
   problems: string[];
+  /** A time past its budget: reported, never a failure (Tier 2, docs/testing.md). */
+  overBudget: string[];
   /** What the journey pressed to leave its start: the rail's link, or the workspace menu's item for `workspace`. */
   via: 'rail' | 'menu';
   workspace?: string;
@@ -101,7 +104,7 @@ const value = (m: Measured | null): number | null => (m && 'ms' in m ? m.ms : nu
 type From = { from: string; menu?: string };
 
 async function measure(page: Page, device: Device, start: From, route: string, check: NavigationCheck | undefined, limits: Record<Metric, number>): Promise<Line> {
-  const line: Line = { route, device, status: 'ok', shell: { ms: null, verdict: 'pass' }, data: { ms: null, verdict: 'not-configured' }, interactive: { ms: null, verdict: 'not-configured' }, noisy: false, prefetchCapped: false, problems: [], ...viaOf(start) };
+  const line: Line = { route, device, status: 'ok', shell: { ms: null, verdict: 'pass' }, data: { ms: null, verdict: 'not-configured' }, interactive: { ms: null, verdict: 'not-configured' }, noisy: false, prefetchCapped: false, problems: [], overBudget: [], ...viaOf(start) };
   const fill = (name: Metric, m: Measured | null) => {
     if (m === null) return;
     if ('fail' in m) {
@@ -133,8 +136,8 @@ async function measure(page: Page, device: Device, start: From, route: string, c
       const samples = all.map((s) => value(s[name])).filter((v): v is number => v !== null);
       if (samples.length !== 3) continue;
       const j = judge(samples, limits[name]);
-      line[name] = { ms: j.median, limit: limits[name], verdict: j.verdict === 'pass' ? 'pass' : 'fail', reason: j.verdict === 'pass' ? undefined : `median of ${samples.join(', ')} ms over ${limits[name]} ms` };
-      if (j.verdict !== 'pass') line.problems.push(`${name} ${j.median} ms over its ${limits[name]} ms budget (samples ${samples.join(', ')})`);
+      line[name] = { ms: j.median, limit: limits[name], verdict: 'pass', samples, reason: j.verdict === 'pass' ? undefined : `median of ${samples.join(', ')} ms over ${limits[name]} ms` };
+      if (j.verdict !== 'pass') line.overBudget.push(`${name} ${j.median} ms over its ${limits[name]} ms budget (samples ${samples.join(', ')})`);
       line.noisy ||= j.noisy;
     }
   }
@@ -150,7 +153,7 @@ const viaOf = (start: From | undefined): Pick<Line, 'via' | 'workspace'> => (sta
  */
 async function shellOnly(page: Page, device: Device, route: string): Promise<Line> {
   const reason = 'no navigation check is configured';
-  const line: Line = { route, device, status: 'warn', shell: { ms: null, verdict: 'not-run' }, data: { ms: null, verdict: 'not-configured', reason }, interactive: { ms: null, verdict: 'not-configured', reason }, noisy: false, prefetchCapped: false, problems: [], via: 'rail' };
+  const line: Line = { route, device, status: 'warn', shell: { ms: null, verdict: 'not-run' }, data: { ms: null, verdict: 'not-configured', reason }, interactive: { ms: null, verdict: 'not-configured', reason }, noisy: false, prefetchCapped: false, problems: [], overBudget: [], via: 'rail' };
   const loaded = await loadShell(page, device, route, base);
   if ('fail' in loaded) {
     const why = `${loaded.fail.kind}: ${loaded.fail.message}`;
@@ -171,7 +174,9 @@ const percent = (r: { ms: number; limit: number }) => `${Math.floor(headroom(r.m
 
 function finish(line: Line): Line {
   line.thin = METRICS.flatMap((name) => { const r = line[name]; return judged(r) && thin(r.ms, r.limit) ? [`${name} ${Math.round(r.ms)} ms leaves ${percent(r)} of its ${r.limit} ms budget`] : []; });
-  line.status = line.problems.length ? 'FAIL' : line.noisy || line.thin.length || line.data.verdict === 'not-configured' || line.interactive.verdict === 'not-configured' ? 'warn' : 'ok';
+  // A function problem — a link that does not work, a page that never becomes ready, a wrong result — is red. A time past
+  // its budget is reported with its numbers and never fails the run.
+  line.status = line.problems.length ? 'FAIL' : line.noisy || line.thin.length || line.overBudget.length || line.data.verdict === 'not-configured' || line.interactive.verdict === 'not-configured' ? 'warn' : 'ok';
   return line;
 }
 
@@ -187,7 +192,8 @@ const text = (l: Line): string =>
   + (l.via === 'menu' ? ` · through the workspace menu (${l.workspace})` : '')
   + (l.prefetched === undefined ? '' : l.prefetched === 0 ? ' · not prefetched' : ` · prefetched ${l.prefetched} time(s) before the press`)
   + (l.thin?.length ? ` · ${l.thin.join('; ')}` : '')
-  + (l.problems.length ? ` · ${l.problems.join('; ')}` : '');
+  + (l.problems.length ? ` · ${l.problems.join('; ')}` : '')
+  + (l.overBudget.length ? ` · ${l.overBudget.join('; ')}` : '');
 
 // ---- prefetch ----
 
@@ -285,6 +291,8 @@ async function main(): Promise<number> {
   }
 
   const lines: Line[] = [];
+  /** The timed values this run measured, recorded for the run's Tier 2 table. */
+  const values: { check: string; page: string; unit: 'ms'; value: number; samples?: number[] }[] = [];
   /** What this run reported as not configured: routes without a navigation check, and a prefetch budget that is not the project's promise. */
   const unrun: string[] = [];
   let prefetch: { desktopKiB?: number; phoneClosedKiB?: number } | undefined;
@@ -321,7 +329,7 @@ async function main(): Promise<number> {
         } catch (e) {
           // The starting page never loading is a failure of this route and device, not of the run.
           const reason = e instanceof Fail ? `${e.kind}: ${e.message}` : (e as Error).message;
-          line = finish({ route, device, status: 'FAIL', shell: { ms: null, verdict: 'fail', reason }, data: { ms: null, verdict: 'not-run' }, interactive: { ms: null, verdict: 'not-run' }, noisy: false, prefetchCapped: false, problems: [reason], ...viaOf(start) });
+          line = finish({ route, device, status: 'FAIL', shell: { ms: null, verdict: 'fail', reason }, data: { ms: null, verdict: 'not-run' }, interactive: { ms: null, verdict: 'not-run' }, noisy: false, prefetchCapped: false, problems: [reason], overBudget: [], ...viaOf(start) });
         }
         if (!check) {
           line.data = { ms: null, verdict: 'not-configured', reason: 'no navigation check is configured' };
@@ -330,8 +338,13 @@ async function main(): Promise<number> {
         }
         lines.push(line);
         console.log(text(line));
+        for (const name of METRICS) {
+          const r = line[name];
+          if (r.ms !== null && r.limit !== undefined) values.push({ check: `nav.${name}`, page: `${route} ${device}`, unit: 'ms', value: r.ms, ...(r.samples ? { samples: r.samples } : {}) });
+        }
       }
     }
+    recordPart(ROOT, 'navigate', values);
     // The phone-closed cap is judged only where the rail is in a drawer on a phone — the project's own promise, as the
     // template's is. A rail in the page prefetches what its visible links point at; that budget is not its promise.
     const phoneJudged = prefetchJudged('phoneClosed', starts);

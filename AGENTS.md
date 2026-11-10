@@ -24,8 +24,8 @@ Each repository has exactly three test commands, and every one takes no argument
 | Command | Runs |
 |---|---|
 | `pnpm test:t1` | the Tier 1 tests affected by the changes since the last green run (the import graph's `related` selection), eslint on the changed source files, and the type check |
-| `pnpm test:t2` | the affected Tier 2 checks too, and the affected Tier 1 tests with them |
-| `pnpm test:release` | every Tier 1 and Tier 2 test, once, with the timed browser suites, lint and the type check |
+| `pnpm test:t2` | the affected Tier 2 checks too, and the affected Tier 1 tests with them; a change under `cli/` or the update flow also runs the consumer smoke (`--adopt --update --verify`), any other `scripts/` change `--adopt --verify`, both with CI's flags |
+| `pnpm test:release` | every Tier 1 and Tier 2 test, once, with the timed browser suites, lint and the type check; Tier 2 values are recorded in `out/perf-record.json` and reported in a table against the release before, never as failures |
 
 - **Tier 2 is a convention.** `*.perf.test.ts(x)` is Tier 2 in any repository; here the broad browser sweeps (`scripts/browser.ts --depth fn`, in `test:t2`) and the timed runs (depth `timed`, in `test:release`) are Tier 2 too. Every other test under `tests/` is Tier 1. `tests/deep-*`, the browser-fixture tests of the checks, are Tier 1; their size keeps them out of the main run, and they run as their own stage. `test:t1` never runs a Tier 2 check.
 - **"Last green" is a marker.** After a passing run the command writes the commit to `out/last-green` (gitignored) and reads it before the next, so a branch's later runs stay small. A missing marker falls back to the diff against master; a checkout with neither marker nor a diff runs the whole tier.

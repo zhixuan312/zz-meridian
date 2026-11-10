@@ -38,6 +38,7 @@ import { pathToFileURL } from 'node:url';
 import { budgetsOf, limitsFor } from './lib/budgets.ts';
 import { launch, type Page } from './lib/chrome.ts';
 import { declaredNotRun, resolveCoverage, unconfiguredRoutes } from './lib/coverage.ts';
+import { recordPart } from './lib/tier2.ts';
 import { railRoutes } from './lib/routes.ts';
 import { summary } from './lib/timing.ts';
 import { DEVICES, Fail, drawerRoutes, journey, journeyStart, liveRefresh, METRICS, prepare, type Condition, type Device, type Metric, type NavConfig, workspaceHomes } from './lib/journey.ts';
@@ -177,6 +178,7 @@ async function main(): Promise<number> {
     return 2;
   }
 
+  const perfValues: { check: string; page: string; unit: 'ms'; value: number; samples: number[] }[] = [];
   let live: string[];
   let starts: string[];
   let drawn: Record<string, string[]>;
@@ -208,6 +210,8 @@ async function main(): Promise<number> {
           const series: Record<Metric, number[]> = { shell: [], data: [], interactive: [] };
           const drawer: number[] = [];
           const problems: string[] = [];
+          /** A p95 past its budget: reported with its numbers, never a failure (Tier 2). */
+          const overBudget: string[] = [];
           let refused = 0;
           let taken = 0;
           if (start === undefined) problems.push(condition === 'afterLive' ? 'no other rail route registers live data to start from' : 'the rail has no other route to start from');
@@ -236,15 +240,19 @@ async function main(): Promise<number> {
           if (!broken) {
             for (const name of METRICS) {
               const s = stats(series[name]);
-              if (s && s.p95 > limits[name]) problems.push(`${name} p95 ${Math.round(s.p95)} ms over its ${limits[name]} ms budget`);
+              if (s && s.p95 > limits[name]) overBudget.push(`${name} p95 ${Math.round(s.p95)} ms over its ${limits[name]} ms budget`);
             }
           }
+          for (const name of METRICS) {
+            const s = stats(series[name]);
+            if (s) perfValues.push({ check: `perf.${name}`, page: `${route} ${device} ${condition}`, unit: 'ms', value: Math.round(s.p95), samples: series[name] });
+          }
           const result: Result = {
-            route, device, condition, status: broken ? 'FAIL' : problems.length ? 'warn' : 'ok', samples: taken,
+            route, device, condition, status: broken ? 'FAIL' : overBudget.length ? 'warn' : 'ok', samples: taken,
             shell: stats(series.shell), data: stats(series.data), interactive: stats(series.interactive),
             drawerMedianMs: drawer.length ? summary(drawer).median : undefined,
             refused: condition === 'cold' ? refused : undefined,
-            problems,
+            problems: [...problems, ...overBudget],
           };
           results.push(result);
           console.log(text(result));
@@ -254,6 +262,7 @@ async function main(): Promise<number> {
   } finally {
     for (const page of Object.values(shared)) page?.close();
   }
+  recordPart(ROOT, 'perf', perfValues);
 
   const failed = results.some((r) => r.status === 'FAIL');
   const took = (Date.now() - started) / 1000;

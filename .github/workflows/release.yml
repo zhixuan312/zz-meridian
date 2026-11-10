@@ -161,6 +161,12 @@ jobs:
       # The browser-fixture tests are Tier 1 and run one file after another inside it: on this 4-CPU runner a Chrome
       # started beside them missed its start window. The Postgres suite reports `not run` here, because this job holds no
       # services.
+      # The release before this one, for the Tier 2 table's stale-baseline line (it warns, never fails).
+      - name: The release before this one
+        run: |
+          set -euo pipefail
+          PREV="$(npm view zz-meridian versions --json | node -e 'const v=JSON.parse(require("fs").readFileSync(0,"utf8")).filter((x)=>/^\d+\.\d+\.\d+$/.test(x));const n=(x)=>x.split(".").map(Number);const lt=(a,b)=>{const p=n(a),q=n(b);for(let i=0;i<3;i++)if(p[i]!==q[i])return p[i]<q[i];return false};console.log(v.filter((x)=>lt(x,process.env.VERSION)).sort((a,b)=>lt(a,b)?-1:1).at(-1)??"")')"
+          echo "PREVIOUS_TAG=v$PREV" >> "$GITHUB_ENV"
       - name: test:release
         run: |
           set -euo pipefail
@@ -299,6 +305,10 @@ jobs:
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 22
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: release-test
+          path: /tmp/release-out
 
       # A failure here is an unsuccessful release, not a rollback: the version stays published and untagged.
       - name: A consumer runs it from the registry, and it is the tested tarball with provenance
@@ -343,11 +353,23 @@ jobs:
           gh api "repos/$GITHUB_REPOSITORY/git/refs" -f "ref=refs/tags/v$VERSION" -f "sha=$GITHUB_SHA" >/dev/null
           echo "tagged v$VERSION at $GITHUB_SHA"
 
-      - name: GitHub Release, with the changelog section
+      - name: GitHub Release, with the changelog section and the Tier 2 table
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           awk -v v="$VERSION" 'index($0, "## [" v "]")==1 {on=1; next} /^## \[/ {if (on) exit} on' CHANGELOG.md > /tmp/notes.md
+          # The gates' own record: its table against the committed history, and the baseline's age. Reported, never a gate.
+          node -e '
+            const fs = require("fs");
+            const record = JSON.parse(fs.readFileSync("/tmp/release-out/perf-record.json", "utf8"));
+            const history = fs.existsSync("scripts/perf-history.json") ? JSON.parse(fs.readFileSync("scripts/perf-history.json", "utf8")) : { releases: [] };
+            const newest = history.releases[0]?.version;
+            const prev = (process.env.PREVIOUS_TAG || "").replace(/^v/, "");
+            const lines = ["", "### Performance (Tier 2, reported, never a gate)", ""];
+            lines.push(...(record.table || []).map((l) => `- ${l}`));
+            if (newest && prev && newest !== prev) lines.push("", `- warn: baseline is ${newest}, the previous release is ${prev}; the comparison is against an older release`);
+            fs.appendFileSync("/tmp/notes.md", lines.join("\n") + "\n");
+          ' 
           printf '\n---\nnpm: https://www.npmjs.com/package/zz-meridian/v/%s\n' "$VERSION" >> /tmp/notes.md
-          gh release create "v$VERSION" --title "v$VERSION" --notes-file /tmp/notes.md --verify-tag
+          gh release create "v$VERSION" --title "v$VERSION" --notes-file /tmp/notes.md --verify-tag /tmp/release-out/perf-record.json

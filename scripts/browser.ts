@@ -37,6 +37,7 @@ import { answers, bin, freePort, spawnNext } from './lib/bin.ts';
 import { CHROME, launch } from './lib/chrome.ts';
 import { fakeModelArgs, fakeModelProblems, type FakeModelStep } from './lib/config-hooks.ts';
 import { declaredNotRun, selectSmokeRoutes } from './lib/coverage.ts';
+import { clearParts, readParts } from './lib/tier2.ts';
 import { unsafeDataUrls } from './lib/data-url.ts';
 import { APP_DIR, railRoutes } from './lib/routes.ts';
 import { sampleSurfaces } from './lib/sample.ts';
@@ -209,7 +210,10 @@ function notRunEntries(out: string): string[] {
 
 function finish(): never {
   stopAll();
-  const state = { ran, failed, notRun, declared, seconds: Number(secs(started).toFixed(1)) };
+  // The Tier 2 values this run's suites recorded, gathered once: the run's table and record (test-run) read them.
+  const tier2 = readParts(ROOT).flatMap((p) => p.values);
+  clearParts(ROOT);
+  const state = { ran, failed, notRun, declared, tier2, seconds: Number(secs(started).toFixed(1)) };
   log(`browser: ${JSON.stringify(state)}`);
   process.exit(failed ? 1 : notRun.length ? 2 : 0);
 }
@@ -286,10 +290,10 @@ const sized = await run('scripts/sizes.ts', ['--base', `http://127.0.0.1:${serve
   for (const v of verdicts) {
     phase(v.status, `sizes: ${v.name}`, sized.took, v.detail);
     if (v.status === 'FAIL') { failed = true; beneath(sized.out.split('\n').filter((l) => l.startsWith('FAIL')).join('\n')); }
-    else if (v.status === 'warn' && v.name === 'html') {
-      // The HTML growth was not judged (a baseline recorded under another Node major, or none): a check that did not run.
-      const why = /growth not judged \((.*)\)/.exec(v.detail)?.[1];
-      notRun.push(`sizes: html${why ? ` (${why})` : ''}`);
+    else if (v.status === 'warn') {
+      // A figure past its budget, or growth not judged under this Node major: reported with its numbers, never a failure
+      // and never a not-run — the check ran and said what it measured (Tier 2, docs/testing.md).
+      ran.push(`sizes: ${v.name}`);
     }
     else if (v.status === 'not run') {
       // A size check left unrun because the baseline is the release's, not the project's, is the project's own

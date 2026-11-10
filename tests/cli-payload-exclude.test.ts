@@ -34,6 +34,34 @@ describe('the payload exclusion', () => {
     }
   });
 
+  it('includes an untracked source file in the worktree payload, and still leaves excluded paths out', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'meridian-payload-worktree-'));
+    try {
+      const put = (rel: string, bytes: string | Buffer) => {
+        fs.mkdirSync(path.dirname(path.join(root, rel)), { recursive: true });
+        fs.writeFileSync(path.join(root, rel), bytes);
+      };
+      for (const rel of ['cli/scripts/build-payload.ts', 'cli/src/files.ts', 'cli/src/jsonc.ts', 'cli/package.json', 'scripts/lib/update-session.ts', 'scripts/lib/jsonc.ts']) {
+        put(rel, fs.readFileSync(path.join(ROOT, rel)));
+      }
+      put('package.json', '{"type":"module"}');
+      put('scripts/navigate.ts', 'export const shipped = true;\n');
+      execFileSync('git', ['init', '-q'], { cwd: root });
+      execFileSync('git', ['add', '-f', '.'], { cwd: root });
+      // Written after the add, so git does not track them: a change under review, not a committed release.
+      put('scripts/lib/untracked-probe.ts', 'export const probe = true;\n');
+      put('.nvmrc', '22\n');
+      put('scripts/perf-history.json', '{ "releases": [] }\n');
+      execFileSync(process.execPath, ['cli/scripts/build-payload.ts', '--worktree'], { cwd: root });
+      expect(fs.existsSync(path.join(root, 'cli/payload/scripts/lib/untracked-probe.ts'))).toBe(true);
+      expect(fs.readFileSync(path.join(root, 'cli/payload/scripts/navigate.ts'), 'utf8')).toBe('export const shipped = true;\n');
+      expect(fs.existsSync(path.join(root, 'cli/payload/.nvmrc'))).toBe(false);
+      expect(fs.existsSync(path.join(root, 'cli/payload/scripts/perf-history.json'))).toBe(false);
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   it('leaves out the deep-DOM tests and their fixtures', () => {
     for (const f of ['tests/deep-dom.test.ts', 'tests/deep-checks.test.ts', 'scripts/fixtures/deep/server.ts', 'scripts/fixtures/deep/expected.json', 'scripts/fixtures/deep/blind-d37f8a8.txt', 'scripts/fixtures/deep/README.md']) {
       expect(PAYLOAD_EXCLUDE.test(f), f).toBe(true);

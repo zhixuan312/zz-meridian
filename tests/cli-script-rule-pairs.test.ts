@@ -75,7 +75,7 @@ const lines = (run: Run, re: RegExp) => run.out.split('\n').filter((l) => re.tes
 const summaryOf = (r: Run) => JSON.parse(r.out.trim().split('\n').pop()!.replace(/^sizes: /, '')) as { status: string };
 
 // ── scripts/sizes.ts ─────────────────────────────────────────────────────────────────────────────────
-const SIZES_FILES = ['scripts/sizes.ts', 'scripts/lib/args.ts', 'scripts/lib/sizes.ts', 'scripts/lib/budgets.ts', 'scripts/lib/next-config.ts'];
+const SIZES_FILES = ['scripts/sizes.ts', 'scripts/lib/args.ts', 'scripts/lib/sizes.ts', 'scripts/lib/budgets.ts', 'scripts/lib/next-config.ts', 'scripts/lib/tier2.ts'];
 /** Incompressible bytes, so a page's gzipped size is its length. */
 const blob = (n: number) => {
   const parts: Buffer[] = [];
@@ -128,6 +128,11 @@ const refusal = (r: Run, re: RegExp) => {
   expect(r.out).toMatch(re);
   expect(r.status).toBe(1);
   expect(summaryOf(r).status).toBe('FAIL');
+};
+/** A Tier 2 value past its line: reported with its numbers, and the run still passes (docs/testing.md). */
+const reported = (r: Run, re: RegExp) => {
+  expect(r.out).toMatch(re);
+  expect(r.status).toBe(0);
 };
 const cleanOf = async (re: RegExp) => {
   const r = await sizesClean();
@@ -186,22 +191,22 @@ const SIZES_MAIN: Rule[] = [
   { id: 'a baseline of the wrong shape is refused', source: '${rel} must be ${SHAPE}',
     fail: async () => refusal(await sizesRun({ baseline: { method: 'x', routes: { '/': 0 } } }, null), /^FAIL\s+scripts\/verify\.baseline\.json must be \{ "method": string/m),
     pass: () => cleanOf(/must be \{/) },
-  { id: 'a route over the cap is reported and fails the run', source: 'for (const p of size.problems) lines.push(`FAIL',
-    fail: async () => { const r = await sizesRun({ ...HUGE, baseline: null }, null); refusal(r, /^FAIL\s+\/big: first-load JS 900 KiB over the 830 KiB cap/m); expect(summaryOf(r)).toMatchObject({ firstLoad: { status: 'FAIL' } }); },
+  { id: 'a route over the cap is reported, and the run still passes', source: 'for (const p of size.problems) lines.push(`warn',
+    fail: async () => { const r = await sizesRun({ ...HUGE, baseline: null }, null); reported(r, /^warn\s+\/big: first-load JS 900 KiB over the 830 KiB cap/m); expect(summaryOf(r)).toMatchObject({ firstLoad: { status: 'warn' } }); },
     pass: () => cleanOf(/first-load JS/) },
-  { id: 'a route that grew past its baseline fails the run', source: 'within ${budgets.firstLoadGrowthPct}% of the baseline',
-    fail: async () => refusal(await sizesRun(GROWN, null), /^FAIL\s+first-load 2 routes[\s\S]*^FAIL\s+\/: first-load JS grew 20\.0% over its baseline \(cap 5%\)/m),
+  { id: 'a route that grew past its baseline is reported, and the run still passes', source: 'within ${budgets.firstLoadGrowthPct}% of the baseline',
+    fail: async () => reported(await sizesRun(GROWN, null), /^warn\s+first-load 2 routes[\s\S]*^warn\s+\/: first-load JS grew 20\.0% over its baseline \(cap 5%\)/m),
     pass: async () => expect((await sizesClean()).out).toMatch(/^ok\s+first-load 2 routes, largest \/services 150 KiB · cap 830 KiB · growth within 5% of the baseline/m) },
-  { id: 'a page that grew past its HTML baseline fails the run', source: 'for (const p of html.problems) lines.push(`FAIL',
-    fail: async () => refusal(await sizesRun({}, { ...CLEAN_PAGES, '/services': { status: 200, bytes: KB(30) } }), /^FAIL\s+\/services: HTML grew 5\d\.\d% over its baseline \(cap 5%\)/m),
+  { id: 'a page that grew past its HTML baseline is reported, and the run still passes', source: 'for (const p of html.problems) lines.push(`warn',
+    fail: async () => reported(await sizesRun({}, { ...CLEAN_PAGES, '/services': { status: 200, bytes: KB(30) } }), /^warn\s+\/services: HTML grew 5\d\.\d% over its baseline \(cap 5%\)/m),
     pass: () => cleanOf(/HTML grew/) },
-  { id: 'a page over its absolute HTML cap fails the run', source: 'htmlProblems(got.sizes, budgets.htmlKb)',
-    fail: async () => refusal(await sizesRun({ config: 'export default { budgets: { htmlKb: { "/": 10 } } };\n' }), /^FAIL\s+\/: HTML 20 KiB over its 10 KiB cap/m),
+  { id: 'a page over its absolute HTML cap is reported, and the run still passes', source: 'htmlProblems(got.sizes, budgets.htmlKb)',
+    fail: async () => reported(await sizesRun({ config: 'export default { budgets: { htmlKb: { "/": 10 } } };\n' }), /^warn\s+\/: HTML 20 KiB over its 10 KiB cap/m),
     pass: () => cleanOf(/over its \d+ KiB cap/) },
-  { id: 'a held page that does not answer 200 is reported', source: 'but the route answered ${res.status}',
+  { id: 'a held page that does not answer 200 is reported', source: 'html.measured ?? []',
     fail: async () => refusal(await sizesRun({}, { ...CLEAN_PAGES, '/services': { status: 404, bytes: 10 } }), /^FAIL\s+\/services: its HTML is held, but the route answered 404/m),
     pass: () => cleanOf(/the route answered/) },
-  { id: 'a held page that cannot be fetched is reported', source: 'could not be fetched from ${base}',
+  { id: 'a held page that cannot be fetched is reported', source: 'html.measured ?? []',
     fail: async () => refusal(await sizesRun({}, 'http://127.0.0.1:1'), /^FAIL\s+\/: could not be fetched from http:\/\/127\.0\.0\.1:1 \(/m),
     pass: () => cleanOf(/could not be fetched/) },
   { id: 'first-load growth without a baseline is a warning, never a pass', source: 'not-configured (no scripts/verify.baseline.json)',
@@ -232,9 +237,9 @@ const SIZES_MAIN: Rule[] = [
       expect(r.out).toMatch(/^ok\s+wrote scripts\/verify\.baseline\.json: first-load of 2 routes, the HTML of 2 pages/m);
       expect(r.status).toBe(0);
     } },
-  { id: 'the exit code is 1 on any FAIL and 0 otherwise', source: 'return failed ? 1 : 0',
-    fail: async () => expect((await sizesRun({ ...HUGE, baseline: null }, null)).status).toBe(1),
-    pass: async () => expect((await sizesClean()).status).toBe(0) },
+  { id: 'the exit code is 1 on a FAIL and 0 on a Tier 2 warning', source: 'return failed ? 1 : 0',
+    fail: async () => expect((await sizesRun({ stats: null }, null)).status).toBe(1),
+    pass: async () => expect((await sizesRun({ ...HUGE, baseline: null }, null)).status).toBe(0) },
 ];
 
 // ── scripts/route-policy.ts ──────────────────────────────────────────────────────────────────────────
@@ -431,7 +436,7 @@ const CONTRAST: Rule[] = [
 // ── The registry, the cases, and the completeness scan ───────────────────────────────────────────────
 const SCRIPTS: Script[] = [
   { file: 'scripts/lib/sizes.ts', site: /throw new Error\(|problems\.push\(|KiB over its/, rules: SIZES_LIB },
-  { file: 'scripts/sizes.ts', site: /\bfail\(|problems\.push\(|lines\.push\(`FAIL|for \(const p of [a-z]+\.problems\) lines\.push|console\.log\(`(?:FAIL|warn)|not-configured \(|return failed|htmlProblems\(got/, rules: SIZES_MAIN },
+  { file: 'scripts/sizes.ts', site: /\bfail\(|lines\.push\(`FAIL|return failed|htmlProblems\(got/, rules: SIZES_MAIN },
   { file: 'scripts/route-policy.ts', site: /throw new Error\(|console\.error\(|console\.log\(`(?:dynamic route|empty shell)|process\.exit\(bad|r\.kind === 'dynamic'/, rules: POLICY },
   { file: 'scripts/contrast.ts', site: /throw new Error\(|fails\.push\(|of (?:PAIRS|MIXES)\) report|\$\{ok \? 'ok|chart palette: \$\{f\}|process\.exit\(fails/, rules: CONTRAST },
 ];

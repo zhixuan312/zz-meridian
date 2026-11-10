@@ -42,6 +42,7 @@ import { distDirOf } from './lib/next-config.ts';
 import { firstLoad, firstLoadProblems, htmlGrowthProblems, htmlNodeMismatch, htmlProblems, htmlRoutes, KIB, kib, sizeBaselineOwned } from './lib/sizes.ts';
 import verifyConfig from './verify.config.ts';
 import { holdArgs } from './lib/args.ts';
+import { recordPart } from './lib/tier2.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const BASELINE = path.join(ROOT, 'scripts/verify.baseline.json');
@@ -152,19 +153,21 @@ async function main(): Promise<number> {
   const size = firstLoadProblems(routes, { capKiB, growthPct: budgets.firstLoadGrowthPct, baseline: baseline?.firstLoad ?? null, capUnheldOnly: budgets.firstLoadKb === null });
   const largest = routes.reduce((a, b) => (b.bytes > a.bytes ? b : a), routes[0]);
   const lines: string[] = [];
-  const firstStatus: Status = size.problems.length ? 'FAIL' : size.growth === 'not-configured' ? 'warn' : 'ok';
-  lines.push(`${firstStatus === 'FAIL' ? 'FAIL   ' : firstStatus === 'warn' ? 'warn   ' : 'ok     '} first-load ${routes.length} routes, largest ${largest.route} ${kib(largest.bytes)} KiB · cap ${capKiB} KiB${budgets.firstLoadKb === null ? ' for a route the baseline does not hold' : ''}`
+  // Tier 2 is reported, never a gate: a route over its cap or a page grown past its allowance is a warn with its
+  // numbers; only a build or a baseline this check cannot read fails the run (a measurement that did not happen).
+  const firstStatus: Status = size.problems.length ? 'warn' : size.growth === 'not-configured' ? 'warn' : 'ok';
+  lines.push(`${firstStatus === 'warn' ? 'warn   ' : 'ok     '} first-load ${routes.length} routes, largest ${largest.route} ${kib(largest.bytes)} KiB · cap ${capKiB} KiB${budgets.firstLoadKb === null ? ' for a route the baseline does not hold' : ''}`
     // Two verdicts, never one word for both: a route may be over its cap and inside its allowance, or the reverse.
     + ` · growth ${size.growth === 'checked' ? (size.overAllowance ? `over ${budgets.firstLoadGrowthPct}% of the baseline` : `within ${budgets.firstLoadGrowthPct}% of the baseline`) : 'not-configured (no scripts/verify.baseline.json)'}`
     + ` · cap ${size.overCap ? 'exceeded' : 'held'}`);
-  for (const p of size.problems) lines.push(`FAIL    ${p}`);
+  for (const p of size.problems) lines.push(`warn    ${p}`);
 
   const capped = Object.keys(budgets.htmlKb);
   // A page the build no longer has (a created project leaves the Atlas out) is not measured: there is nothing to hold.
   const built = new Set(routes.map((r) => r.route));
   const held = Object.keys(baseline?.html ?? {}).filter((r) => built.has(r));
   const pages = [...new Set([...held, ...capped])].sort();
-  let html: { status: Status; sizes: Record<string, number>; growth?: 'checked' | 'not-configured'; overCap?: boolean; overAllowance?: boolean; reason?: string; unjudged?: string; problems: string[] };
+  let html: { status: Status; sizes: Record<string, number>; growth?: 'checked' | 'not-configured'; overCap?: boolean; overAllowance?: boolean; reason?: string; unjudged?: string; problems: string[]; measured?: string[] };
   if (!base) html = { status: 'not run', sizes: {}, reason: 'no app is running to measure', problems: [] };
   else {
     const got = await htmlSizes(pages, 'its HTML is held');
@@ -173,21 +176,30 @@ async function main(): Promise<number> {
     const unjudged = baseline?.html ? htmlNodeMismatch(baseline.htmlNode, NODE_MAJOR) : null;
     const grown = unjudged ? { problems: [], growth: 'not-configured' as const, overAllowance: false } : htmlGrowthProblems(got.sizes, { growthPct: budgets.htmlGrowthPct, baseline: baseline?.html ?? null });
     const caps = htmlProblems(got.sizes, budgets.htmlKb);
-    const problems = [...got.problems, ...grown.problems, ...caps];
-    html = { status: problems.length ? 'FAIL' : unjudged || grown.growth === 'not-configured' ? 'warn' : 'ok', sizes: got.sizes, growth: grown.growth, overCap: caps.length > 0, overAllowance: grown.overAllowance, ...(unjudged ? { unjudged } : {}), problems };
+    // A page that could not be measured (not 200, not fetched) is a failure of the check itself; growth and caps past
+    // their line are Tier 2 values, reported and never a failure.
+    const measured = got.problems;
+    const problems = [...grown.problems, ...caps];
+    html = { status: measured.length ? 'FAIL' : problems.length || unjudged || grown.growth === 'not-configured' ? 'warn' : 'ok', sizes: got.sizes, growth: grown.growth, overCap: caps.length > 0, overAllowance: grown.overAllowance, ...(unjudged ? { unjudged } : {}), problems, measured };
   }
   const largestPage = Object.entries(html.sizes).sort((a, b) => b[1] - a[1])[0];
   lines.push(html.status === 'not run'
     ? `not run html ${html.reason}`
-    : `${html.status === 'FAIL' ? 'FAIL   ' : html.status === 'warn' ? 'warn   ' : 'ok     '} html ${Object.keys(html.sizes).length} pages gzipped${largestPage ? `, largest ${largestPage[0]} ${(largestPage[1] / KIB).toFixed(1)} KiB` : ''}`
+    : `${html.status === 'warn' ? 'warn   ' : 'ok     '} html ${Object.keys(html.sizes).length} pages gzipped${largestPage ? `, largest ${largestPage[0]} ${(largestPage[1] / KIB).toFixed(1)} KiB` : ''}`
       + (html.unjudged ? ` · growth not judged (${html.unjudged})`
         : ` · growth ${html.growth === 'checked' ? (html.overAllowance ? `over ${budgets.htmlGrowthPct}% of the baseline` : `within ${budgets.htmlGrowthPct}% of the baseline`) : 'not-configured (no html in scripts/verify.baseline.json: node scripts/sizes.ts --write-baseline --base <url>)'}`)
       + ` · cap ${html.overCap ? 'exceeded' : 'held'}`
       + (capped.length ? ` · caps ${capped.map((r) => `${r} ${html.sizes[r] === undefined ? 'unmeasured' : `${(html.sizes[r] / KIB).toFixed(1)} KiB`} of ${budgets.htmlKb[r]}`).join(', ')}` : ''));
-  for (const p of html.problems) lines.push(`FAIL    ${p}`);
+  for (const p of html.measured ?? []) lines.push(`FAIL    ${p}`);
+  for (const p of html.problems) lines.push(`warn    ${p}`);
   lines.forEach((l) => console.log(l));
 
-  const failed = firstStatus === 'FAIL' || html.status === 'FAIL';
+  const failed = html.status === 'FAIL';
+  // Every figure is a Tier 2 value: recorded here, judged by the run's table against the release before.
+  recordPart(ROOT, 'sizes', [
+    ...routes.map((r) => ({ check: 'sizes.first-load', page: r.route, unit: 'KiB' as const, value: Math.round((r.bytes / KIB) * 100) / 100 })),
+    ...(html.sizes ? Object.entries(html.sizes).map(([page, bytes]) => ({ check: 'sizes.html', page, unit: 'KiB' as const, value: Math.round((bytes / KIB) * 100) / 100 })) : []),
+  ]);
   summary({
     status: failed ? 'FAIL' : firstStatus === 'warn' || html.status === 'warn' ? 'warn' : 'ok',
     firstLoad: { status: firstStatus, routes: routes.length, largest: { route: largest.route, kib: kib(largest.bytes) }, growth: size.growth, overCap: size.overCap, overAllowance: size.overAllowance, problems: size.problems },
