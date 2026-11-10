@@ -67,8 +67,10 @@ const record = (check: string, ms: number) => {
 // ---- processes this script starts, and only those ----
 
 const started: ChildProcess[] = [];
-const stopGroup = (c: ChildProcess) => { try { process.kill(-c.pid!, 'SIGTERM'); } catch { /* already gone */ } };
-process.on('exit', () => started.forEach(stopGroup));
+const stopGroup = (c: ChildProcess, signal: NodeJS.Signals = 'SIGTERM') => { try { process.kill(-c.pid!, signal); } catch { /* already gone */ } };
+// At exit nothing is waited for, so the group is killed outright: a graceful stop can outlive this process, and the
+// servers here are disposable.
+process.on('exit', () => started.forEach((c) => stopGroup(c, 'SIGKILL')));
 // An interrupted run does not emit 'exit' by itself, and the detached servers would outlive it.
 for (const sig of ['SIGINT', 'SIGTERM'] as const) process.on(sig, () => process.exit(sig === 'SIGINT' ? 130 : 143));
 async function serve(port: number): Promise<ChildProcess> {
@@ -78,14 +80,26 @@ async function serve(port: number): Promise<ChildProcess> {
   throw new Error(`the server on port ${port} did not start`);
 }
 
+/** Whether any process of this server's group is still running. */
+const groupAlive = (pid: number | undefined) => {
+  if (!pid) return false;
+  try { process.kill(-pid, 0); return true; } catch { return false; }
+};
 async function stopServer(server: ChildProcess, port: number) {
   stopGroup(server);
   // The port answers until the process is really gone; only then can the next one take it.
   for (let i = 0; i < 80; i++) {
-    if ((await status(port)) === null) return;
+    if ((await status(port)) === null) break;
     await sleep(100);
   }
-  throw new Error(`the server on port ${port} did not stop`);
+  if ((await status(port)) !== null) throw new Error(`the server on port ${port} did not stop`);
+  // A graceful stop closes the port and THEN waits for its open connections, and a tab's keep-alive sockets are open
+  // connections: the old process outlived its port for as long as a tab kept polling over them (measured 5 s and
+  // longer). The new process served the port while the old one went on answering that tab from its own store — one tab
+  // read a server the other tab never wrote to. A restart ends the process, and its connections end with it.
+  if (groupAlive(server.pid)) stopGroup(server, 'SIGKILL');
+  for (let i = 0; i < 50 && groupAlive(server.pid); i++) await sleep(100);
+  if (groupAlive(server.pid)) throw new Error(`the server on port ${port} is still running after it was killed`);
 }
 
 // ---- what the page records, from its first script on ----
@@ -93,7 +107,7 @@ async function stopServer(server: ChildProcess, port: number) {
 /** Wraps EventSource and fetch before the app runs, so a tab can say which hints it heard and how many refreshes it made. */
 const INSTRUMENT = `(() => {
   const w = window;
-  const live = w.__live = { born: Date.now(), opens: 0, errors: 0, events: [], actions: [], inFlight: 0, maxInFlight: 0, reads: { count: 0, inFlight: 0, max: 0 }, prefetches: { count: 0, inFlight: 0, max: 0 } };
+  const live = w.__live = { born: Date.now(), opens: 0, errors: 0, events: [], actions: [], inFlight: 0, maxInFlight: 0, reads: { count: 0, inFlight: 0, max: 0 }, prefetches: { count: 0, inFlight: 0, max: 0 }, watch: '', exchanges: [] };
   const Native = w.EventSource;
   if (Native) w.EventSource = class extends Native {
     constructor(url, init) {
@@ -127,17 +141,45 @@ const INSTRUMENT = `(() => {
     const kind = prefetch ? live.prefetches : live.reads;
     if (!action) { kind.count++; kind.inFlight++; kind.max = Math.max(kind.max, kind.inFlight); }
     const done = () => { if (action) live.inFlight--; else kind.inFlight--; };
-    return nativeFetch(input, init).finally(done);
+    const sent = nativeFetch(input, init);
+    // What the server answered a refresh with, kept for a failure to read: a status, and whether the body holds the name
+    // the case is waiting for. A read that has the row and a page that does not is the client's fault; a read without it
+    // is the server's.
+    const at = Date.now();
+    const keep = (entry) => { live.exchanges.push(entry); if (live.exchanges.length > 12) live.exchanges.shift(); };
+    if (action || read) sent.then(
+      (res) => {
+        // The entry itself is kept, not a copy: the body arrives after it is pushed and fills in bytes and has.
+        const entry = { kind: action ? 'action' : 'read', at, status: res.status, bytes: 0, has: false };
+        keep(entry);
+        res.clone().text().then((t) => { entry.bytes = t.length; entry.has = !!live.watch && t.includes(live.watch); }).catch(() => {});
+      },
+      () => keep({ kind: action ? 'action' : 'read', at, failed: true }),
+    );
+    return sent.finally(done);
   };
   live.reset = () => { live.events.length = 0; live.actions.length = 0; for (const k of [live.reads, live.prefetches]) { k.count = 0; k.max = k.inFlight; } live.maxInFlight = live.inFlight; };
 })()`;
 
-type Seen = { born: number; opens: number; errors: number; events: string[]; actions: number[]; inFlight: number; maxInFlight: number; reads: Requests; prefetches: Requests };
+type Seen = { born: number; opens: number; errors: number; events: string[]; actions: number[]; inFlight: number; maxInFlight: number; reads: Requests; prefetches: Requests; watch: string; exchanges: Exchange[] };
 /** One kind of request a tab made: how many, and the most at once. */
 type Requests = { count: number; inFlight: number; max: number };
+/** One refresh action or route read: what the server answered, and whether the body held the name being watched for. */
+type Exchange = { kind: 'action' | 'read'; at: number; status?: number; bytes?: number; has?: boolean; failed?: boolean };
 const seen = (page: Page) => page.eval<Seen>('window.__live');
 /** What a tab's stream and refreshes had done, for a failure to say. */
-const tally = async (page: Page) => { const s = await seen(page); return `age ${Date.now() - s.born} ms, opens ${s.opens}, errors ${s.errors}, hints heard [${s.events.join(',')}], refreshes ${s.actions.length}, ${s.inFlight} in flight`; };
+const tally = async (page: Page) => {
+  const s = await seen(page);
+  return `age ${Date.now() - s.born} ms, opens ${s.opens}, errors ${s.errors}, hints heard [${s.events.join(',')}], refresh actions ${s.actions.length} and route reads ${s.reads.count}, ${s.inFlight + s.reads.inFlight} in flight`;
+};
+/** What the server answered each refresh with, newest last: the status, and whether the body held the name waited for. */
+const exchange = async (page: Page, since: number) => {
+  const s = await seen(page);
+  const kept = s.exchanges.filter((x) => x.at >= since);
+  return kept.length
+    ? kept.map((x) => `${x.kind} ${x.failed ? 'failed' : `HTTP ${x.status}, ${x.has ? 'has the row' : 'no row'} (${x.bytes ?? '?'} bytes)`} at +${x.at - since} ms`).join('; ')
+    : `no refresh action or route read since +${since}`;
+};
 
 async function tab(): Promise<Page> {
   const page = await launch();
@@ -487,9 +529,15 @@ async function restart(t: Tabs) {
     if (gone === null) throw new Error(`B still showed the pre-restart member ${PATIENCE_MS} ms after the server was back`);
     const goneMs = gone - upAt;
     const after = name('restart-after');
+    // The instrument reports, for every refresh after this, whether the server's answer held this name.
+    await Promise.all([t.a, t.b].map((page) => page.eval(`if (window.__live) window.__live.watch = ${JSON.stringify(after)}`)));
     const sent = await invite(t.a, after);
     const arrived = await showing(t.b, [after], true, PATIENCE_MS);
-    if (arrived === null) throw new Error(`B did not show a write made after the restart within ${PATIENCE_MS} ms (${await tally(t.b)}; A ${await tally(t.a)})`);
+    if (arrived === null) {
+      const rows = (page: Page) => page.eval<string>(`deepQueryAll('tr').map((tr) => deepText(tr).replace(/\\s+/g, ' ').slice(0, 60)).filter((x) => x.includes(${JSON.stringify(run)})).join(' / ')`);
+      const messages = (page: Page) => page.eval<string>(`(document.body?.innerText ?? '').split('\\n').filter((l) => /Invitation|Change not made|Sign in|permission|Enter their|Name the/.test(l)).join(' / ')`);
+      throw new Error(`B did not show a write made after the restart within ${PATIENCE_MS} ms; A shows it: ${await t.a.eval<boolean>(`(document.body?.innerText ?? '').includes(${JSON.stringify(after)})`)}, A's rows ${await t.a.eval<number>(`deepQueryAll('tr').length`)}, B's ${await t.b.eval<number>(`deepQueryAll('tr').length`)}; this run's rows: A [${await rows(t.a)}] B [${await rows(t.b)}]; A's messages: ${await messages(t.a)}; B's messages: ${await messages(t.b)}; B's exchanges: ${await exchange(t.b, sent)}; A's exchanges: ${await exchange(t.a, sent)}; ${await tally(t.b)}; A ${await tally(t.a)}`);
+    }
     const afterMs = arrived - sent;
     record('live.restart-before', firstMs);
     record('live.restart-gone', goneMs);
