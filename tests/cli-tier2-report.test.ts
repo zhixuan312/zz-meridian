@@ -34,6 +34,13 @@ describe('a Tier 2 value against its baseline', () => {
     expect(moved.line).toContain('outside mean ±');
   });
 
+  it('lists a CLS that fell as better, never as a flag, though it moved past the absolute line', () => {
+    const history: History = { releases: [release('0.38.0', [{ check: 'vitals.cls', page: '/', unit: 'score', value: 0.1 }])] };
+    const row = compare(history, [{ check: 'vitals.cls', page: '/', unit: 'score', value: 0 }], seed).rows[0]!;
+    expect(row.flagged).toBe(false);
+    expect(row.improved).toBe(true);
+  });
+
   it('lists an improvement, and marks a value whose baseline came from the seed', () => {
     const history: History = { releases: [release('0.38.0', [lcp(1.0)])] };
     expect(compare(history, [lcp(0.6)], seed).rows[0]!.improved).toBe(true);

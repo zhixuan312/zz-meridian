@@ -113,7 +113,7 @@ export function compare(history: History | null, now: Value[], seed: Seed): { ro
     const abs = kind === 'size' ? Math.abs(delta) / (from || 1) : Math.abs(delta);
     const flagged = judgedSpread
       ? overSpread && (kind === 'size' ? abs >= PROVISIONAL.size.pct : abs >= minMove(kind))
-      : changePct !== null && (kind === 'cls' ? abs >= PROVISIONAL.cls.min : kind === 'size' ? changePct >= PROVISIONAL.size.pct * 100 : changePct >= PROVISIONAL.timing.pct * 100 && abs >= minMove(kind));
+      : changePct !== null && changePct > 0 && (kind === 'cls' ? abs >= PROVISIONAL.cls.min : kind === 'size' ? changePct >= PROVISIONAL.size.pct * 100 : changePct >= PROVISIONAL.timing.pct * 100 && abs >= minMove(kind));
     const improved = !flagged && changePct !== null
       && (kind === 'cls' ? changePct < 0 && abs >= PROVISIONAL.cls.min
         : kind === 'size' ? changePct <= -PROVISIONAL.size.pct * 100
