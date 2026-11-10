@@ -202,9 +202,9 @@ export const Combobox = forwardRef<HTMLInputElement, ComboboxProps>(function Com
           {name ? <input type="hidden" name={name} value={current ?? ''} /> : null}
         </div>
       </PopoverAnchor>
-      {/* The list is at most the panel height of a Select (18rem) AND no taller than the room on the side it opens on:
-          Radix reports that room in the variable, and taking all of it drew the list over the whole dialog when the
-          field sat low on the screen. */}
+      {/* A cap, and never more than the room Radix reports on the side it opens on: without the cap the field's position
+          decided the height, and low in a dialog the list took all the room above the trigger (about 700px at 1440) and
+          covered the dialog's title and every field above it. */}
       <PopoverContent
         id={listId}
         role="listbox"
