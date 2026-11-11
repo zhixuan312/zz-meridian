@@ -315,7 +315,7 @@ const MEASURE = `(() => {
   out.overlap = [...new Set(out.overlap)].slice(0, 8); out.truncated = [...new Set(out.truncated)].slice(0, 8); out.spills = [...new Set(out.spills)].slice(0, 8);
   // Headings descend one level at a time, so a screen reader's outline has no holes.
   // A specimen's headings are the card's own, at the level the card uses where it is placed, not the documentation page's.
-  const levels = [...document.querySelectorAll('h1,h2,h3,h4,h5,h6')].filter((h) => !h.closest('[aria-hidden="true"]') && !h.closest('[data-specimen]')).map((h) => +h.tagName[1]);
+  const levels = [...deepQueryAll('h1,h2,h3,h4,h5,h6')].filter((h) => !deepClosest(h, '[aria-hidden="true"]') && !deepClosest(h, '[data-specimen]')).map((h) => +h.tagName[1]);
   levels.forEach((l, i) => { if (i && l > levels[i - 1] + 1) out.headings.push('h' + levels[i - 1] + ' then h' + l); });
   out.focusless = [];
   // What each element looks like unfocused, so the focus check can tell a ring from a decoration that is always there.

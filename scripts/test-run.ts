@@ -430,6 +430,9 @@ async function affected(tier: 't1' | 't2'): Promise<number> {
   // the 20-sample protocol where CI is true. test:t1 never runs them, and says so by leaving the marker alone.
   const notRun: string[] = [];
   const declared: string[] = [];
+  // A machine with no Chrome cannot run the browser fixtures: that is missing evidence, reported as not run, and a run
+  // that leaves it out is never "every check passed".
+  if (deepNeeded && !deepRan) notRun.push('Tier 1 browser-fixture tests (no Chrome)');
   let browserTier2: Value[] = [];
   if (withTier2 && (ranWhole || touchesBrowserAll(changed))) {
     const perf = process.env.CI === 'true' && ranWhole;

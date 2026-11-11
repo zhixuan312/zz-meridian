@@ -185,7 +185,7 @@ async function main(): Promise<number> {
   const largestPage = Object.entries(html.sizes).sort((a, b) => b[1] - a[1])[0];
   lines.push(html.status === 'not run'
     ? `not run html ${html.reason}`
-    : `${html.status === 'warn' ? 'warn   ' : 'ok     '} html ${Object.keys(html.sizes).length} pages gzipped${largestPage ? `, largest ${largestPage[0]} ${(largestPage[1] / KIB).toFixed(1)} KiB` : ''}`
+    : `${html.status === 'FAIL' ? 'FAIL   ' : html.status === 'warn' ? 'warn   ' : 'ok     '} html ${Object.keys(html.sizes).length} pages gzipped${largestPage ? `, largest ${largestPage[0]} ${(largestPage[1] / KIB).toFixed(1)} KiB` : ''}`
       + (html.unjudged ? ` · growth not judged (${html.unjudged})`
         : ` · growth ${html.growth === 'checked' ? (html.overAllowance ? `over ${budgets.htmlGrowthPct}% of the baseline` : `within ${budgets.htmlGrowthPct}% of the baseline`) : 'not-configured (no html in scripts/verify.baseline.json: node scripts/sizes.ts --write-baseline --base <url>)'}`)
       + ` · cap ${html.overCap ? 'exceeded' : 'held'}`

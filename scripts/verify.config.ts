@@ -173,6 +173,9 @@ const ROLE_ROUTES = ['/keys', '/operations-tickets', '/members', '/settings'];
 const config: VerifyConfig = {
   // Ids from the sample (the requests of src/system/fixtures/sample.ts, the customers of company.ts); tests/cli-sample.test.ts fails if one stops being what it says.
   detailRoutes: [
+    // A dynamic route the rail links to: discover() leaves dynamic segments to this list, so the suites visit the Docs
+    // page a person reaches from the rail as well as timing the navigation to it.
+    '/system/start/start-a-dashboard',
     '/requests/req_qmi1vbyi3uqt', // GET, 200: no request body, no model
     '/requests/req_jqwm3le188pi', // POST /v1/messages, 201: model, tokens and a streamed response
     '/requests/req_p2r91aiimd17', // a request that answered 404: the refused state

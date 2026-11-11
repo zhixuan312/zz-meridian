@@ -15,6 +15,7 @@ describe('smoke routes', () => {
     expect(() => selectSmokeRoutes({ smokeRoutes: ['/nowhere'], nav, landing: '/' })).toThrow(/nowhere/);
     expect(() => selectSmokeRoutes({ smokeRoutes: ['/', '/'], nav, landing: '/' })).toThrow();
     expect(() => selectSmokeRoutes({ smokeRoutes: ['/', '/usage', '/requests', '/services'], nav, landing: '/' })).toThrow();
+    expect(() => selectSmokeRoutes({ smokeRoutes: [], nav, landing: '/' })).toThrow(/empty list/);
   });
 });
 
