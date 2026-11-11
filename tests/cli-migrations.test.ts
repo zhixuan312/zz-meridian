@@ -74,6 +74,44 @@ describe("this release's migrations", () => {
   });
 });
 
+// 0.39.0 replaced gate, verify and the rest with the three test commands. The 0.5.0 entry never fired on a 0.38.0 to
+// 0.39.0 update, and read package.json and shell files only (issue #142).
+describe('the commands 0.39.0 removed', () => {
+  const withManifest = (files: Record<string, string>) => project({ '.meridian/manifest.json': '{"files":{}}\n', ...files });
+  const pathsOn = (root: string, source = '0.38.0', target = '0.39.0') => releaseMigrations(root, source, target).find((m) => m.id === 'verify-modes')?.paths ?? null;
+  it('is reported when crossing 0.39.0 and on every later update while a mention remains', () => {
+    const root = withManifest({ 'package.json': JSON.stringify({ scripts: { ci: 'pnpm gate && pnpm verify --full' } }) });
+    expect(pathsOn(root)).toEqual(['package.json']);
+    expect(pathsOn(root, '0.39.0', '0.39.1')).toEqual(['package.json']);
+    expect(byId('verify-modes').recurring).toBe(true);
+  });
+  it('names every surface a stale command hides in: a workflow, a document, a shell file and a comment', () => {
+    const root = withManifest({
+      'package.json': JSON.stringify({ scripts: { ci: 'pnpm verify' } }),
+      '.github/workflows/ci.yml': 'jobs:\n  test:\n    steps:\n      - run: pnpm verify --full\n',
+      'README.md': 'Run `pnpm gate` before you push.\n',
+      'scripts/team.sh': '#!/bin/sh\npnpm verify\n',
+      'scripts/team.ts': '// old loop: pnpm gate\nexport const x = 1;\n',
+      'src/views/team.ts': '// run pnpm audit before shipping\nexport const y = 2;\n',
+    });
+    expect(pathsOn(root)).toEqual(['.github/workflows/ci.yml', 'README.md', 'package.json', 'scripts/team.sh', 'scripts/team.ts', 'src/views/team.ts']);
+  });
+  it('names package.json for a script named for a removed command too, which reconcile removes or reports', () => {
+    const root = withManifest({ 'package.json': JSON.stringify({ scripts: { gate: 'node scripts/gate.ts', verify: 'node scripts/verify.ts', 'test:t1': 'node scripts/test-run.ts t1' } }) });
+    expect(pathsOn(root)).toEqual(['package.json']);
+  });
+  it('does not mistake test:t1 for the removed test script, or verify.config for verify.ts', () => {
+    const root = withManifest({
+      'package.json': JSON.stringify({ scripts: { 'test:t1': 'node scripts/test-run.ts t1', 'test:t2': 'node scripts/test-run.ts t2', 'test:release': 'node scripts/test-run.ts release' } }),
+      'docs/notes.md': 'The config is `scripts/verify.config.ts`; `test:t1` picks the tests.\n',
+    });
+    expect(pathsOn(root)).toBeNull();
+  });
+  it('is not reported on a project that never named one', () => {
+    expect(pathsOn(withManifest({ 'package.json': '{}' }), '0.5.0', '0.6.0')).toBeNull();
+  });
+});
+
 describe('App Router migration paths', () => {
   it.each(['app', 'src/app'])('finds the old 0.5.0 shapes under %s and clears them after migration', (app) => {
     const relocate = (files: Record<string, string>) => Object.fromEntries(Object.entries(files).map(([rel, src]) => [rel.startsWith('app/') ? `${app}/${rel.slice(4)}` : rel, src]));
@@ -630,7 +668,7 @@ describe('the verify-modes migration', () => {
       'bin/release.sh': '#!/bin/sh\nnode scripts/verify.ts --extra /reports\n',
       'docs/notes.md': 'We used to run pnpm verify --quick.\n',
     });
-    expect(byId('verify-modes').applies(root, '0.35.0')?.sort()).toEqual(['.github/workflows/ci.yml', 'bin/release.sh', 'package.json']);
+    expect(byId('verify-modes').applies(root, '0.35.0')?.sort()).toEqual(['.github/workflows/ci.yml', 'bin/release.sh', 'docs/notes.md', 'package.json']);
   });
   it("reads a team's own script under scripts/, and none the manifest records as Meridian's", () => {
     // scripts/ is Meridian's folder, and the usual place a team keeps its CI script: the manifest says which are whose.
@@ -647,7 +685,7 @@ describe('the verify-modes migration', () => {
       'package.json': JSON.stringify({ scripts: { ci: 'pnpm verify --full', verify: 'node scripts/verify.ts' } }),
       '.github/workflows/ci.yml': 'jobs:\n  check:\n    steps:\n      - run: pnpm verify --full --perf\n',
     });
-    expect(byId('verify-modes').applies(root, '0.35.0')).toEqual(['package.json', '.github/workflows/ci.yml']);
+    expect(byId('verify-modes').applies(root, '0.35.0')).toEqual(['.github/workflows/ci.yml', 'package.json']);
   });
 });
 

@@ -111,18 +111,41 @@ const matching = (root: string, test: (rel: string, src: string) => boolean): st
   return hits.length > 0 ? hits : null;
 };
 
+/** The commands 0.39.0 removed: the scripts and the files under `scripts/` they ran. */
+const REMOVED_COMMAND = /\b(?:pnpm|npm|yarn|bun)\s+(?:run\s+)?(?:gate|verify|audit|interactions|live|keyboard|vitals|test:all|test(?![\w:]))\b|\bscripts\/(?:gate|verify|audit|interactions|live|keyboard|vitals)\.ts\b/;
+
+/** The comment text of a source file: `//` to its line's end, and `/* … *\/`, with strings left out. */
+function commentsOf(src: string): string {
+  let out = '';
+  for (let i = 0; i < src.length;) {
+    const past = skipLiteral(src, i);
+    if (past === i) { i++; continue; }
+    if (src[i] === '/' && (src[i + 1] === '/' || src[i + 1] === '*')) out += `${src.slice(i, past)}\n`;
+    i = past;
+  }
+  return out;
+}
+
 /**
- * The team's files that still invoke `verify` — the package script, a workflow, or a shell script — or name its removed
- * `scripts/verify.ts`. A shell script is the team's unless the project's manifest records it: scripts/ is Meridian's
- * folder and the usual home of a team's CI script.
+ * The team's files that still invoke a command 0.39.0 removed (`gate`, `verify`, `audit`, and the rest) or name a
+ * `scripts/` file it retired: a workflow, a shell script, a document, or a comment in the team's own source. A script
+ * named for a removed command is left to `reconcilePackage`, which removes it or reports it; a value of another script
+ * that still calls one is read here, because the update cannot rewrite what it embeds.
  */
-function removedVerifyFlags(root: string): string[] | null {
-  const files: string[] = ['package.json'];
+function removedCommandMentions(root: string): string[] | null {
+  const hits = new Set<string>();
+  const pkg = text(root, 'package.json');
+  if (pkg !== null && REMOVED_COMMAND.test(pkg)) hits.add('package.json');
+  const files: string[] = [];
   walk(root, '.github/workflows', files, /\.ya?ml$/);
   walk(root, '', files, /\.sh$/, ownedIn(root));
-  const removed = /\b(?:pnpm|npm|yarn|bun)\s+(?:run\s+)?verify\b|\bscripts\/verify\.ts\b/;
-  const hits = [...new Set(files)].filter((rel) => removed.test(text(root, rel) ?? ''));
-  return hits.length > 0 ? hits : null;
+  walk(root, '', files, /\.md$/, ownedIn(root));
+  for (const rel of files) if (REMOVED_COMMAND.test(text(root, rel) ?? '')) hits.add(rel);
+  for (const { rel, src } of teamSources(root)) if (REMOVED_COMMAND.test(commentsOf(src))) hits.add(rel);
+  const scriptFiles: string[] = [];
+  walk(root, 'scripts', scriptFiles, SOURCE, ownedIn(root));
+  for (const rel of scriptFiles) if (REMOVED_COMMAND.test(commentsOf(text(root, rel) ?? ''))) hits.add(rel);
+  return hits.size > 0 ? [...hits].sort() : null;
 }
 
 const APP_DIRS = ['app', 'src/app'];
@@ -372,9 +395,10 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
   {
     id: 'verify-modes',
     since: '0.5.0',
-    applies: removedVerifyFlags,
-    summary: '`pnpm verify` and its modes are replaced by the three test commands.',
-    instructions: 'Read "Test runs" in AGENTS.md and "The tiers" in `references/validation.md`. `pnpm verify` and its flags — `--full`, `--timed`, `--perf`, `--quick`, `--no-vitals` and `--extra` — are removed. Run `pnpm test:t1` after a change (the affected Tier 1 tests, the static checks and the type check), `pnpm test:t2` when the change can alter what a page draws or a control does (the affected Tier 2 checks and the browser sweeps as well), and `pnpm test:release` before a release (every Tier 1 and Tier 2 test once, the timed browser suites, lint and the type check). None takes an argument: the command selects the tests. Replace the removed command and flags in the script, workflow or shell file, and read the line each run ends with: it says what ran and what did not.',
+    recurring: true,
+    applies: removedCommandMentions,
+    summary: '`pnpm gate`, `pnpm verify` and the other removed commands are replaced by the three test commands.',
+    instructions: 'Read "Test runs" in AGENTS.md and "The tiers" in `references/validation.md`. `pnpm gate` and `pnpm verify` with its flags — `--full`, `--timed`, `--perf`, `--quick`, `--no-vitals` and `--extra` — are removed, and so are the `test`, `audit`, `interactions`, `live`, `keyboard` and `vitals` scripts and `scripts/gate.ts` and `scripts/verify.ts`. Run `pnpm test:t1` after a change (the affected Tier 1 tests, the static checks and the type check), `pnpm test:t2` when the change can alter what a page draws or a control does (the affected Tier 2 checks and the browser sweeps as well), and `pnpm test:release` before a release (every Tier 1 and Tier 2 test once, the timed browser suites, lint and the type check). None takes an argument: the command selects the tests. Replace every removed call in the files listed — scripts, workflows, shell files, documents and comments — and read the line each run ends with: it says what ran and what did not. `scripts/verify.config.ts` and `scripts/verify.baseline.json` stay.',
     checks: ['test:t1'],
   },
   {

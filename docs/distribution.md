@@ -162,6 +162,8 @@ Two environment variables exist for the updater's own tests and are used only wh
 reports as `migration:<id>` because it cannot make them. Normally an entry applies when the project's recorded version
 is older than its `since` and the target is not. `sample-with-its-tests` is recurring: it is checked on every forward
 upgrade at or after its introduction, so updated managed tests do not silently outrun team-owned sample helpers.
+`verify-modes` is recurring too: a stale call to a command the release removed is reported on every forward upgrade
+until the team rewrites it, wherever it sits.
 `applies(root, source)` receives the project's recorded source version and returns the paths needing review, or null.
 Route, page, layout and page-spec migrations recognize both `app/` and `src/app/`, and report the actual project paths.
 The direct-query migration and layer-rule guard cover both app roots too: use the authorized reader, or state a required direct-query escape on the call's own line.
@@ -173,7 +175,7 @@ Thirty arrived after 0.5.0 and are resolved as the skill's `references/update.md
 
 | Id | Reported when a team-owned file still has | Completion step |
 |----|-------------------------------------------|-----------------|
-| `verify-modes` | a `package.json` script, workflow or shell file that still runs the old `verify` command, with a removed flag or none | `validation.md`: replace each with the current test commands, `pnpm test:t1`, `pnpm test:t2` or `pnpm test:release`; none takes an argument |
+| `verify-modes` | a `package.json` script, workflow, shell file, document or code comment that still runs `gate`, `verify`, `audit`, `interactions`, `live`, `keyboard`, `vitals`, `test:all` or `test`, or names a retired `scripts/` file | `validation.md`: replace each with the current test commands, `pnpm test:t1`, `pnpm test:t2` or `pnpm test:release`; none takes an argument |
 | `shell-assistant-promise` | `<AppShell` with an `assistant=` prop and no promise (`.then(`, `Promise`, `use(`) | `cache.md`, "The shell's assistant promise": pass a promise and do not await it |
 | `assistant-available-promise` | `useAssistantAvailable()` used as a boolean | same section: `use(useAssistantAvailable())` inside `Suspense` |
 | `clock-now-required` | `<Freshness`, `<ShellTools` or `<AlertsPanel` without `now=`, or `formatRelative(` with one argument | `cache.md`, "The clock is the data's": pass the data's clock |

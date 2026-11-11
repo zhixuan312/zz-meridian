@@ -150,7 +150,7 @@ function managedSources(target: Release, managed: ReadonlySet<string>): Map<stri
   return out;
 }
 
-type Plan = { journal: UpdateJournal; missingKept: string[]; texts: Map<string, string>; source: Release; target: Release };
+type Plan = { journal: UpdateJournal; missingKept: string[]; texts: Map<string, string>; source: Release; target: Release; packageChanges: string[] };
 
 /** Everything the update will do, decided from the recorded release, the running one and the project as it is now. */
 function plan(ctx: Context, manifest: Manifest, startedAt: Date): Plan {
@@ -225,7 +225,7 @@ function plan(ctx: Context, manifest: Manifest, startedAt: Date): Plan {
     texts.set(rel, text);
     operations.push({ path: rel, disposition: 'team-preserved', action: 'write', base: ours.side, ours: ours.side, target: sideOf(sha(text)), applied: false, appliedHash: null });
   };
-  const pkg = reconcilePackage(readText(root, 'package.json') ?? '', template, need, source.pkg);
+  const pkg = reconcilePackage(readText(root, 'package.json') ?? '', template, need, source.pkg, new Set(target.payload));
   shared('package.json', pkg.text);
   migrations.push(...pkg.migrations);
   const agents = planAgents(readText(root, 'AGENTS.md'), managedBlock(ctx.version, packageManager(root)), legacySection(source.agents, manifest.route));
@@ -247,7 +247,7 @@ function plan(ctx: Context, manifest: Manifest, startedAt: Date): Plan {
     operations, migrations, retired, validation: [], failure: null,
   };
   journal.planHash = planHash(journal);
-  return { journal, missingKept, texts, source, target };
+  return { journal, missingKept, texts, source, target, packageChanges: pkg.changes };
 }
 
 /** The staged copies, the new files and the preimages: everything the session folder holds besides state and the report. */
@@ -279,12 +279,13 @@ export type ResumeOptions = { install: boolean; verbose: boolean };
 const pin = (version: string, flag: string) => `npx zz-meridian@${version} update ${flag}`;
 
 /** The conflict list, the migrations, the timings and, unless `next` is null, the outcome and the next command. */
-function report(ctx: Context, j: UpdateJournal, o: { verbose: boolean; keepWarnings: string[] }, outcome: string, times: string, next: string | null) {
+function report(ctx: Context, j: UpdateJournal, o: { verbose: boolean; keepWarnings: string[]; packageChanges?: string[] }, outcome: string, times: string, next: string | null) {
   const { log } = ctx;
   for (const line of formatReport(j.operations.map((x) => ({ path: x.path, disposition: x.disposition, action: x.action })), { verbose: o.verbose }).split('\n')) {
     if (line.startsWith('summary:')) {
       for (const w of o.keepWarnings) log(`kept             ${w}`);
       for (const x of j.operations.filter((y) => y.disposition === 'retired-kept')) log(`retired-kept     ${x.path}  left in place; the new release removed it`);
+      for (const c of o.packageChanges ?? []) log(`note: package.json ${c}`);
       for (const m of j.migrations) log(`migration  ${m.id}  pending`);
     }
     log(line);
@@ -398,7 +399,7 @@ export function start(ctx: Context, o: StartOptions): number {
     const sessionRel = `.meridian/update/${j.targetVersion}`;
     const keepWarnings = p.missingKept.map((k) => `${k}: kept file is missing; update never recreates it. Restore it or remove it from .meridian/keep.json.`);
 
-    const print = (outcome: Outcome, times: string, next: string) => report(ctx, j, { verbose: o.verbose, keepWarnings }, outcome, times, next);
+    const print = (outcome: Outcome, times: string, next: string) => report(ctx, j, { verbose: o.verbose, keepWarnings, packageChanges: p.packageChanges }, outcome, times, next);
     const pinned = (flag: string) => pin(j.targetVersion, flag);
 
     if (o.dryRun) {
@@ -408,7 +409,7 @@ export function start(ctx: Context, o: StartOptions): number {
 
     // Persist the plan: state, report, resolutions, staged copies and preimages. The project is not yet touched.
     const session = inside(root, sessionRel);
-    const write = (outcome: Outcome) => writeAtomic(path.join(session, 'MERGE.md'), renderMergeReport({ journal: j, session: sessionRel, outcome, pm, keepWarnings, changelog: p.target.changelog, hashOf }));
+    const write = (outcome: Outcome) => writeAtomic(path.join(session, 'MERGE.md'), renderMergeReport({ journal: j, session: sessionRel, outcome, pm, keepWarnings, changelog: p.target.changelog, hashOf, packageChanges: p.packageChanges }));
     const persist = () => writeAtomic(path.join(session, 'state.json'), `${JSON.stringify(j, null, 2)}\n`);
     fs.mkdirSync(session, { recursive: true });
     persist();
@@ -468,7 +469,7 @@ export function start(ctx: Context, o: StartOptions): number {
     const times = `plan ${secs(planned)} · apply ${secs(applyMs)} · ${installNote}`;
     if (!pending && o.install) {
       // Nothing is left to decide and the install ran: finalize in this same command.
-      report(ctx, j, { verbose: o.verbose, keepWarnings }, outcome, times, null);
+      report(ctx, j, { verbose: o.verbose, keepWarnings, packageChanges: p.packageChanges }, outcome, times, null);
       const loaded = loadSession(ctx);
       return typeof loaded === 'string' ? refuse(loaded) : finalizeLoaded(ctx, loaded);
     }

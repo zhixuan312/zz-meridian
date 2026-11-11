@@ -15,6 +15,8 @@ export type ReportInput = {
   keepWarnings: string[];
   /** The target release's CHANGELOG.md, or ''. */
   changelog: string;
+  /** What `reconcilePackage` added, raised, updated or removed in `package.json`, one line each. */
+  packageChanges: string[];
   /** The project file's current hash, or null when it is absent. */
   hashOf: (path: string) => Hash | null;
 };
@@ -68,6 +70,11 @@ export function renderMergeReport(i: ReportInput): string {
     out.push(`### migration:${m.id}`, '', m.summary, '', `Paths: ${m.paths.map((p) => `\`${p}\``).join(', ') || 'none'}`, '', m.instructions, '');
     if (m.checks.length) out.push('Checks:', '', ...m.checks.map((c) => `- \`${c}\``), '');
     out.push('Resolve with `resolved` or `not-applicable`:', '', json({ id: `migration:${m.id}`, status: 'resolved', reason: '', files: Object.fromEntries(m.paths.map((p) => [p, i.hashOf(p)])) }), '');
+  }
+
+  if (i.packageChanges.length) {
+    out.push('## Changed for you in package.json', '');
+    out.push(...i.packageChanges.map((c) => `- ${c}`), '');
   }
 
   const warnings = [

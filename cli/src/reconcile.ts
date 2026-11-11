@@ -54,7 +54,7 @@ const file = (id: string, summary: string, instructions: string, path: string): 
  * `base` is the template of the release the project came from: an entry still exactly as that release wrote it is
  * Meridian's own, so it follows the target even across a major; one the team changed stays theirs.
  */
-export function reconcilePackage(teamText: string, template: Template, need: Need, base?: Template): { text: string | null; changes: string[]; migrations: Migration[] } {
+export function reconcilePackage(teamText: string, template: Template, need: Need, base?: Template, shipped?: ReadonlySet<string>): { text: string | null; changes: string[]; migrations: Migration[] } {
   const unreadable = (why: string) => ({
     text: null,
     changes: [],
@@ -144,6 +144,25 @@ export function reconcilePackage(teamText: string, template: Template, need: Nee
       changes.push(`updated script ${name}`);
     } else if (have !== want) {
       migrations.push(file(`script:${name}`, `script "${name}" differs from Meridian's`, `Your "${name}" script is ${JSON.stringify(have)} and was kept; Meridian's is ${JSON.stringify(want)}. Merge the two so the project's \`test:t1\` can call it, or leave yours if it already does the same work.`, 'package.json'));
+    }
+  }
+
+  // A script the base release wrote and this release no longer ships. One still exactly as the base wrote it, and naming
+  // a file under `scripts/` that the update retires, is Meridian's alone: it is removed, since the file it calls is gone.
+  // One the team changed is theirs to settle. One that names no file of Meridian's (`test` ran `vitest run`) still works,
+  // so it stays and is named for its decision rather than silently taken away.
+  for (const [name, was] of Object.entries(base?.scripts ?? {})) {
+    if (template.scripts?.[name] !== undefined) continue;
+    const have = scripts?.[name];
+    if (typeof have !== 'string') continue;
+    const called = /(?:^|\s)node\s+(scripts\/[^\s"']+\.ts)(?:\s|$)/.exec(have)?.[1];
+    if (have === was && called !== undefined && shipped !== undefined && !shipped.has(called)) {
+      delete scripts![name];
+      changes.push(`removed script ${name}`);
+    } else if (have === was) {
+      migrations.push(file(`script:${name}`, `script "${name}" is no longer part of Meridian's toolchain`, `Your "${name}" script is ${JSON.stringify(have)}, exactly what the previous release wrote, and this release no longer adds or maintains it. It was kept because the command it runs still exists. Move the work to \`test:t1\`, \`test:t2\` or \`test:release\` where it belongs, or leave it if it does the same work. The release removed \`gate\`, \`verify\`, \`audit\`, \`interactions\`, \`live\`, \`keyboard\` and \`vitals\`.`, 'package.json'));
+    } else {
+      migrations.push(file(`script:${name}`, `script "${name}" calls a file this release removed`, `Your "${name}" script is ${JSON.stringify(have)} and was kept; Meridian no longer ships it. The file it calls may be gone with the update: point it at the test command that replaced it (\`test:t1\`, \`test:t2\`, \`test:release\`) or your own script, then run the project's \`test:t1\`.`, 'package.json'));
     }
   }
 

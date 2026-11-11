@@ -33,6 +33,41 @@ describe('reconcilePackage against the base release', () => {
   });
 });
 
+describe('a script the release dropped', () => {
+  // 0.39.0 removed gate and verify and their files, and stopped shipping `test`.
+  const oldBase = { dependencies: base.dependencies, devDependencies: base.devDependencies, scripts: { ...base.scripts, gate: 'node scripts/gate.ts', verify: 'node scripts/verify.ts', test: 'vitest run' } };
+  const old = { dependencies: base.dependencies, devDependencies: base.devDependencies, scripts: oldBase.scripts };
+  // What the target release still ships: test-run.ts stays, gate.ts and verify.ts are retired, live.ts stays for the
+  // browser suites even though the script that ran it is gone.
+  const shipped = new Set(['scripts/test-run.ts', 'scripts/live.ts']);
+  const planOld = (scripts: Record<string, string>) => reconcilePackage(pkg({ dependencies: base.dependencies, devDependencies: base.devDependencies, scripts }), template, need, oldBase, shipped);
+  it('is removed when it is still what the release wrote and names a file the update retires', () => {
+    const withoutTest = Object.fromEntries(Object.entries(old.scripts).filter(([name]) => name !== 'test'));
+    const r = planOld(withoutTest);
+    const scripts = JSON.parse(r.text!).scripts;
+    expect(scripts).not.toHaveProperty('gate');
+    expect(scripts).not.toHaveProperty('verify');
+    expect(r.changes).toEqual(expect.arrayContaining(['removed script gate', 'removed script verify']));
+    expect(r.migrations).toEqual([]);
+  });
+  it('is kept and named when its command still works, since the team may rely on it', () => {
+    const r = planOld(old.scripts);
+    expect(JSON.parse(r.text!).scripts.test).toBe('vitest run');
+    expect(r.migrations.map((m) => m.id)).toEqual(['script:test']);
+  });
+  it('is the team\'s when they changed it, as a migration naming the missing file', () => {
+    const r = planOld({ ...old.scripts, gate: 'node scripts/gate.ts --verbose' });
+    expect(JSON.parse(r.text!).scripts.gate).toBe('node scripts/gate.ts --verbose');
+    expect(r.migrations.map((m) => m.id)).toEqual(expect.arrayContaining(['script:gate', 'script:test']));
+  });
+  it('stays when the file it names still ships, named for the team to decide', () => {
+    const liveBase = { ...oldBase, scripts: { ...oldBase.scripts, live: 'node scripts/live.ts' } };
+    const r = reconcilePackage(pkg({ dependencies: base.dependencies, devDependencies: base.devDependencies, scripts: liveBase.scripts }), template, need, liveBase, shipped);
+    expect(JSON.parse(r.text!).scripts.live).toBe('node scripts/live.ts');
+    expect(r.migrations.map((m) => m.id)).toEqual(expect.arrayContaining(['script:live', 'script:test']));
+  });
+});
+
 describe('needOf', () => {
   it('always needs the framework the template declares, imported or not', () => {
     const n = needOf(template, new Map([['src/lib/a.ts', "import { cn } from './cn';"]]));

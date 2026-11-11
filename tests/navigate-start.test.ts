@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest';
-import { startFor } from '../scripts/lib/journey.ts';
+import { redirectedEverywhere, startFor } from '../scripts/lib/journey.ts';
 
 // A product whose rail shows the part of the navigation the page belongs to: three parts, of three, two and one routes.
 const order = ['/', '/members', '/settings', '/usage', '/customers', '/services'];
@@ -35,5 +35,23 @@ describe('where a journey to a destination starts', () => {
   it('is unchanged for a rail that shows every route on every page', () => {
     const all = part(order);
     for (const route of order) expect(startFor(order, route, order, all), route).toBe(startFor(order, route, order));
+  });
+});
+
+// A build behind sign-in answers every rail route with the sign-in page. The sweep must name that wall, not send every
+// route to `never-ready: the rail has no other route to start from` (issue #142).
+describe('every rail route answered by one page outside the console', () => {
+  const routes = ['/', '/usage', '/requests'];
+  it('names the path when every route landed there', () => {
+    expect(redirectedEverywhere(routes, { '/': '/sign-in', '/usage': '/sign-in', '/requests': '/sign-in' })).toBe('/sign-in');
+  });
+  it('treats a trailing slash as the same path', () => {
+    expect(redirectedEverywhere(['/usage'], { '/usage': '/usage/' })).toBeNull();
+    expect(redirectedEverywhere(routes, { '/': '/sign-in/', '/usage': '/sign-in', '/requests': '/sign-in' })).toBe('/sign-in');
+  });
+  it('stays silent when one route was answered where it was asked, or they landed apart', () => {
+    expect(redirectedEverywhere(routes, { '/': '/sign-in', '/usage': '/usage', '/requests': '/sign-in' })).toBeNull();
+    expect(redirectedEverywhere(routes, { '/': '/sign-in', '/usage': '/404', '/requests': '/sign-in' })).toBeNull();
+    expect(redirectedEverywhere(routes, { '/': '/sign-in', '/usage': undefined, '/requests': '/sign-in' })).toBeNull();
   });
 });
