@@ -30,7 +30,8 @@ export function SampleFooter({ services }: { services: () => Promise<Service[] |
 
 async function ServicesState({ services }: { services: () => Promise<Service[] | null> }) {
   const list = await services();
-  if (!list) return null;
+  // A product that monitors nothing says nothing: `summarise([])` would call an empty list "All services operational".
+  if (!list?.length) return null;
   const status = summarise(list);
   return (
     <Link href="/services" className="hit ml-auto inline-flex items-center gap-2 hover:text-ink-2">

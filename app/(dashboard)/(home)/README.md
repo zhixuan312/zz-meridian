@@ -61,7 +61,7 @@ Below 1024px every row stacks: the revenue card first, then its three tiles (thr
 | Partial (a read failed) | That part's card, with its title, says what could not be read ("The usage by model could not be read"; What we sell needs the usage by model and the models, and names whichever could not be read, or both) in its own place, and every other part stands; a tile whose figure could not be read shows a dash and "Could not be read". Worth knowing leaves out the lines whose reads failed; when nothing could be said and something was not read, it says so. The context says what could not be read |
 | All time (no previous period) | The period is every complete day kept, and nothing comes before it: the featured figure draws no change pill, and each tile with a change (Requests, Compute cost, Compute in use and Gross margin) says "No earlier period to compare" where its change would be. Nothing is compared with zero |
 | Stale | Freshness turns to warning: "Stale · 47 min ago" |
-| Error | `error.tsx`, inside the shell at the data width, like every page: the title says the view did not load, and the line under it that nothing was changed; one card says retrying usually works, with Retry (primary), a second way out read from `nav` (Check Services where the product has one, the home page where it does not), and the reference |
+| Error | `error.tsx`, inside the shell at the data width, like every page: the title says the view did not load, the line under it says it could not finish loading and to retry or open another page; one card says retrying usually works, with Retry (primary), a second way out read from `nav` (Check Services where the product has one, the home page where it does not), and the reference when the error carries one |
 
 ## Data
 

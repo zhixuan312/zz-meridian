@@ -311,8 +311,10 @@ export function DataTable<R>({
     );
   } else {
     const roleOf = (c: Column<R>): Mobile => (c === titleColumn ? 'title' : c === status ? 'status' : facts.includes(c) ? 'fact' : 'hidden');
+    // The head is visually hidden on a phone, not display:none: the cells still need their headers in the accessibility
+    // tree to say which fact is which.
     body = (
-      <Table caption={caption} aria-busy={loading || busy || undefined} className={cn('@max-[640px]:block @max-[640px]:[&>thead]:hidden @max-[640px]:[&>tbody]:block', CELLS, selectable && SELECT, PHONE_ROWS, PHONE_CELLS, PHONE_ROLES, '[&>tbody]:transition-opacity [&>tbody]:duration-(--dur-hover)', busy && '[&>tbody]:opacity-60')}>
+      <Table caption={caption} aria-busy={loading || busy || undefined} className={cn('@max-[640px]:block @max-[640px]:[&>thead]:sr-only @max-[640px]:[&>tbody]:block', CELLS, selectable && SELECT, PHONE_ROWS, PHONE_CELLS, PHONE_ROLES, '[&>tbody]:transition-opacity [&>tbody]:duration-(--dur-hover)', busy && '[&>tbody]:opacity-60')}>
         <TableHead>
           <tr role="row">
             {selectable ? (
@@ -394,7 +396,7 @@ export function DataTable<R>({
       {title ? <CardHeader title={title} description={description} actions={actions} divided={!toolbar} /> : null}
       {toolbar ? <div className="px-(--card-pad) py-3.5 md:border-b md:border-line">{toolbar}</div> : null}
       {body}
-      {!error && total > (manual ? size : Math.min(size, ...pageSizes)) ? (
+      {!error && total > size ? (
         <div className="border-t border-line px-(--card-pad) py-2.5">
           <Pagination
             page={page}

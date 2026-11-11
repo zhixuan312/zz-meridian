@@ -37,10 +37,23 @@ function proposalContext(state: ProposalState): SharedContext {
 }
 
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
+/** A terminal outcome survives the host remounting the view: otherwise an applied proposal came back "Needs you" and could run twice. */
+const OUTCOME_KEY = 'zz-meridian.proposal.rate-limit';
 
 export function EmbedProposal() {
   const { callTool } = useSurface();
-  const [state, setState] = useState<ProposalState>('pending');
+  const [state, setState] = useState<ProposalState>(() => {
+    try {
+      const held = sessionStorage.getItem(OUTCOME_KEY);
+      return held === 'applied' || held === 'dismissed' || held === 'failed' ? held : 'pending';
+    } catch { return 'pending'; }
+  });
+  /** A terminal state is kept for the session; `applying` is not, so a remount in the middle can be tried again. */
+  const settle = (next: ProposalState) => {
+    setState(next);
+    if (next !== 'applied' && next !== 'dismissed' && next !== 'failed') return;
+    try { sessionStorage.setItem(OUTCOME_KEY, next); } catch { /* storage unavailable: the state lasts this mount */ }
+  };
   useShareView(proposalContext(state));
   return (
     <EmbedFrame title="Proposal" consolePath="/customers" expandable={false}>
@@ -62,12 +75,12 @@ export function EmbedProposal() {
               const result = await callTool(`${toolPrefix}_set_rate_limit`, { customer: 'northwind-labs', rpm: 2400, burst: 3600 });
               if ((result as { isError?: boolean } | null)?.isError) throw new Error('refused');
             } else await wait(900);
-            setState('applied');
+            settle('applied');
           } catch {
-            setState('failed');
+            settle('failed');
           }
         }}
-        onDismiss={() => setState('dismissed')}
+        onDismiss={() => settle('dismissed')}
       />
     </EmbedFrame>
   );

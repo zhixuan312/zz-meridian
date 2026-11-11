@@ -46,8 +46,8 @@ describe('the feature table', () => {
       system: 'public',
       docs: 'public',
       tickets: 'tickets:read',
-      tests: 'tests:read',
-      releases: 'releases:read',
+      tests: { allOf: ['tests:read', 'releases:read'] },
+      releases: { allOf: ['releases:read', 'tests:read'] },
     };
     for (const [id, need] of Object.entries(N)) expect(FEATURES[id as FeatureId].needs).toEqual(need);
     for (const [id, f] of Object.entries(FEATURES)) expect(typeof f.title, id).toBe('string');

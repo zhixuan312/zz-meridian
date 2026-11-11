@@ -86,7 +86,7 @@ export function EmbedRequests(data: RequestsData) {
       <Card className="overflow-hidden">
         <div className="flex items-center gap-3 border-b border-line px-4 py-2.5">
           <p className="t-num min-w-0 flex-1 text-xs text-ink-3">
-            <span className="font-medium text-ink">{total}</span> matching · showing the latest {latest.length}
+            <span className="font-medium text-ink">{total}</span> matching · showing {Number(state.page) > 1 ? `the first ${latest.length} on this page` : `the latest ${latest.length}`}
           </p>
           {latest.length ? <AskAbout question={scope ? `What do these requests with ${scope} have in common, and why?` : 'What stands out in the latest requests, and why?'} /> : null}
         </div>

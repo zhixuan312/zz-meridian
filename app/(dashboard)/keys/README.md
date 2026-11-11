@@ -27,7 +27,7 @@ The body (rows 1 and 2 and the line on rotating a key under them, under the mast
 | Not created | A critical Banner at the top of the open sheet, "Key not created", with the server's reason; the sheet keeps what was typed |
 | Revoked | The row leaves; a toast "Key revoked" |
 | No keys | The first-run empty state with Create key, for someone who may create |
-| Read-only | A Member reads every key; Create key and Revoke are not drawn, and nothing on the page says who can use them |
+| Read-only | A Member without the Key manager add-on reads every key; Create key and Revoke are not drawn, and nothing on the page says who can use them |
 | Never used | "Never" in `ink-3` |
 
 ## Data

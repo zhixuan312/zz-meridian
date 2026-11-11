@@ -20,7 +20,7 @@ export function EmbedHome(p: HomeData) {
     <EmbedFrame
       title={`Home · ${PERIOD_LABEL[p.period]}`}
       meta={<Freshness updatedAt={new Date(p.updatedAt)} now={new Date(p.now)} />}
-      consolePath={`/?period=${p.period}`}
+      consolePath={`/?period=${p.period}${p.day ? `&day=${p.day}` : ''}`}
     >
       {s.mode === 'fullscreen' || isEmpty(p) ? <HomeBody {...p} finding={p.record} /> : <Inline {...p} />}
     </EmbedFrame>

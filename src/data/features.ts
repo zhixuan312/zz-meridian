@@ -42,8 +42,10 @@ export const FEATURES: Record<FeatureId, { title: string; needs: Need }> = {
   system: { title: 'Design system', needs: 'public' },
   docs: { title: 'Docs', needs: 'public' },
   tickets: { title: 'Tickets', needs: 'tickets:read' },
-  tests: { title: 'Tests', needs: 'tests:read' },
-  releases: { title: 'Releases', needs: 'releases:read' },
+  // Each page joins the other's collection: a run names its release and a release counts its runs, and a read the
+  // caller may not make throws. The gate must ask for both, or a replaced role table opens the page and 500s in it.
+  tests: { title: 'Tests', needs: { allOf: ['tests:read', 'releases:read'] } },
+  releases: { title: 'Releases', needs: { allOf: ['releases:read', 'tests:read'] } },
 };
 
 /**

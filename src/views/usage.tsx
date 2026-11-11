@@ -113,17 +113,20 @@ function Counted({ data }: { data: UsageData }) {
 /** When they come, over the last 30 complete days: by hour of day, the busiest highlighted, or by weekday and hour. The choice is the view's own. */
 function WhenTheyCome({ figures }: { figures: UsageFigures }) {
   const [when, setWhen] = useState<When>('hour');
-  const busiest = figures.hours.reduce((m, c) => ((c.value ?? 0) > (m.value ?? 0) ? c : m));
+  // Only a measured hour has a busiest: with every cell zero the reduce picked 00:00 and the card named it the busiest.
+  const busiest = figures.hours.some((c) => (c.value ?? 0) > 0)
+    ? figures.hours.reduce((m, c) => ((c.value ?? 0) > (m.value ?? 0) ? c : m))
+    : null;
   return (
     <Card>
       <CardHeader
         title={P.when}
-        description={when === 'hour' ? `Every weekday summed, ${app.timezone}, over the last 30 complete days. The busiest hour is ${busiest.label}.` : `Each weekday and hour, ${app.timezone}, over the last 30 complete days, in five steps of equal count.`}
+        description={when === 'hour' ? `Every weekday summed, ${app.timezone}, over the last 30 complete days.${busiest ? ` The busiest hour is ${busiest.label}.` : ' No request was counted by hour in this window.'}` : `Each weekday and hour, ${app.timezone}, over the last 30 complete days, in five steps of equal count.`}
       />
       <CardBody className="flex flex-col gap-4">
         <Segmented label="Count when they come" size="sm" value={when} onChange={setWhen} options={WHEN} />
         {when === 'hour' ? (
-          <ColumnChart columns={figures.hours} highlight={busiest.key} highlightLabel="The busiest hour" format={formatCompact} axisFormat={AXIS_FORMATTERS.count} label="Requests by hour of day" labelEvery={6} height={220} />
+          <ColumnChart columns={figures.hours} highlight={busiest?.key} highlightLabel={busiest ? 'The busiest hour' : undefined} format={formatCompact} axisFormat={AXIS_FORMATTERS.count} label="Requests by hour of day" labelEvery={6} height={220} />
         ) : (
           <Heatmap values={figures.heat} timezone={app.timezone} scale="quantile" label="Requests by weekday and hour" format={formatCompact} />
         )}
@@ -186,12 +189,16 @@ export function UsageBody(data: UsageData & { revisions?: Revisions }) {
   // The collections the page's read touched, kept live: a request or a day recorded somewhere else redraws it.
   useLive(['days', 'hours', 'regions', 'endpoints', 'responses'], data.revisions);
   if (isEmpty(data)) {
+    // A day in progress is in no series and no calendar total, but its traffic has arrived: say that instead of "none".
+    const running = data.days?.running?.requests ?? 0;
     return (
       <Stack>
         <ShareUsage data={data} />
         <Card>
-          <EmptyState title="No requests have arrived yet" action={<Link href="/keys" className={linkClass}>API keys <ArrowRight className="size-3.5" /></Link>} className="py-16">
-            Requests a day, when they come and where from appear here once a customer makes its first call and a day is complete.
+          <EmptyState title={running > 0 ? 'Today is still in progress' : 'No requests have arrived yet'} action={running > 0 ? undefined : <Link href="/keys" className={linkClass}>API keys <ArrowRight className="size-3.5" /></Link>} className="py-16">
+            {running > 0
+              ? `${formatCompact(running)} requests so far on ${formatDate(data.days!.running!.date)}. Requests a day, when they come and where from appear once a day is complete.`
+              : 'Requests a day, when they come and where from appear here once a customer makes its first call and a day is complete.'}
           </EmptyState>
         </Card>
       </Stack>

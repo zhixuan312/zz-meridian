@@ -48,7 +48,7 @@ An agent can open the view with an option already chosen (`?period=90d`). It doe
 
 ## Accessibility
 
-- Radix ToggleGroup (single): each option is a pressed or unpressed button; the group is named by `label`.
+- Radix ToggleGroup (single): it renders a `radiogroup` named by `label`, one `radio` per option with `aria-checked`; arrow keys move between options, and Space or Enter chooses.
 - Labels `ink-2` on `surface-sunk` 6.9:1; the current option `ink` on `surface` 18.1:1.
 - An option with only an icon needs a `title` and an accessible name.
 

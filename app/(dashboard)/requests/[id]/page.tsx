@@ -58,10 +58,12 @@ export default async function RequestPage({ params }: { params: Promise<{ id: st
   // After the gate: what this person may do with the record, so Replay is drawn only where it may be used. A Viewer
   // holds `requests:read` without `requests:create`, so it is withheld for them and nothing is drawn in its place; and
   // without `keys:read` the More menu does not lead to API keys.
-  const [{ request: r, observedAt }, mayReplay, mayOpenKeys, endpoints] = await Promise.all([byId(id), may(ACTIONS['replay-request'].needs), may(FEATURES.keys.needs), readEndpoints()]);
+  // The endpoints read only gives the record's route its p95. A failure there must not take the record down with it: the
+  // page stands, and the comparison is absent.
+  const [{ request: r, observedAt }, mayReplay, mayOpenKeys, endpoints] = await Promise.all([byId(id), may(ACTIONS['replay-request'].needs), may(FEATURES.keys.needs), readEndpoints().catch(() => null)]);
   // Rendered here rather than thrown, so the screen is in the first HTML (see MissingPage).
   if (!r) return <MissingPage />;
   const customerHref = await customerPage(r.customer);
-  const route = endpoints.find((e) => e.method === r.method && e.route === r.route);
+  const route = endpoints?.find((e) => e.method === r.method && e.route === r.route);
   return <RequestView request={r} trace={traceOf(r)} payloads={payloadsOf(r)} routeP95={route?.p95 ?? null} now={observedAt} mayReplay={mayReplay} mayOpenKeys={mayOpenKeys} replay={replayRequest} customerHref={customerHref} />;
 }

@@ -16,8 +16,8 @@ export function generateMetadata() {
  * person too, but hiding is presentation only — this check is the gate, and it runs before the read either way.
  *
  * After the gate it asks the action table what this person may do here, so the view draws Create key and Revoke only
- * where they may be used. A Member opens this page (they may read keys) but may not create or revoke one, and sees
- * neither control and nothing that says why. The authority is a snapshot: a control shown here is still refused by the
+ * where they may be used. A Member without the Key manager add-on opens this page (they may read keys) but may not
+ * create or revoke one, and sees neither control and nothing that says why; the add-on is what carries the two writes. The authority is a snapshot: a control shown here is still refused by the
  * server action if it changed.
  */
 export default async function KeysPage() {

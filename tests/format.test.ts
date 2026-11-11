@@ -1,7 +1,7 @@
 import { formatDay } from '@/lib/format-date';
 import { describe, expect, it, vi } from 'vitest';
 import { niceTicks } from '@/components/charts/scale';
-import { AXIS_FORMATTERS, capitalise, changeOf, fitFigure, formatCompact, formatCost, formatDuration, formatPercent, splitFigure } from '@/lib/format';
+import { AXIS_FORMATTERS, FORMATTERS, capitalise, changeOf, fitFigure, formatCompact, formatCost, formatDuration, formatPercent, splitFigure } from '@/lib/format';
 
 // In dollars, whatever the product's currency: a rebranded product (--currency JPY) writes its own minor unit, which
 // tests/format-currency.test.ts holds for each kind of currency.
@@ -50,6 +50,16 @@ describe('formatters', () => {
     expect(splitFigure('HK$12,345,678')).toEqual({ pre: 'HK$', int: '12,345,678', frac: undefined, unit: undefined });
     // A formatter that writes something else — a word, a space in the symbol — is never split, and never crashes.
     expect(splitFigure('CHF 1,234.50')).toEqual({ int: 'CHF 1,234.50' });
+    // A spaced unit after a compact step is the unit, so shortening keeps it.
+    expect(splitFigure('12.5M tokens')).toEqual({ pre: undefined, int: '12.5', frac: undefined, unit: 'M tokens' });
+    expect(fitFigure('12.5M tokens', 12_500_000)).toBe('12.5M tokens');
+    expect(fitFigure('1,234,567,890 tokens', 1_234_567_890)).toBe('1.2B tokens');
+  });
+  it('keeps a small money figure from rounding to nothing', () => {
+    const costCompact = (n: number) => FORMATTERS['cost-compact'](n);
+    expect(costCompact(0.4)).toBe('$0.40');
+    expect(costCompact(0)).toBe('$0');
+    expect(costCompact(912)).toBe('$912');
   });
   it('format money, durations and shares', () => {
     expect(formatCost(298.43)).toBe(`$298.43`);

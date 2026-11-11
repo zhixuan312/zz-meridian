@@ -237,13 +237,15 @@ export async function assignMemberRole(input: { id: string; role: MainRole; addO
     const after = rows.map((m) => (m.id === input.id ? { ...m, role: input.role, addOns } : m));
     if (!after.some((m) => m.role === 'Owner' && m.status === 'Active')) throw new MemberRefusal(REFUSALS.lastOwner);
     await members.update!([input.id], { role: input.role, addOns });
+    // The members' cached reads retire first: a failure in the Activity line must not leave the page showing the role
+    // it just changed.
+    invalidate(await tag(scope.tenantId, 'members'));
     await activity.create!({
       at: clock().toISOString(),
       actor: caller.name,
       verb: 'changed',
       object: `${target.name}'s role to ${roleLabel({ role: input.role, addOns })}`,
     });
-    invalidate(await tag(scope.tenantId, 'members'));
     invalidate(await tag(scope.tenantId, 'activity'));
   });
 }

@@ -331,12 +331,16 @@ export function HomeBody(data: HomeData & { finding?: string | null; revisions?:
   useLive(['days', 'usage', 'models', 'compute', 'incidents', 'customers', 'services', 'tickets', 'tests', 'releases'], data.revisions);
   // No complete day kept: one card says nothing has arrived, and no figure is drawn as if it had.
   if (isEmpty(data)) {
+    // The day in progress is in no series, but it can still hold traffic: "nothing has arrived" was false while today did.
+    const running = data.running?.requests ?? 0;
     return (
       <Stack>
         <Card>
           <ShareHome data={data} />
-          <EmptyState title="No requests have arrived yet" action={<Link href="/keys" className={linkClass}>API keys <ArrowRight className="size-3.5" /></Link>} className="py-16">
-            Revenue, customers and the year&apos;s facts appear here once a key makes its first call and a day is complete.
+          <EmptyState title={running > 0 ? 'Today is still in progress' : 'No requests have arrived yet'} action={running > 0 ? undefined : <Link href="/keys" className={linkClass}>API keys <ArrowRight className="size-3.5" /></Link>} className="py-16">
+            {running > 0
+              ? `${formatCompact(running)} requests so far on ${formatDay(data.running!.date)}. Revenue, customers and the year's facts appear once a day is complete.`
+              : "Revenue, customers and the year's facts appear here once a key makes its first call and a day is complete."}
           </EmptyState>
         </Card>
       </Stack>

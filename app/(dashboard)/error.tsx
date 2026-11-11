@@ -18,7 +18,8 @@ import { EmptyState } from '@/components/ui/empty-state';
  * Retry is Next's `retry`, which fetches the page again; `reset` would re-render the payload that holds the error.
  */
 export default function DashboardError({ error, retry }: { error: unknown; retry: () => void }) {
-  const digest = error !== null && typeof error === 'object' && 'digest' in error && typeof error.digest === 'string' ? error.digest : 'client';
+  // No digest on a client render error: naming the literal "client" gave support a reference it could not trace.
+  const digest = error !== null && typeof error === 'object' && 'digest' in error && typeof error.digest === 'string' ? error.digest : null;
   const items = nav.flatMap((g) => g.items);
   const services = items.find((i) => i.href === '/services');
   const home = items.find((i) => i.href === '/');
@@ -36,7 +37,8 @@ export default function DashboardError({ error, retry }: { error: unknown; retry
             </>
           }
         >
-          {services ? `If it fails again, ${services.label} says whether an incident is under way.` : 'If it fails again, it is likely to stay that way until someone looks at the data behind it.'} Reference <span className="font-mono text-ink">{digest}</span>
+          {services ? `If it fails again, ${services.label} says whether an incident is under way.` : 'If it fails again, it is likely to stay that way until someone looks at the data behind it.'}
+          {digest ? <> Reference <span className="font-mono text-ink">{digest}</span></> : null}
         </EmptyState>
       </Card>
     </PageFrame>

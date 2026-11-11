@@ -11,6 +11,8 @@ import { can, requireNeed, resolveAccess } from '@/data/access';
 import { clock } from '@/data/collections';
 import { FEATURES } from '@/data/features';
 import { readLatestFrom, readRequests, REQUEST_PAGE } from '@/data/requests';
+import { REQUEST_METHODS } from '@/data/request-methods';
+import { REGION_NAMES } from '@/data/sample';
 import { readReleases, readRuns } from '@/data/engineering';
 import { attempt } from '@/data/main';
 import { readTickets } from '@/data/tickets';
@@ -108,8 +110,10 @@ export const requestsTool = defineViewTool({
   page: '/requests',
   input: z.object({
     status: z.enum(['all', '2xx', '3xx', '4xx', '5xx']).optional(),
-    method: z.string().optional(),
-    region: z.string().optional(),
+    // The values the table offers: an unknown one used to fall back to "all", so an agent's filtered question was
+    // answered over every request while its answer said it was filtered.
+    method: z.enum(REQUEST_METHODS as [string, ...string[]]).optional(),
+    region: z.enum(REGION_NAMES as [string, ...string[]]).optional(),
     q: z.string().max(100).optional().describe('Text in the id, the route or the customer.'),
   }),
   resourceUri: `ui://${slug}/requests`,

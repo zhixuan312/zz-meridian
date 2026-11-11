@@ -23,7 +23,7 @@ import { toast } from '@/components/ui/toast';
 import { AskAbout } from '@/components/patterns/ask-about';
 import { DataTable, type Column } from '@/components/patterns/data-table';
 import { plural } from '@/lib/format';
-import { dayOf, formatDate, formatRelative } from '@/lib/format-date';
+import { dayOf, formatDate } from '@/lib/format-date';
 import { useLive, type Revisions } from '@/lib/live';
 import { RolesMatrix } from './roles-matrix';
 import type { MemberRowAccess } from '@/data/member-mutations';
@@ -66,6 +66,12 @@ function EmailText({ email }: { email: string }) {
 export function MembersView({ rows, now, revisions, actions, access, roles, workspace }: { rows: Member[]; now: string; /** The revisions the page's server read the members at: the live stream's first open asks what moved since. */ revisions?: Revisions; actions: MemberActions; /** What the boundary says of every row, read once by the page: the actions it offers this caller and why not. */ access: Record<string, MemberRowAccess>; /** The roles the page may put on an invitation, from the boundary's `invitableRoles`. */ roles: readonly MainRole[]; /** The workspace's name as its record holds it, where the page could read it: the invitation names it. */ workspace?: string }) {
   useShareView(membersContext(rows, now));
   const asOf = new Date(now);
+  // `lastActive` is a calendar day, not an instant: read as a time ("9 h ago") it counted from midnight UTC, so everyone
+  // active that day read the same hour. The context says "seen today", and the page now says the same.
+  const seen = (date: string) => {
+    const days = Math.round((Date.parse(dayOf(asOf)) - Date.parse(date)) / 86_400_000);
+    return days <= 0 ? 'Today' : days === 1 ? 'Yesterday' : `${days} days ago`;
+  };
   const router = useRouter();
   useLive(['members'], revisions);
   const [pending, start] = useTransition();
@@ -241,10 +247,10 @@ export function MembersView({ rows, now, revisions, actions, access, roles, work
     { key: 'joined', header: 'Joined', numeric: true, muted: true, hideBelow: 'lg', mobile: 'hidden', sortValue: (m) => m.joined, cell: (m) => formatDate(m.joined) },
     {
       key: 'active', header: 'Last active', numeric: true, mobile: 'fact', sortValue: (m) => m.lastActive ?? '',
-      cell: (m) => (m.lastActive ? formatRelative(m.lastActive, asOf) : <span className="text-ink-3">Never</span>),
+      cell: (m) => (m.lastActive ? seen(m.lastActive) : <span className="text-ink-3">Never</span>),
       // "Seen", not "Active": the status is the fact before this one on the card, so "Active · Active 9 h ago" said
       // the same word twice in three words. A member who has never signed in says that instead.
-      mobileCell: (m) => (m.lastActive ? `Seen ${formatRelative(m.lastActive, asOf)}` : 'Never signed in'),
+      mobileCell: (m) => (m.lastActive ? `Seen ${seen(m.lastActive).toLowerCase()}` : 'Never signed in'),
     },
     {
       key: 'actions', header: <span className="sr-only">Actions</span>, align: 'right', mobile: 'status',

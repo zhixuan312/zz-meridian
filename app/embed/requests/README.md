@@ -35,4 +35,4 @@ The Requests page's context (`app/(dashboard)/requests/README.md` lists it), rea
 ## Surfaces
 
 - **Embed inline**: as above, at 360 to 760px; no scrollbar of its own, the height is reported to the host.
-- **Embed fullscreen**: the table at the host's width. A row press or its focusable title button opens the request through the host, just like the inline list. A known customer has its own button opening that customer through the host without opening the request; neither action navigates the embed frame.
+- **Embed fullscreen**: the table at the host's width. A row press or its focusable title button opens the request through the host, just like the inline list. The customer is text, as on the console: the embed's read does not carry customer ids, so no row offers a second link.

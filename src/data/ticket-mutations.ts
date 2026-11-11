@@ -115,6 +115,9 @@ async function createStep(scope: AccessScope, input: Record<string, unknown>): P
   if (input.title === undefined) throw new TicketRefusal(REFUSALS.title);
   if (input.service === undefined) throw new TicketRefusal(REFUSALS.service);
   if (input.priority === undefined) throw new TicketRefusal(REFUSALS.priority);
+  // The collection's create schema offers `state`, but a new ticket is always open: refusing here turns a proposal that
+  // promised "closed" into a named failure instead of a ticket that quietly opened.
+  if (input.state !== undefined && input.state !== 'open') throw new TicketRefusal('A new ticket is always open. Create it, then move it along with the ticket actions.');
   const own = await checked({ title: input.title, service: input.service, priority: input.priority, assigneeId: input.assigneeId ?? null, summary: input.summary ?? '' });
   const now = clock().toISOString();
   const row = await tickets.create!({ ...own, state: 'open', openedAt: now, updatedAt: now, closedAt: null, incidentId: null });
