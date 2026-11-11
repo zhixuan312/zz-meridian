@@ -87,8 +87,8 @@ Write the status on the line under the title: `Status: beta`.
 | Command | What it does | When |
 |---|---|---|
 | `pnpm test:t1` | The static checks, then the Tier 1 tests the import graph reaches from the changes since the last green run | After each change |
-| `pnpm test:t2` | The same for the affected Tier 2 tests (`*.perf.test.ts(x)`, and this repository's `tests/deep-*`), with the affected Tier 1 tests | After a change to shared components, the shell or data; after a Tier 2 or Tier 3 phase |
-| `pnpm test:release` | Every Tier 1 and Tier 2 test, once, with lint and the type check | Before a release |
+| `pnpm test:t2` | The same for the affected Tier 2 tests (`*.perf.test.ts(x)` and this repository's broad browser sweeps), with the affected Tier 1 tests | After a change to shared components, the shell or data; after a Tier 2 or Tier 3 phase |
+| `pnpm test:release` | Every Tier 1 and Tier 2 test, once, with the timed browser suites, lint, the type check and a production build | Before a release |
 | `pnpm tokens` | Generates the token CSS and the Tailwind bridge from `tokens/` (`--check` only compares) | After any token change |
 | `node scripts/contrast.ts [--all]` | Every specified foreground on its background, in every theme and accent, and the chart palette's colour-vision checks | Every test command |
 | `node scripts/registry.ts` | Regenerates the Atlas registry from the card folders (`--check` only compares) | After adding or renaming a card |

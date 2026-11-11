@@ -110,7 +110,7 @@ A limit that moved, with what it was set from.
 
 ## The classification
 
-Every test belongs to exactly one tier, by the convention alone: a file matching `*.perf.test.ts(x)` or this repository's `tests/deep-*.test.ts(x)` is Tier 2, and every other test under `tests/` is Tier 1. `tests/cli-*` is Meridian's repository only (the package's own tests; a project made from Meridian has no `cli/`). The static checks run on every tier because they read the whole tree.
+Every test belongs to exactly one tier, by the convention alone: a file matching `*.perf.test.ts(x)` is Tier 2, and every other test under `tests/` is Tier 1 — `tests/deep-*.test.ts(x)` included, whose size keeps it out of the main run, never its tier. `tests/cli-*` is Meridian's repository only (the package's own tests; a project made from Meridian has no `cli/`). The static checks run on every tier because they read the whole tree.
 
 | Key | Size | Type | Tier | Quiet machine | Command | What it checks |
 |---|---|---|---|---|---|---|
