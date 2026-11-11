@@ -103,14 +103,13 @@ export function ArticleLoading() {
 
 type ReadingProps = { section: string; params: Promise<{ id: string }> };
 
-/** A route for the entries of one section that is only reading: no stage, so none of the stages' code rides along with it. */
-export function ReadingPage(props: ReadingProps) {
-  return <Suspense fallback={<ArticleLoading />}><ReadingEntry {...props} /></Suspense>;
-}
-
-async function ReadingEntry({ section, params }: ReadingProps) {
+/**
+ * A route for the entries of one section that is only reading: no stage, so none of the stages' code rides along with
+ * it. The entry is resolved before the boundary, so an unknown one answers 404 rather than a streamed 200.
+ */
+export async function ReadingPage({ section, params }: ReadingProps) {
   const { id } = await params;
   const e = entry(section, id);
   if (!e) notFound();
-  return <Article e={e} />;
+  return <Suspense fallback={<ArticleLoading />}><Article e={e} /></Suspense>;
 }

@@ -40,15 +40,18 @@ export async function generateMetadata({ params }: { params: Promise<{ section: 
 }
 
 type EntryProps = { params: Promise<{ section: string; id: string }> };
+type AtlasEntry = NonNullable<ReturnType<typeof entry>>;
 
-export default function EntryPage(props: EntryProps) {
-  return <Suspense fallback={<ArticleLoading />}><Entry {...props} /></Suspense>;
-}
-
-async function Entry({ params }: EntryProps) {
+export default async function EntryPage({ params }: EntryProps) {
+  // The entry is resolved, and an unknown one answered 404, before any boundary: `notFound()` thrown inside a Suspense
+  // after the shell flushed reached the client as a 200 with the not-found screen, so a dead Atlas URL looked healthy.
   const { section, id } = await params;
   const e = entry(section, id);
   if (!e) notFound();
+  return <Suspense fallback={<ArticleLoading />}><Entry e={e} /></Suspense>;
+}
+
+async function Entry({ e }: { e: AtlasEntry }) {
   const page = PAGES.find((p) => p.id === e.id);
   const stage =
     e.kind === 'card' || e.kind === 'template' ? <CardStage id={`${e.section}/${e.id}`} />
