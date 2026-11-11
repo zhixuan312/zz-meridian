@@ -111,8 +111,13 @@ const matching = (root: string, test: (rel: string, src: string) => boolean): st
   return hits.length > 0 ? hits : null;
 };
 
-/** The commands 0.39.0 removed: the scripts and the files under `scripts/` they ran. */
-const REMOVED_COMMAND = /\b(?:pnpm|npm|yarn|bun)\s+(?:run\s+)?(?:gate|verify|audit|interactions|live|keyboard|vitals|test:all|test(?![\w:]))\b|\bscripts\/(?:gate|verify|audit|interactions|live|keyboard|vitals)\.ts\b/;
+/**
+ * The commands 0.39.0 removed, and the two files it retired. `audit` is matched only as `run audit`: pnpm, npm and yarn
+ * run their own dependency audit ahead of a script of that name, so a bare `pnpm audit` was never Meridian's. A bare
+ * `test` is left to `reconcilePackage`, which reports the script: `npm test` is usually a team's own, and `bun test` is
+ * bun's runner. `scripts/audit.ts` and the other helpers still ship; only `gate.ts` and `verify.ts` went.
+ */
+const REMOVED_COMMAND = /\b(?:pnpm|npm|yarn|bun)\s+(?:run\s+(?:gate|verify|audit|interactions|live|keyboard|vitals|test:all)|(?:gate|verify|interactions|live|keyboard|vitals|test:all))\b|\bscripts\/(?:gate|verify)\.ts\b/;
 
 /** The comment text of a source file: `//` to its line's end, and `/* … *\/`, with strings left out. */
 function commentsOf(src: string): string {
@@ -132,14 +137,16 @@ function commentsOf(src: string): string {
  * named for a removed command is left to `reconcilePackage`, which removes it or reports it; a value of another script
  * that still calls one is read here, because the update cannot rewrite what it embeds.
  */
-function removedCommandMentions(root: string): string[] | null {
+function removedCommandMentions(root: string, markdown: boolean): string[] | null {
   const hits = new Set<string>();
   const pkg = text(root, 'package.json');
   if (pkg !== null && REMOVED_COMMAND.test(pkg)) hits.add('package.json');
   const files: string[] = [];
   walk(root, '.github/workflows', files, /\.ya?ml$/);
   walk(root, '', files, /\.sh$/, ownedIn(root));
-  walk(root, '', files, /\.md$/, ownedIn(root));
+  // A document is read only while the update crosses 0.39.0. On later upgrades a dated line ("`pnpm verify` now …") is
+  // history the team cannot settle without rewriting it, and a recurring line no team can close is noise.
+  if (markdown) walk(root, '', files, /\.md$/, ownedIn(root));
   for (const rel of files) if (REMOVED_COMMAND.test(text(root, rel) ?? '')) hits.add(rel);
   for (const { rel, src } of teamSources(root)) if (REMOVED_COMMAND.test(commentsOf(src))) hits.add(rel);
   const scriptFiles: string[] = [];
@@ -396,7 +403,7 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     id: 'verify-modes',
     since: '0.5.0',
     recurring: true,
-    applies: removedCommandMentions,
+    applies: (root, source) => removedCommandMentions(root, isNewer('0.39.0', source)),
     summary: '`pnpm gate`, `pnpm verify` and the other removed commands are replaced by the three test commands.',
     instructions: 'Read "Test runs" in AGENTS.md and "The tiers" in `references/validation.md`. `pnpm gate` and `pnpm verify` with its flags — `--full`, `--timed`, `--perf`, `--quick`, `--no-vitals` and `--extra` — are removed, and so are the `test`, `audit`, `interactions`, `live`, `keyboard` and `vitals` scripts and `scripts/gate.ts` and `scripts/verify.ts`. Run `pnpm test:t1` after a change (the affected Tier 1 tests, the static checks and the type check), `pnpm test:t2` when the change can alter what a page draws or a control does (the affected Tier 2 checks and the browser sweeps as well), and `pnpm test:release` before a release (every Tier 1 and Tier 2 test once, the timed browser suites, lint and the type check). None takes an argument: the command selects the tests. Replace every removed call in the files listed — scripts, workflows, shell files, documents and comments — and read the line each run ends with: it says what ran and what did not. `scripts/verify.config.ts` and `scripts/verify.baseline.json` stay.',
     checks: ['test:t1'],

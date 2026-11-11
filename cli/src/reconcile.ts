@@ -162,7 +162,15 @@ export function reconcilePackage(teamText: string, template: Template, need: Nee
     } else if (have === was) {
       migrations.push(file(`script:${name}`, `script "${name}" is no longer part of Meridian's toolchain`, `Your "${name}" script is ${JSON.stringify(have)}, exactly what the previous release wrote, and this release no longer adds or maintains it. It was kept because the command it runs still exists. Move the work to \`test:t1\`, \`test:t2\` or \`test:release\` where it belongs, or leave it if it does the same work. The release removed \`gate\`, \`verify\`, \`audit\`, \`interactions\`, \`live\`, \`keyboard\` and \`vitals\`.`, 'package.json'));
     } else {
-      migrations.push(file(`script:${name}`, `script "${name}" calls a file this release removed`, `Your "${name}" script is ${JSON.stringify(have)} and was kept; Meridian no longer ships it. The file it calls may be gone with the update: point it at the test command that replaced it (\`test:t1\`, \`test:t2\`, \`test:release\`) or your own script, then run the project's \`test:t1\`.`, 'package.json'));
+      const lost = called !== undefined && shipped !== undefined && !shipped.has(called) ? called : null;
+      migrations.push(file(
+        `script:${name}`,
+        lost ? `script "${name}" calls ${lost}, a file this release removed` : `script "${name}" is no longer part of Meridian's toolchain`,
+        lost
+          ? `Your "${name}" script is ${JSON.stringify(have)} and was kept, but it calls ${lost}, which the update removes: point it at the test command that replaced it (\`test:t1\`, \`test:t2\`, \`test:release\`) or your own script, then run the project's \`test:t1\`.`
+          : `Your "${name}" script is ${JSON.stringify(have)} and was kept; Meridian no longer adds or maintains it, and the command it runs still exists. Move the work to \`test:t1\`, \`test:t2\` or \`test:release\` where it belongs, or leave it if it does the same work.`,
+        'package.json',
+      ));
     }
   }
 

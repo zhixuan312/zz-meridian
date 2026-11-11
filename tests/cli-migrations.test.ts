@@ -92,7 +92,7 @@ describe('the commands 0.39.0 removed', () => {
       'README.md': 'Run `pnpm gate` before you push.\n',
       'scripts/team.sh': '#!/bin/sh\npnpm verify\n',
       'scripts/team.ts': '// old loop: pnpm gate\nexport const x = 1;\n',
-      'src/views/team.ts': '// run pnpm audit before shipping\nexport const y = 2;\n',
+      'src/views/team.ts': '// run pnpm run audit before shipping\nexport const y = 2;\n',
     });
     expect(pathsOn(root)).toEqual(['.github/workflows/ci.yml', 'README.md', 'package.json', 'scripts/team.sh', 'scripts/team.ts', 'src/views/team.ts']);
   });
@@ -686,6 +686,27 @@ describe('the verify-modes migration', () => {
       '.github/workflows/ci.yml': 'jobs:\n  check:\n    steps:\n      - run: pnpm verify --full --perf\n',
     });
     expect(byId('verify-modes').applies(root, '0.35.0')).toEqual(['.github/workflows/ci.yml', 'package.json']);
+  });
+  it('leaves the package managers\' own commands and the helpers that still ship alone', () => {
+    // pnpm/npm/yarn audit is the dependency audit, not Meridian's removed script; bun test is bun's runner; npm test is
+    // usually the team's own; scripts/audit.ts and its siblings still ship in 0.39.0.
+    const root = project({
+      'package.json': JSON.stringify({ scripts: { sec: 'pnpm audit --prod && npm audit fix', ci: 'bun test && npm test', audit: 'node scripts/audit.ts', interactions: 'node scripts/interactions.ts' } }),
+      'README.md': 'Run `npm test` in api/ after a change.\n',
+      'src/views/team.ts': '// the helper lives in scripts/audit.ts\nexport const y = 2;\n',
+    });
+    expect(byId('verify-modes').applies(root, '0.35.0')).toBeNull();
+    // `pnpm run audit` reaches the removed script, which a bare `pnpm audit` never did.
+    expect(byId('verify-modes').applies(project({ 'package.json': JSON.stringify({ scripts: { ci: 'pnpm run audit' } }) }), '0.35.0')).toEqual(['package.json']);
+  });
+  it('reads a document only while the update crosses 0.39.0, so a changelog line is not named forever', () => {
+    const root = project({
+      'CHANGELOG.md': '## 0.2.0\n\n`pnpm verify` now runs the gate.\n',
+      '.github/workflows/ci.yml': 'jobs:\n  check:\n    steps:\n      - run: pnpm gate\n',
+    });
+    expect(byId('verify-modes').applies(root, '0.38.0')).toEqual(['.github/workflows/ci.yml', 'CHANGELOG.md']);
+    expect(byId('verify-modes').applies(root, '0.39.0')).toEqual(['.github/workflows/ci.yml']);
+    expect(releaseMigrations(root, '0.39.0', '0.39.1').find((m) => m.id === 'verify-modes')?.paths).toEqual(['.github/workflows/ci.yml']);
   });
 });
 

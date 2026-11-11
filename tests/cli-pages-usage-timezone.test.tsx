@@ -27,8 +27,6 @@ import { usageExplore } from '@/logic/usage-explore';
 describe("Usage names the product's reporting timezone wherever it names a zone", () => {
   it('in the cards, the Heatmap of hours and the context, never UTC', async () => {
     const { data } = await usageTool.read({ period: '30d' });
-    // The read's revisions travel with its data, so the page's live stream asks what moved since (issue #139).
-    expect(data.revisions).toMatchObject({ days: expect.any(String), endpoints: expect.any(String), responses: expect.any(String) });
     const { container } = render(<Tooltip.Provider><UsageBody {...data} /></Tooltip.Provider>);
     expect(container.textContent).toMatch(/Every weekday summed, Asia\/Singapore, over the last 30 complete days/);
     fireEvent.click(screen.getByRole('radio', { name: 'By weekday and hour' }));
@@ -38,6 +36,17 @@ describe("Usage names the product's reporting timezone wherever it names a zone"
     const context = contextText(usageContext(data));
     expect(context).toMatch(/Asia\/Singapore/);
     expect(context).not.toMatch(/UTC/);
+  });
+
+  // #139: /usage is the rail route that draws /requests, so its live registration is what gives the navigation protocol
+  // an after-live start. The read's revisions travel with its data; a subscribed collection read through
+  // readAllInScope (hours, regions) carries none, and the stream resyncs a name it has no revision for.
+  it('hands Usage\'s live stream the revisions its read touched, and resyncs the two that carry none (#139)', async () => {
+    const { data } = await usageTool.read({ period: '30d' });
+    expect(Object.keys(data.revisions ?? {}).sort()).toEqual(['days', 'endpoints', 'responses']);
+    for (const name of ['days', 'endpoints', 'responses']) expect(data.revisions![name], name).toMatch(/^.+:\d+$/);
+    expect(data.revisions).not.toHaveProperty('hours');
+    expect(data.revisions).not.toHaveProperty('regions');
   });
 
   it("in Usage's prepared query, whose hours and their measure say the same zone", () => {

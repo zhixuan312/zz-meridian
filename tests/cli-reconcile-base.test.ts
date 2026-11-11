@@ -60,6 +60,20 @@ describe('a script the release dropped', () => {
     expect(JSON.parse(r.text!).scripts.gate).toBe('node scripts/gate.ts --verbose');
     expect(r.migrations.map((m) => m.id)).toEqual(expect.arrayContaining(['script:gate', 'script:test']));
   });
+  it('names the lost file only when the team\'s script actually calls one', () => {
+    const r = planOld({ ...oldBase.scripts, test: 'vitest run --coverage' });
+    const test = r.migrations.find((m) => m.id === 'script:test')!;
+    expect(test.summary).toBe("script \"test\" is no longer part of Meridian's toolchain");
+    expect(test.summary).not.toMatch(/calls/);
+    const gate = planOld({ ...oldBase.scripts, gate: 'node scripts/gate.ts --verbose' }).migrations.find((m) => m.id === 'script:gate')!;
+    expect(gate.summary).toBe('script "gate" calls scripts/gate.ts, a file this release removed');
+  });
+  it('removes nothing when the caller cannot say what the target ships', () => {
+    // The production caller passes the target payload; without it the safe answer is to keep the script and name it.
+    const r = reconcilePackage(pkg({ dependencies: base.dependencies, devDependencies: base.devDependencies, scripts: oldBase.scripts }), template, need, oldBase);
+    expect(JSON.parse(r.text!).scripts.gate).toBe('node scripts/gate.ts');
+    expect(r.migrations.map((m) => m.id)).toEqual(expect.arrayContaining(['script:gate']));
+  });
   it('stays when the file it names still ships, named for the team to decide', () => {
     const liveBase = { ...oldBase, scripts: { ...oldBase.scripts, live: 'node scripts/live.ts' } };
     const r = reconcilePackage(pkg({ dependencies: base.dependencies, devDependencies: base.devDependencies, scripts: liveBase.scripts }), template, need, liveBase, shipped);
