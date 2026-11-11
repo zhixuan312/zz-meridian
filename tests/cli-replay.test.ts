@@ -17,7 +17,7 @@ describe('fetchRelease', () => {
 
 describe('assertSafeEntries', () => {
   it('accepts a normal package', () => expect(() => assertSafeEntries(['package/package.json', 'package/dist/cli.js', 'package/payload/src/lib/cn.ts'])).not.toThrow());
-  it.each([['/etc/passwd'], ['package/../evil'], ['../evil'], ['other/file'], ['package/payload/../../x']])('refuses %s', (e) => {
+  it.each([['/etc/passwd'], ['package/../evil'], ['../evil'], ['other/file'], ['package/payload/../../x'], ['package/a//b'], ['package/a/./b']])('refuses %s', (e) => {
     expect(() => assertSafeEntries(['package/package.json', e])).toThrow();
   });
 });

@@ -13,7 +13,8 @@ const UPDATER = ['.meridian/update', '.meridian/history', '.meridian/update.lock
 
 export type Inventory = { prints: Map<string, string>; conflicts: string[] };
 
-const NEXT_CONFIGS = ['next.config.ts', 'next.config.mts', 'next.config.js', 'next.config.mjs', 'next.config.cjs'];
+// Next's own order (CONFIG_FILES in next/dist/shared/lib/constants.js); it never reads a .cjs config.
+const NEXT_CONFIGS = ['next.config.js', 'next.config.mjs', 'next.config.ts', 'next.config.mts'];
 const overlaps = (a: string, b: string) => a === b || a.startsWith(`${b}/`) || b.startsWith(`${a}/`);
 
 /** The Next build folder: `distDir` when `next.config` sets it as a string literal, else `.next`. */

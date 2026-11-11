@@ -14,6 +14,7 @@ import {
   run, runTool, sha256, writeIn, writeManifest,
 } from './files.js';
 import { BRIEF_TEMPLATE, managedBlock, upsertManagedBlock } from './context.js';
+import { aliasesOf } from './imports.js';
 import { FIXED, adoptSetOf, managedPaths, parseManifest } from './ownership.js';
 import { MERIDIAN_SCRIPTS, TOOLCHAIN, compareMinimum, needOf, type Template } from './reconcile.js';
 
@@ -195,6 +196,12 @@ export function tsconfigWrites(tsPath: string): { writes: Map<string, string>; n
   }
   ts.compilerOptions.paths ??= {};
   ts.compilerOptions.paths['@meridian/*'] = ['./src/*'];
+  // A project whose `include` names only its own folders would leave every file Meridian copies under `src/` outside
+  // `tsc`, so the type check (and test:t1) reports a pass nothing checked. An absent `include` already takes everything.
+  if (Array.isArray(ts.include) && ts.include.length && !ts.include.some((p: unknown) => typeof p === 'string' && (p === '**/*.ts' || p === '**/*.tsx' || p.startsWith('src/')))) {
+    ts.include.push('src/**/*.ts', 'src/**/*.tsx');
+    notes.push('added src/**/*.ts and src/**/*.tsx to tsconfig include, so the files Meridian copies there are type-checked');
+  }
   const at = ts.compilerOptions.paths['@/*']?.[0];
   const atAlias = typeof at === 'string' ? at.replace(/\/\*$/, '').replace(/^\.\//, '') || '.' : null;
   // A tsconfig may carry comments and trailing commas, which `next dev` keeps (`comment-json`) and `JSON.stringify`
@@ -314,10 +321,19 @@ Rename or move them, then run adopt again.`);
   }
 
   // The global stylesheet: Meridian's, at the place the root layout already imports; theirs kept beside it to port from.
+  // The import may be relative or through the project's own alias (`@/styles/globals.css`); a specifier that cannot be
+  // resolved to a file in the project is refused, since writing a second stylesheet there would leave theirs active.
   const layout = ['tsx', 'jsx', 'ts', 'js'].map((x) => `${dir}/layout.${x}`).find((f) => fs.existsSync(path.join(root, f)))!;
   const layoutSrc = fs.readFileSync(path.join(root, layout), 'utf8');
-  const cssImport = /import\s+['"](\.{1,2}\/[^'"]+\.css)['"]/.exec(layoutSrc)?.[1];
-  const cssRel = cssImport ? path.posix.normalize(path.posix.join(path.posix.dirname(layout), cssImport)) : `${dir}/globals.css`;
+  const cssImport = /import\s+['"]([^'"]+\.css)['"]/.exec(layoutSrc)?.[1];
+  const cssFile = (spec: string): string | null => {
+    if (spec.startsWith('.')) return path.posix.normalize(path.posix.join(path.posix.dirname(layout), spec));
+    const tsText = fs.existsSync(tsPath) ? fs.readFileSync(tsPath, 'utf8') : null;
+    for (const [alias, target] of aliasesOf(tsText)) if (spec.startsWith(alias)) return path.posix.normalize(`${target}${spec.slice(alias.length)}`);
+    return null;
+  };
+  const cssRel = cssImport === undefined ? `${dir}/globals.css` : cssFile(cssImport);
+  if (cssRel === null) return fail(`${layout} imports ${cssImport}, a stylesheet this project's tsconfig cannot resolve to a file. Move the import to a relative path, then run adopt again; nothing was written.`);
   const cssAbs = path.join(root, cssRel);
   if (fs.existsSync(cssAbs)) {
     const before = cssRel.replace(/\.css$/, '.before.css');
@@ -363,8 +379,16 @@ Rename or move them, then run adopt again.`);
   if (unignored.length) writes.set('.gitignore', `${ignored.trimEnd()}\n\n# zz-meridian: local reports and an update in progress\n${unignored.join('\n')}\n`);
 
   // ── Write: every target checked first, so a bad one stops it before anything changes ─────────────────
-  try { for (const rel of writes.keys()) inside(root, rel); } catch (e) { return fail((e as Error).message); }
-  for (const [rel, content] of writes) writeIn(root, rel, content);
+  const written: string[] = [];
+  try {
+    for (const rel of writes.keys()) inside(root, rel);
+    for (const [rel, content] of writes) { writeIn(root, rel, content); written.push(rel); }
+  } catch (e) {
+    // An IO failure (a read-only folder, a full disk) between writes is not a check's refusal: name what was written,
+    // since the manifest and the agent files were not, and say how to take the tree back.
+    return fail(`a write failed (${(e as Error).message}) after ${written.length} file${written.length === 1 ? '' : 's'} ${written.length === 1 ? 'was' : 'were'} written; the manifest and agent files were not. ` +
+      `${o.allowDirty ? 'git status shows what adopt wrote beside your own changes' : 'put the tree back with `git restore . && git clean -fd`, which removes only what adopt wrote since it started clean'}, then run adopt again.${written.length ? `\nWritten: ${written.join(', ')}` : ''}`);
+  }
 
   const name = brand.name ?? String(pkg.name ?? path.basename(root)).replace(/^@[^/]+\//, '').replace(/[-_]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
   brand = effectiveBrand({ ...brand, name });

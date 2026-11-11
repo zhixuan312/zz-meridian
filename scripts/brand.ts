@@ -28,7 +28,7 @@ import { holdArgs } from './lib/args.ts';
 const ROOT = path.resolve(import.meta.dirname, '..');
 const argv = process.argv.slice(2);
 // A mistyped flag (--hu for --hue) stops the run before anything is written, rather than branding the rest without it.
-holdArgs('brand', argv, ['--name', '--workspace', '--timezone', '--package', '--accent', '--theme', '--currency', '--user', '--role', '--hex', '--hue', '--chroma', '--accent-name', '--no-atlas', '--product', '--existing']);
+holdArgs('brand', argv, ['--name', '--workspace', '--timezone', '--package', '--accent', '--theme', '--currency', '--user', '--role', '--hex', '--hue', '--chroma', '--accent-name', '--package-manager', '--no-atlas', '--product', '--existing']);
 const opt = (k: string) => { const i = argv.indexOf(k); return i >= 0 ? argv[i + 1] : undefined; };
 const has = (k: string) => argv.includes(k);
 const file = (p: string) => path.join(ROOT, p);
@@ -112,6 +112,12 @@ function defaultAccent(id: string) {
   done.push(`accent = ${id}`);
 }
 
+// A preset and a colour are two answers to one question. Silently dropping the preset left the caller believing a
+// choice had been applied, so the pair is refused before anything is written.
+if (opt('--accent') && (opt('--hex') !== undefined || opt('--hue') !== undefined)) {
+  throw new Error('--accent names a preset; --hex and --hue name a colour. Pass one or the other, not both');
+}
+
 const hex = opt('--hex');
 let hue = opt('--hue'), chroma = opt('--chroma');
 if (hex) {
@@ -185,12 +191,6 @@ if (hue !== undefined) {
   const accent = opt('--accent');
   if (accent) defaultAccent(accent);
 }
-// A preset and a colour are two answers to one question. Silently dropping the preset left the caller believing a
-// choice had been applied, so the pair is refused before anything is written.
-if (opt('--accent') && (hex !== undefined || hue !== undefined)) {
-  throw new Error('--accent names a preset; --hex and --hue name a colour. Pass one or the other, not both');
-}
-
 if (theme) {
   const s = read('src/app.config.ts');
   if (/\n {2}theme: '/.test(s)) write('src/app.config.ts', s.replace(/(\n {2}theme: )'[^']*'/, `$1'${theme}'`));
@@ -229,7 +229,11 @@ if (has('--no-atlas') || has('--product')) {
 
 if (has('--product')) {
   // A product is the dashboard, not the design system: drop what documents and previews the system, keep the parts it
-  // is built from (components, tokens, styles, scripts and the gates).
+  // is built from (components, tokens, styles, scripts and the gates). The README names the package manager the project
+  // installs with: `create` passes the one it chose, so a machine without pnpm is not told to run it.
+  const pm = opt('--package-manager') ?? 'pnpm';
+  if (!['pnpm', 'npm', 'yarn', 'bun'].includes(pm)) throw new Error('--package-manager must be pnpm, npm, yarn or bun');
+  const cmd = (name: string) => (pm === 'npm' ? (name === 'install' ? 'npm install' : `npm run ${name}`) : pm === 'bun' ? `bun run ${name}` : `${pm} ${name}`);
   const walkDirs = (dir: string): string[] => fs.existsSync(file(dir)) ? fs.readdirSync(file(dir), { withFileTypes: true }).flatMap((e) => e.isDirectory() ? walkDirs(path.join(dir, e.name)) : [path.join(dir, e.name)]) : [];
   for (const f of walkDirs('src/components')) if (/\/(README\.md|preview\.tsx)$/.test(f)) fs.rmSync(file(f));
   for (const f of walkDirs('app')) if (/\/README\.md$/.test(f)) fs.rmSync(file(f));
@@ -240,7 +244,7 @@ if (has('--product')) {
   delete p.scripts?.registry;
   write('package.json', JSON.stringify(p, null, 2) + '\n');
   const product = read('src/app.config.ts').match(/name: '([^']*)'/)?.[1] ?? 'Dashboard';
-  write('README.md', `# ${product}\n\nA dashboard built on ZZ Meridian (Next.js, React, Tailwind v4, DTCG tokens).\n\n## Run it\n\n\`\`\`sh\npnpm install\npnpm dev          # http://localhost:3000\npnpm test:t1      # the tests affected by the change since the last green run\npnpm test:t2      # the affected Tier 2 tests too\npnpm test:release # every Tier 1 and Tier 2 test, with lint and the type check\n\`\`\`\n\n## Where things are\n\n| Path | What |\n|---|---|\n| \`src/app.config.ts\` | Name, workspace, accent, timezone, currency, the signed-in user and the navigation |\n| \`src/data/collections.ts\` | Where pages, actions and the assistant read and change records |\n| \`src/views/\`, \`app/\` | The pages |\n| \`src/components/\` | Meridian's components and patterns |\n| \`tokens/\` | Colour, type, space and motion (run \`pnpm tokens\` after a change) |
+  write('README.md', `# ${product}\n\nA dashboard built on ZZ Meridian (Next.js, React, Tailwind v4, DTCG tokens).\n\n## Run it\n\n\`\`\`sh\n${cmd('install')}\n${cmd('dev')}          # http://localhost:3000\n${cmd('test:t1')}      # the tests affected by the change since the last green run\n${cmd('test:t2')}      # the affected Tier 2 tests too\n${cmd('test:release')} # every Tier 1 and Tier 2 test, with lint and the type check\n\`\`\`\n\n## Where things are\n\n| Path | What |\n|---|---|\n| \`src/app.config.ts\` | Name, workspace, accent, timezone, currency, the signed-in user and the navigation |\n| \`src/data/collections.ts\` | Where pages, actions and the assistant read and change records |\n| \`src/views/\`, \`app/\` | The pages |\n| \`src/components/\` | Meridian's components and patterns |\n| \`tokens/\` | Colour, type, space and motion (run \`${cmd('tokens')}\` after a change) |
 
 ## Assistant
 
@@ -255,7 +259,7 @@ The dashboard carries an assistant panel. It is off until \`ASSISTANT_PROVIDER\`
 
 - Collections live in \`src/data/collections.ts\`: replace each \`rows\` with your API and \`clock\` with \`new Date()\`. The assistant reads and proposes changes only through them.
 - Add your sign-in check in the dashboard layout (\`app/(dashboard)/layout.tsx\`), in \`app/api/assistant/route.ts\` before the model is reached, and in every server action (each \`actions.ts\`): an action is a public endpoint the layout does not guard.
-- \`node scripts/assistant.ts\` runs the assistant off, then on against a fake model (\`scripts/fake-llm.ts\`); \`pnpm test:t2\` runs the same walk-through in its browser sweeps.
+- \`node scripts/assistant.ts\` runs the assistant off, then on against a fake model (\`scripts/fake-llm.ts\`); \`${cmd('test:t2')}\` runs the same walk-through in its browser sweeps.
 `);
   const agents = read('AGENTS.md');
   const cut = agents.indexOf('# Working in Meridian');

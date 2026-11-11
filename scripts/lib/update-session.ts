@@ -65,6 +65,13 @@ function str(v: unknown, at: string): string {
   return v;
 }
 
+/** A journal id is one folder's name: letters, digits, dot, dash and underscore, never `.` or `..`. */
+function sessionName(v: unknown, at: string): string {
+  const s = str(v, at);
+  if (!/^[A-Za-z0-9._-]+$/.test(s) || s === '.' || s === '..') throw new Error(`${at}: must be a plain folder name (letters, digits, dot, dash and underscore)`);
+  return s;
+}
+
 function oneOf<T extends string>(v: unknown, list: readonly T[], at: string): T {
   if (typeof v !== 'string' || !(list as readonly string[]).includes(v)) throw new Error(`${at}: must be one of ${list.join(', ')}`);
   return v as T;
@@ -200,7 +207,9 @@ export function parseJournal(text: string): UpdateJournal {
   const v = parseJson(text, 'state.json');
   if (!isObj(v)) throw new Error('state.json: must be an object');
   return {
-    id: str(v.id, 'id'),
+    // The id becomes the session folder's name under `.meridian/history/<version>/`; a hand-edited `../` would move it
+    // outside.
+    id: sessionName(v.id, 'id'),
     sourceVersion: str(v.sourceVersion, 'sourceVersion'),
     targetVersion: str(v.targetVersion, 'targetVersion'),
     route: oneOf(v.route, ['adopt', 'create'], 'route'),

@@ -23,7 +23,6 @@ export function readFlags(args: string[]): { values: Record<string, string | boo
         resume: { type: 'boolean' },
         finalize: { type: 'boolean' },
         abort: { type: 'boolean' },
-        verify: { type: 'boolean' },
         verbose: { type: 'boolean' },
         global: { type: 'boolean' },
         help: { type: 'boolean', short: 'h' },
@@ -45,7 +44,7 @@ const BRAND = BRAND_FLAGS;
 const ACCEPTS: Record<string, readonly string[]> = {
   adopt: [...BRAND, 'allow-dirty', 'no-install'],
   create: [...BRAND, 'no-install'],
-  update: ['allow-dirty', 'no-install', 'dry-run', 'resume', 'finalize', 'abort', 'verify', 'verbose'],
+  update: ['allow-dirty', 'no-install', 'dry-run', 'resume', 'finalize', 'abort', 'verbose'],
   brand: [...BRAND, 'allow-dirty'],
   skill: ['global'],
 };

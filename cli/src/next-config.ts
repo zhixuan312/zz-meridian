@@ -9,8 +9,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-/** The Next config files Next itself reads, in its order: the first one a project has is its config. */
-export const NEXT_CONFIG_FILES = ['next.config.ts', 'next.config.mts', 'next.config.js', 'next.config.mjs', 'next.config.cjs'];
+/**
+ * The Next config files Next itself reads, in its order (`CONFIG_FILES` in next/dist/shared/lib/constants.js):
+ * `next.config.js`, then `.mjs`, then `.ts`, then `.mts`. It never reads a `.cjs` config. The first one a project has
+ * is its config.
+ */
+export const NEXT_CONFIG_FILES = ['next.config.js', 'next.config.mjs', 'next.config.ts', 'next.config.mts'];
 
 /** The config files this project has, in Next's order. */
 export function nextConfigFiles(root: string): string[] {

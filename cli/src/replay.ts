@@ -26,7 +26,9 @@ export function assertSafeEntries(entries: string[]) {
     const bad = (why: string) => new Error(`refusing the package: entry ${JSON.stringify(e)} ${why}`);
     if (!e || e.includes('\0') || e.includes('\\')) throw bad('is not a plain path');
     if (e.startsWith('/') || /^[A-Za-z]:/.test(e)) throw bad('is absolute');
-    const parts = e.split('/').filter((p, i, a) => p !== '' || i === a.length - 1);
+    // A tar directory entry may end in one slash; every other empty segment stays and is refused, which the filter this
+    // replaces dropped before the check.
+    const parts = (e.endsWith('/') ? e.slice(0, -1) : e).split('/');
     if (parts.some((p) => p === '..' || p === '.' || p === '')) throw bad('contains a ".." or empty segment');
     if (parts[0] !== 'package') throw bad('is not under package/');
   }

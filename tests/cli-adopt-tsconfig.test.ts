@@ -74,6 +74,17 @@ describe('adopt and the team\'s tsconfig', () => {
     expect(r.writes.has('tsconfig.before.json')).toBe(false);
   });
 
+  it("adds src/ to an include that names only the team's own folders, so the copied files are type-checked", () => {
+    const r = at('{\n  "compilerOptions": { "target": "ES2022" },\n  "include": ["app/**/*.ts", "app/**/*.tsx"]\n}\n');
+    expect(JSON.parse(r.writes.get('tsconfig.json')!).include).toEqual(['app/**/*.ts', 'app/**/*.tsx', 'src/**/*.ts', 'src/**/*.tsx']);
+    expect(r.notes.join('\n')).toMatch(/tsconfig include/);
+    // A config that already takes everything, or names src, is left as it is.
+    for (const include of [['**/*.ts', '**/*.tsx'], ['src/**/*.ts'], ['next-env.d.ts', '**/*.ts']]) {
+      const kept = at(JSON.stringify({ compilerOptions: { target: 'ES2022' }, include }));
+      expect(JSON.parse(kept.writes.get('tsconfig.json')!).include).toEqual(include);
+    }
+  });
+
   it('writes no backup when there was nothing to lose', () => {
     const r = at('{\n  "compilerOptions": {\n    "target": "ES2017",\n    "paths": { "@/*": ["./src/*"] }\n  }\n}\n');
     expect(r.writes.has('tsconfig.before.json')).toBe(false);

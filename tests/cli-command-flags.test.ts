@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest';
-import { misapplied } from '../cli/src/command-flags.ts';
+import { misapplied, readFlags } from '../cli/src/command-flags.ts';
 
 /**
  * A flag a command does not read must be refused, never accepted and ignored. `adopt --dry-run` used to copy Meridian
@@ -8,11 +8,16 @@ import { misapplied } from '../cli/src/command-flags.ts';
  */
 describe('a flag outside its command', () => {
   it('refuses the update modes on the commands that do not act on them', () => {
-    for (const flag of ['dry-run', 'resume', 'finalize', 'abort', 'verify', 'verbose']) {
+    for (const flag of ['dry-run', 'resume', 'finalize', 'abort', 'verbose']) {
       for (const command of ['adopt', 'create', 'brand', 'skill']) {
         expect(misapplied(command, { [flag]: true }), `${command} --${flag}`).toEqual({ flag, belongsTo: 'zz-meridian update' });
       }
     }
+  });
+
+  it('refuses --verify as an unknown flag, since update no longer reads it', () => {
+    const read = readFlags(['update', '--verify']);
+    expect('error' in read && read.error).toMatch(/verify/);
   });
 
   it('refuses the brand flags on the commands that write no brand', () => {
@@ -27,8 +32,8 @@ describe('a flag outside its command', () => {
   it('reads every flag the command does declare, and the two every command reads', () => {
     expect(misapplied('adopt', { name: 'Acme', 'allow-dirty': true, 'no-install': true, help: true })).toBeNull();
     expect(misapplied('create', { name: 'Acme', 'no-install': true })).toBeNull();
-    expect(misapplied('update', { 'dry-run': true, 'allow-dirty': true, 'no-install': true, verify: true, verbose: true })).toBeNull();
-    expect(misapplied('update', { finalize: true, verify: true })).toBeNull();
+    expect(misapplied('update', { 'dry-run': true, 'allow-dirty': true, 'no-install': true, verbose: true })).toBeNull();
+    expect(misapplied('update', { finalize: true, verbose: true })).toBeNull();
     expect(misapplied('brand', { accent: 'jade', 'allow-dirty': true })).toBeNull();
     expect(misapplied('skill', { global: true, version: true })).toBeNull();
   });

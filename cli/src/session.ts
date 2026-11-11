@@ -555,8 +555,8 @@ function command(ctx: Context, takeover: boolean, body: (l: Loaded) => number): 
   }
 }
 
-/** Updates the phase, outcome and failure lines of `MERGE.md` in place; the rest of the report is left as written. */
-function patchReport(l: Loaded, outcome: string) {
+/** Updates the phase, outcome, failure and resolution-stub hashes of `MERGE.md` in place; the rest is left as written. */
+function patchReport(l: Loaded, outcome: string, root: string) {
   const file = path.join(l.dir, 'MERGE.md');
   if (!fs.existsSync(file)) return;
   const j = l.journal;
@@ -564,6 +564,16 @@ function patchReport(l: Loaded, outcome: string) {
     .replace(/^- Phase: .*$/m, `- Phase: ${j.phase}`)
     .replace(/^- Outcome: .*$/m, `- Outcome: ${outcome}`)
     .replace(/^## Failure\n\n[\s\S]*?\n\n(?=## )/m, '');
+  // The stubs were rendered before apply. After a resume they would carry the hashes from before the update wrote, so a
+  // team copying one would be refused for the change the update itself made. Rewrite each stub's files as they are now.
+  text = text.replace(/(```json\n)([\s\S]*?)(\n```)/g, (whole, open: string, body: string, close: string) => {
+    try {
+      const stub = JSON.parse(body) as { id?: unknown; files?: Record<string, unknown> };
+      if (typeof stub.id !== 'string' || !stub.files || typeof stub.files !== 'object') return whole;
+      for (const p of Object.keys(stub.files)) stub.files[p] = probe(root, p).side.hash;
+      return `${open}${JSON.stringify(stub, null, 2)}${close}`;
+    } catch { return whole; }
+  });
   if (j.failure) text = text.replace(/^## What needs you$/m, () => `## Failure\n\n${j.failure}\n\n## What needs you`);
   writeAtomic(file, text);
 }
@@ -620,7 +630,7 @@ function finalizeLoaded(ctx: Context, l: Loaded): number {
     j.phase = 'complete';
     j.failure = null;
     persistJournal(l);
-    patchReport(l, 'complete');
+    patchReport(l, 'complete', root);
     log(`note: the target manifest was already in place; archived the session to ${archive(root, l)}`);
     log('outcome: complete');
     return 0;
@@ -652,7 +662,7 @@ function finalizeLoaded(ctx: Context, l: Loaded): number {
     j.failure = changed.length ? `${why}\nChanged paths:\n${changed.map((p) => `- ${p}`).join('\n')}` : why;
     j.validation = j.validation.filter(isInstall);
     persistJournal(l);
-    patchReport(l, 'failed');
+    patchReport(l, 'failed', root);
     log(`zz-meridian update: ${why}`);
     for (const p of changed) log(`  ${p}`);
     log('outcome: failed');
@@ -721,7 +731,7 @@ function finalizeLoaded(ctx: Context, l: Loaded): number {
   writeAtomic(manifestFile, targetText);
   j.phase = 'complete';
   persistJournal(l);
-  patchReport(l, 'complete');
+  patchReport(l, 'complete', root);
   const where = archive(root, l);
   log(`time: ${took.join(' · ')}`);
   log('tests: the Tier 1 tests affected by the change, the static checks and the type check passed');
@@ -798,7 +808,7 @@ export function resume(ctx: Context, o: ResumeOptions): number {
       j.phase = 'failed';
       j.failure = `resume stopped; these paths changed since the plan was made:\n${stopped.map((s) => `- ${s}`).join('\n')}`;
       persistJournal(l);
-      patchReport(l, 'failed');
+      patchReport(l, 'failed', root);
       log('zz-meridian update: resume stopped; these paths changed since the plan was made, and nothing was written for them:');
       for (const s of stopped) log(`  ${s}`);
       log(`Next: reconcile them by hand, then ${pin(j.targetVersion, '--resume')} (or ${pin(j.targetVersion, '--abort')})`);
@@ -832,7 +842,7 @@ export function resume(ctx: Context, o: ResumeOptions): number {
         j.phase = 'failed';
         j.failure = r.failure;
         persistJournal(l);
-        patchReport(l, 'failed');
+        patchReport(l, 'failed', root);
         log(`zz-meridian update: ${r.failure}`);
         report(ctx, j, { verbose: o.verbose, keepWarnings: [] }, 'failed', `apply ${secs(applyMs)} · ${installNote}`, `fix the cause, then ${pin(j.targetVersion, '--resume')} (or ${pin(j.targetVersion, '--abort')})`);
         return 1;
@@ -844,7 +854,7 @@ export function resume(ctx: Context, o: ResumeOptions): number {
     j.failure = null;
     persistJournal(l);
     const outcome = pending ? 'migration-required' : installed ? 'ready-to-finalize' : 'install-pending';
-    patchReport(l, outcome);
+    patchReport(l, outcome, root);
     const times = `apply ${secs(applyMs)} · ${installNote}`;
     if (!pending && installed) {
       report(ctx, j, { verbose: o.verbose, keepWarnings: [] }, outcome, times, null);
@@ -908,7 +918,7 @@ export function abort(ctx: Context): number {
     }
     j.phase = 'aborted';
     persistJournal(l);
-    patchReport(l, 'aborted');
+    patchReport(l, 'aborted', root);
     const where = archive(root, l);
     const pm = packageManager(root);
     log(`restored ${restore.length} ${restore.length === 1 ? 'path' : 'paths'}; the original manifest was never changed`);

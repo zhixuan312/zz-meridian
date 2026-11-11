@@ -24,19 +24,20 @@ export function create(o: CreateOptions): number {
     writeIn(root, rel, payloadBytes(rel));
   }
 
-  const name = brand.name ?? path.basename(root).replace(/[-_]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
-  brand = effectiveBrand({ ...brand, name });
-  if (run(process.execPath, ['scripts/brand.ts', ...brandArgs(brand), '--product'], root).status !== 0) {
-    return fail(`scripts/brand.ts failed (above). ${root} holds the unbranded template and nothing else: fix the cause, delete the folder and run zz-meridian create again with the same flags`);
-  }
-
   // pnpm installs from the template's lockfile, with install scripts off (pnpm-workspace.yaml). Without pnpm, corepack
   // (bundled with Node 22) runs it; only without both does npm install, from the version ranges, with scripts off too.
+  // The choice is made before branding, so the project's own README names the package manager it can actually run.
   const install: [string, string[]] = hasCommand('pnpm') ? ['pnpm', ['install']] : hasCommand('corepack') ? ['corepack', ['pnpm', 'install']] : ['npm', ['install', '--ignore-scripts']];
   const pm = install[0] === 'npm' ? 'npm' : 'pnpm';
   if (pm === 'npm') {
     for (const f of ['pnpm-lock.yaml', 'pnpm-workspace.yaml']) fs.rmSync(path.join(root, f), { force: true });
     console.log('pnpm is not available: installing with npm from the version ranges, without a lockfile.');
+  }
+
+  const name = brand.name ?? path.basename(root).replace(/[-_]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+  brand = effectiveBrand({ ...brand, name });
+  if (run(process.execPath, ['scripts/brand.ts', ...brandArgs(brand), '--product', '--package-manager', pm], root).status !== 0) {
+    return fail(`scripts/brand.ts failed (above). ${root} holds the unbranded template and nothing else: fix the cause, delete the folder and run zz-meridian create again with the same flags`);
   }
 
   // The managed block goes in only now that the installer is known, so its commands match; the template's own lines

@@ -117,6 +117,13 @@ describe('scripts/brand.ts', () => {
     expect(() => brand('--existing', '--timezone', 'Not/AZone')).toThrow();
     expect(read('src/app.config.ts')).toBe(before);
   });
+  it('refuses a preset and a colour together before writing either', () => {
+    const configBefore = read('src/app.config.ts');
+    const resolverBefore = read('tokens/zz-meridian.resolver.json');
+    expect(() => brand('--existing', '--accent', 'jade', '--hex', '#E4572E')).toThrow(/one or the other/);
+    expect(read('src/app.config.ts')).toBe(configBefore);
+    expect(read('tokens/zz-meridian.resolver.json')).toBe(resolverBefore);
+  }, 120_000);
   it('validates the timezone before applying other requested configuration changes', () => {
     const before = read('src/app.config.ts');
     try {

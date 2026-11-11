@@ -42,6 +42,9 @@ const resolved: Resolution[] = [
 describe('parseJournal', () => {
   it('reads a valid journal back', () => expect(parseJournal(JSON.stringify(journal()))).toEqual(journal()));
   it('refuses an unknown phase', () => expect(() => parseJournal(JSON.stringify({ ...journal(), phase: 'done' }))).toThrow(/phase/));
+  it("refuses an id that is not one folder's name, since archive() joins it into a path", () => {
+    for (const id of ['../escape', 'a/b', '..', '.', 'a\\b']) expect(() => parseJournal(JSON.stringify({ ...journal(), id })), id).toThrow(/plain folder name/);
+  });
   it('refuses a side whose existence and hash disagree', () => {
     const j = journal();
     j.operations[0].base = { exists: true, hash: null };
