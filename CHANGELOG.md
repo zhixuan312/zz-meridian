@@ -2,6 +2,18 @@
 
 Every release of ZZ Meridian, newest first. Versions follow semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Each entry says what breaks and what to do instead.
 
+## [Unreleased]
+
+### Fixed
+
+- **An update removes the scripts a release retired, and names what still calls them** (#142). `update` reconciled only the scripts it still ships, so a 0.38.0 project updated to 0.39.0 kept `"gate": "node scripts/gate.ts"` and `"verify": "node scripts/verify.ts"` after both files were deleted. A script the recorded release wrote, still unchanged, and naming a `scripts/` file the target no longer ships is now removed and reported (`removed script gate`) in the console and in `MERGE.md`; one the team changed is kept and raises a migration naming the lost file, and one whose file still ships (`test`) is kept and named for its decision. The `verify-modes` migration is recurring and reads `package.json`, workflows, shell files, Markdown and code comments, so a stale `pnpm gate`, `pnpm verify`, `scripts/verify.ts` or one of the removed auxiliary scripts is named in `MERGE.md` instead of first failing `check.ts`. An adopted project's `AGENTS.md` block no longer describes Meridian's own release workflow, and a browser sweep whose every rail route redirects to one page (a sign-in wall) says so before judging any route `never-ready`.
+- **Usage is a live page** (#139). Its read returns the revisions it was served and the body registers `days`, `hours`, `regions`, `endpoints` and `responses` with `useLive`, so a change recorded elsewhere redraws it. `/usage` is now an after-live start that draws `/requests`, which gives the navigation protocol the start it had lacked since the workspace move.
+- **A streamed page's React placeholder race is no longer the page's error** (#143). React 19.3.1's inline Suspense completion script (`$RS`) can dereference a placeholder its deferred flush already removed, under CPU load, while the document is still parsing; it leaves the content complete and the page interactive, and the product raised nothing. The browser suites no longer count that exact signature — `parentNode` on null or undefined, thrown from `$RS` (React's `completeSegment`) with no application frame — as a console error; every other React boundary call (`$RC`, `$RX`, `$RV`) still fails. The tolerated occurrence is printed once per run as a known issue, so it stays visible without failing anything.
+
+### Known issues
+
+- **The `$RS` placeholder race is React Fizz's, not the dashboard's** (#143). The check now tolerates it, but the throw itself is still in `react-dom` 19.3.1: a deferred `$RV` flush removes a nested placeholder before that placeholder's own `$RS` runs. It has no user-visible effect. An upstream report to React is the owner's call; until it is fixed, a page may log the exception once under heavy CPU throttling.
+
 ## [0.39.0] · 2026-11-08
 
 ### Added
