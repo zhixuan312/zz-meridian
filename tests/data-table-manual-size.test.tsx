@@ -18,4 +18,12 @@ describe('a server-paged table', () => {
     render(<DataTable title="Requests" caption="Requests" rows={rows} columns={columns as never} rowKey={(r: Row) => r.id} pageSize={20} noun="requests" />);
     expect(screen.getByRole('button', { name: /per page/i })).toBeTruthy();
   });
+
+  it('keeps the size menu when the chosen size fits every row, and shows no one-page navigation', () => {
+    // 30 rows at 50 a page: the size control must stay, or the person cannot return to 20; the page arrows do not.
+    render(<DataTable title="Requests" caption="Requests" rows={rows.slice(0, 30)} columns={columns as never} rowKey={(r: Row) => r.id} pageSize={50} noun="requests" />);
+    expect(screen.getByRole('button', { name: /per page/i })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Next page' })).toBeNull();
+    expect(screen.queryByText(/Page 1 of 1/)).toBeNull();
+  });
 });

@@ -396,7 +396,10 @@ export function DataTable<R>({
       {title ? <CardHeader title={title} description={description} actions={actions} divided={!toolbar} /> : null}
       {toolbar ? <div className="px-(--card-pad) py-3.5 md:border-b md:border-line">{toolbar}</div> : null}
       {body}
-      {!error && total > size ? (
+      {/* The footer stays while any offered size could split the rows: hiding it at total <= size unmounted the size
+          control the person had just used, with no way back to a smaller page. The page navigation itself is hidden at
+          one page by Pagination. */}
+      {!error && total > (manual ? size : Math.min(size, ...pageSizes)) ? (
         <div className="border-t border-line px-(--card-pad) py-2.5">
           <Pagination
             page={page}
