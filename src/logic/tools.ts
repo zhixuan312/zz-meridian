@@ -192,11 +192,12 @@ export const usageTool = defineViewTool({
   async read({ period: p = '30d', day: d }) {
     await requireNeed(FEATURES.usage.needs);
     // Each read apart from the others: one that fails leaves its part saying so and the rest standing.
-    const [days, history, figures, endpoints, responses] = await Promise.all([attempt(() => readDays(p)), readHistory(), attempt(() => usageFigures()), attempt(readEndpoints), attempt(readResponses)]);
+    const { value: [days, history, figures, endpoints, responses], revisions } = await revisionsOf(() => Promise.all([attempt(() => readDays(p)), readHistory(), attempt(() => usageFigures()), attempt(readEndpoints), attempt(readResponses)]));
     const data = usageData({ period: p, day: d ?? null, days, history, figures, endpoints, responses, updatedAt: updatedAt(), now: days?.observedAt ?? clock().toISOString() });
     // The Meridian's days, as the page points at them: the period's complete days, then the day in progress.
     const index = d ? [...(data.days?.series ?? []), ...(data.days?.running ? [data.days.running] : [])].findIndex((x) => x.date === d) : -1;
-    return { context: usageContext(data, index >= 0 ? index : null), data };
+    // The revisions ride with the data, so the page's live stream asks what moved since instead of reading it all again.
+    return { context: usageContext(data, index >= 0 ? index : null), data: { ...data, revisions } };
   },
   explore: usageExplore,
 });

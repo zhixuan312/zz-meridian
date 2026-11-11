@@ -22,6 +22,7 @@ import type { UsageFigures } from '@/data/usage';
 import { AXIS_FORMATTERS, changeOf, formatCompact, formatDuration, plural } from '@/lib/format';
 import { formatDate, formatShortDate } from '@/lib/format-date';
 import { PERIOD_LABEL } from '@/lib/period';
+import { useLive, type Revisions } from '@/lib/live';
 import { ASKED, STATUS_COLOR, USAGE_PARTS as P, WHEN, usageContext, type UsageData, type When } from '@/logic/usage-context';
 import { AskPeriod } from './ask-period';
 import { Unread } from './unread';
@@ -181,7 +182,9 @@ const isEmpty = (data: UsageData) => data.days !== null && data.days.series.leng
  * period's days: pointing at a day in the Featured metric's chart, or at a day of the period in the calendar, reads it
  * in both.
  */
-export function UsageBody(data: UsageData) {
+export function UsageBody(data: UsageData & { revisions?: Revisions }) {
+  // The collections the page's read touched, kept live: a request or a day recorded somewhere else redraws it.
+  useLive(['days', 'hours', 'regions', 'endpoints', 'responses'], data.revisions);
   if (isEmpty(data)) {
     return (
       <Stack>

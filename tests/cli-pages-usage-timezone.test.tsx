@@ -27,6 +27,8 @@ import { usageExplore } from '@/logic/usage-explore';
 describe("Usage names the product's reporting timezone wherever it names a zone", () => {
   it('in the cards, the Heatmap of hours and the context, never UTC', async () => {
     const { data } = await usageTool.read({ period: '30d' });
+    // The read's revisions travel with its data, so the page's live stream asks what moved since (issue #139).
+    expect(data.revisions).toMatchObject({ days: expect.any(String), endpoints: expect.any(String), responses: expect.any(String) });
     const { container } = render(<Tooltip.Provider><UsageBody {...data} /></Tooltip.Provider>);
     expect(container.textContent).toMatch(/Every weekday summed, Asia\/Singapore, over the last 30 complete days/);
     fireEvent.click(screen.getByRole('radio', { name: 'By weekday and hour' }));
