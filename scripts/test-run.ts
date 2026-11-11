@@ -30,6 +30,7 @@ import { bin } from './lib/bin.ts';
 import { FIRST_LOAD_CAP_KB, budgetsOf, type BudgetsConfig } from './lib/budgets.ts';
 import { consumerSmokeKind } from './lib/consumer-smoke.ts';
 import { lintTargets } from './lib/lint.ts';
+import { deepBrowserNotRun } from './lib/report-lines.ts';
 import { clearParts, reportOrWarn, type Seed, type Value } from './lib/tier2.ts';
 import { summaryLine } from './lib/summary.ts';
 
@@ -432,7 +433,7 @@ async function affected(tier: 't1' | 't2'): Promise<number> {
   const declared: string[] = [];
   // A machine with no Chrome cannot run the browser fixtures: that is missing evidence, reported as not run, and a run
   // that leaves it out is never "every check passed".
-  if (deepNeeded && !deepRan) notRun.push('Tier 1 browser-fixture tests (no Chrome)');
+  notRun.push(...deepBrowserNotRun(deepNeeded, deepRan));
   let browserTier2: Value[] = [];
   if (withTier2 && (ranWhole || touchesBrowserAll(changed))) {
     const perf = process.env.CI === 'true' && ranWhole;

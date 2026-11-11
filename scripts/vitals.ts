@@ -41,6 +41,7 @@ import { DEEP_SOURCE } from './lib/deep.ts';
 import { frameCause, loafOf, type LoafEntry } from './lib/frame-cause.ts';
 import { measurePhone } from './lib/phone.ts';
 import { thin } from './lib/timing.ts';
+import { vitalsSummary } from './lib/report-lines.ts';
 import { discover } from './lib/routes.ts';
 import config from './verify.config.ts';
 import { holdArgs } from './lib/args.ts';
@@ -177,5 +178,5 @@ for (const route of ROUTES) {
 }
 await page.send('Emulation.setCPUThrottlingRate', { rate: 1 });
 page.close();
-console.log(`\nvitals: ${ROUTES.length - failures - overFloor} of ${ROUTES.length} pages under LCP 2.5 s, INP 200 ms, CLS 0.1 and no dropped frame on a mid-range phone${overFloor ? `; ${overFloor} over a floor` : ''}${nearFloor ? `; ${nearFloor} within 20% of a floor` : ''}`);
+console.log(`\n${vitalsSummary(ROUTES.length, failures, overFloor, nearFloor)}`);
 process.exit(failures ? 1 : 0);
