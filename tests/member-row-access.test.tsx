@@ -41,6 +41,13 @@ describe('a member row shows what the person may do to it', () => {
     expect(html).not.toMatch(/\bOnly an? \b|\b(Owners|Admins) (and|or) (Owners|Admins)\b|\bmanage members\b/);
   });
 
+  it('reads a date-only last active as a day, not as hours since midnight UTC', () => {
+    const html = view(ALLOWED as never);
+    expect(html).toContain('Yesterday');
+    expect(html).toContain('2 days ago');
+    expect(html).not.toMatch(/\d+ h ago/);
+  });
+
   it('reads a member with an add-on by their full role', () => {
     expect(view(ALLOWED as never)).toContain('Member + Key manager');
   });

@@ -1,5 +1,5 @@
 // Named cli-* so the payload leaves it out: it is about the sample's footer, which a product replaces.
-import { render } from '@testing-library/react';
+import { render, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 /** The footer, with the navigation the project has: the template's, or one brand.ts --no-atlas left without the Atlas. */
@@ -22,5 +22,13 @@ describe("the sample's footer", () => {
     const c = await footer(false);
     expect(c.querySelector('a[href="/system"]')).toBeNull();
     expect(c.textContent).toMatch(/^© /);
+  });
+  it('claims nothing when the product monitors no service', async () => {
+    vi.resetModules();
+    const { SampleFooter } = await import('@/views/sample-footer');
+    const c = render(<SampleFooter services={async () => []} />).container;
+    // The state streams in: an empty list must leave the footer without "All services operational".
+    await waitFor(() => expect(c.textContent).not.toMatch(/All services operational/));
+    expect(c.querySelector('a[href="/services"]')).toBeNull();
   });
 });

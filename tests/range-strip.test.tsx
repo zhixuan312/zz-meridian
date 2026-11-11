@@ -41,10 +41,12 @@ describe('RangeStrip', () => {
     expect(container.querySelector('[data-end="to"]')).not.toBeNull();
   });
 
-  it('says which end is absent for a range with no high end either', () => {
-    render1({ items: [{ key: 'c', label: '/v1/completions', from: 210, to: null }] });
+  it('draws a range with only its low end to the plot’s edge, and marks no absent end', () => {
+    const { container } = render1({ items: [{ key: 'c', label: '/v1/completions', from: 210, to: null }] });
     expect(screen.getByRole('listitem').getAttribute('title')).toContain('from 210ms');
     expect(screen.queryByText(/to null/)).toBeNull();
+    expect(container.querySelector('[data-strip]')).not.toBeNull();
+    expect(container.querySelector('[data-end="to"]')).toBeNull();
   });
 
   it('reads every row against the references it is given, and names them once under the chart', () => {

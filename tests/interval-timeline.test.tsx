@@ -54,6 +54,17 @@ describe('IntervalTimeline', () => {
     expect((bars[1] as HTMLElement).style.width).toBe('');
   });
 
+  it('draws a now line only for a moment the window holds', () => {
+    const inside = draw({ now: '2026-10-01T09:30:00Z' });
+    expect(inside.container.querySelector('[data-now]')).not.toBeNull();
+    inside.unmount();
+    for (const now of ['2026-10-01T08:00:00Z', '2026-10-01T11:00:00Z']) {
+      const outside = draw({ now });
+      expect(outside.container.querySelector('[data-now]'), now).toBeNull();
+      outside.unmount();
+    }
+  });
+
   it('names every run in words: its tone, its times and how long it took', () => {
     draw();
     expect(screen.getByTitle(/^Build, Completed: .*–.*, 40 min$/)).toBeTruthy();

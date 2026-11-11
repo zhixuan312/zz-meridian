@@ -16,6 +16,12 @@ describe("this repository's navigation coverage", () => {
     expect(coverage.errors).toEqual([]);
     expect(coverage.routes.filter((r) => r.data !== 'configured').map((r) => r.path)).toEqual([]);
   });
+
+  it('lists the Docs rail route in detailRoutes, so the audit and presses visit it too', () => {
+    // The address is a rail destination and a dynamic Atlas route; discover() leaves dynamic segments to detailRoutes,
+    // so without this the navigation budgets were the only suite that ever opened it.
+    expect(config.detailRoutes).toContain('/system/start/start-a-dashboard');
+  });
 });
 
 describe('the routes a project has configured no check for', () => {

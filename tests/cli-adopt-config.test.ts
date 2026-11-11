@@ -7,7 +7,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { afterAll, describe, expect, it } from 'vitest';
-import { eslintConfigOf, projectConfig } from '../cli/src/adopt.ts';
+import { eslintConfigOf, projectConfig, stylesheetPath } from '../cli/src/adopt.ts';
 import { installSkill, payloadBytes, skillPaths } from '../cli/src/files.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
@@ -149,5 +149,18 @@ describe('the skill adopt brings', () => {
     expect(fs.lstatSync(linked).isSymbolicLink()).toBe(true);
     expect(fs.readdirSync(outside)).toEqual(['SKILL.md']);
     expect(fs.readFileSync(external)).toEqual(payloadBytes(payload));
+  });
+});
+
+describe("the stylesheet the root layout imports", () => {
+  const tsconfig = JSON.stringify({ compilerOptions: { baseUrl: '.', paths: { '@/*': ['./src/*'] } } });
+  it("is found by its relative path, by the project's own alias, or as the default when none is imported", () => {
+    expect(stylesheetPath('app/layout.tsx', "import './globals.css';", null, 'app')).toEqual({ rel: 'app/globals.css', spec: './globals.css' });
+    expect(stylesheetPath('app/layout.tsx', "import '@/styles/globals.css';", tsconfig, 'app')).toEqual({ rel: 'src/styles/globals.css', spec: '@/styles/globals.css' });
+    expect(stylesheetPath('src/app/layout.tsx', 'export default function L() { return null; }', null, 'src/app')).toEqual({ rel: 'src/app/globals.css' });
+  });
+
+  it('is refused rather than replaced when the import cannot be resolved, so the team sheet stays active', () => {
+    expect(stylesheetPath('app/layout.tsx', "import '~/styles/globals.css';", tsconfig, 'app')).toEqual({ unresolved: '~/styles/globals.css' });
   });
 });

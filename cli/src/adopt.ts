@@ -138,6 +138,19 @@ export function verifyConfig(): string {
 };`);
 }
 
+/**
+ * Where the root layout's stylesheet lives: its relative import as written, an alias from the project's tsconfig
+ * (`@/styles/globals.css`), or the default `app/globals.css` when it imports none. A specifier the tsconfig cannot
+ * resolve comes back as `unresolved`, and adopt refuses it rather than writing a second stylesheet beside a live one.
+ */
+export function stylesheetPath(layout: string, layoutSrc: string, tsconfig: string | null, dir: string): { rel: string; spec?: string } | { unresolved: string } {
+  const spec = /import\s+['"]([^'"]+\.css)['"]/.exec(layoutSrc)?.[1];
+  if (spec === undefined) return { rel: `${dir}/globals.css` };
+  if (spec.startsWith('.')) return { rel: path.posix.normalize(path.posix.join(path.posix.dirname(layout), spec)), spec };
+  for (const [alias, target] of aliasesOf(tsconfig)) if (spec.startsWith(alias)) return { rel: path.posix.normalize(`${target}${spec.slice(alias.length)}`), spec };
+  return { unresolved: spec };
+}
+
 /** The template's stylesheet, with its paths made relative to where the project keeps its own. */
 function globals(cssRel: string, dir: string): string {
   const from = path.posix.dirname(cssRel);
@@ -325,15 +338,10 @@ Rename or move them, then run adopt again.`);
   // resolved to a file in the project is refused, since writing a second stylesheet there would leave theirs active.
   const layout = ['tsx', 'jsx', 'ts', 'js'].map((x) => `${dir}/layout.${x}`).find((f) => fs.existsSync(path.join(root, f)))!;
   const layoutSrc = fs.readFileSync(path.join(root, layout), 'utf8');
-  const cssImport = /import\s+['"]([^'"]+\.css)['"]/.exec(layoutSrc)?.[1];
-  const cssFile = (spec: string): string | null => {
-    if (spec.startsWith('.')) return path.posix.normalize(path.posix.join(path.posix.dirname(layout), spec));
-    const tsText = fs.existsSync(tsPath) ? fs.readFileSync(tsPath, 'utf8') : null;
-    for (const [alias, target] of aliasesOf(tsText)) if (spec.startsWith(alias)) return path.posix.normalize(`${target}${spec.slice(alias.length)}`);
-    return null;
-  };
-  const cssRel = cssImport === undefined ? `${dir}/globals.css` : cssFile(cssImport);
-  if (cssRel === null) return fail(`${layout} imports ${cssImport}, a stylesheet this project's tsconfig cannot resolve to a file. Move the import to a relative path, then run adopt again; nothing was written.`);
+  const stylesheet = stylesheetPath(layout, layoutSrc, fs.existsSync(tsPath) ? fs.readFileSync(tsPath, 'utf8') : null, dir);
+  if ('unresolved' in stylesheet) return fail(`${layout} imports ${stylesheet.unresolved}, a stylesheet this project's tsconfig cannot resolve to a file. Move the import to a relative path, then run adopt again; nothing was written.`);
+  const cssImport = stylesheet.spec;
+  const cssRel = stylesheet.rel;
   const cssAbs = path.join(root, cssRel);
   if (fs.existsSync(cssAbs)) {
     const before = cssRel.replace(/\.css$/, '.before.css');
