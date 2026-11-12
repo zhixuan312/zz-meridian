@@ -2,6 +2,14 @@
 
 Every release of ZZ Meridian, newest first. Versions follow semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Each entry says what breaks and what to do instead.
 
+## [0.39.2] · 2026-11-12
+
+### Fixed
+
+- **Every day is counted in the project's reporting timezone** (#144). Dates were cut to their UTC day in the aggregate window and its day, week, month and weekday buckets, in both drill addresses, in the weekday averages and service strips, in a customer's busiest day and on the interval timeline's axis. A product east or west of UTC therefore counted an early-morning or late-evening record on the wrong day, and a drill address could open a day that held none of the figure. One rule now does every cut: a bare `YYYY-MM-DD` is kept as the day it names, and an instant is read as its day in `app.timezone`. `node scripts/check.ts` refuses a ten-character date cut in the product's layers, so the rule cannot drift back.
+- **An explore filter takes the kind of value its author declared** (#145). A condition was handed to the collection whatever its value looked like, so `latency_ms gt "500"` matched nothing and read as an empty result. Every filter now declares `number`, `text`, `date` or `boolean`; the schema the model reads states it beside each field (`latency_ms (a number; gt, lt)`), and a value of another type is refused before anything is read, naming the field and the type. A `date` filter is a calendar day, `YYYY-MM-DD`, compared by the day it names in the reporting timezone, the same rule every other day cut uses. Nothing is coerced.
+- **An update reads a created project from what that project's `create` actually wrote** (#146). A release is replayed by running `create` with the project's brand, so a managed file the project never received — `create` removes the Design Atlas and its tests after copying — is no longer treated as new and written back, and a shipped test of a page the project does not have can never reappear. A managed file the team deleted is recorded once as kept deleted in `.meridian/keep.json` and left out by every later update, including one the manifest never named (a project created before 0.29.0). Removing its entry restores the file on the next update, and an aborted update takes back the entries it wrote, leaving the register as it found it.
+
 ## [0.39.1] · 2026-11-12
 
 ### Fixed
