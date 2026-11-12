@@ -76,6 +76,13 @@ describe('the payload exclusion', () => {
     expect(files.filter((f) => /^tests\/(cli|deep)-[^/]*$/.test(f) && !PAYLOAD_EXCLUDE.test(f))).toEqual([]);
   });
 
+  it('leaves out the repository-scope checks, which judge the template\'s own tree and config', () => {
+    expect(PAYLOAD_EXCLUDE.test('tests/tsconfig-scope.test.ts')).toBe(true);
+    // The Atlas test is not excluded: brand.ts removes it with the Atlas a created project does not have.
+    expect(PAYLOAD_EXCLUDE.test('tests/atlas-unknown-entry.test.ts')).toBe(false);
+    expect(PAYLOAD_EXCLUDE.test('tests/table-head-phone.test.ts')).toBe(false);
+  });
+
   it('still ships the helper the suites inject, and tests that are not the CLI\'s or the deep ones', () => {
     for (const f of ['scripts/lib/deep.ts', 'scripts/audit.ts', 'tests/format.test.ts', 'tests/shared-context.test.tsx', 'tests/deep.ts', 'tests/sub/deep-dom.test.ts', 'tests/sub/cli-home.test.tsx']) {
       expect(PAYLOAD_EXCLUDE.test(f), f).toBe(false);

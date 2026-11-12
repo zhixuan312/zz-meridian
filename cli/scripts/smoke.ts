@@ -843,7 +843,7 @@ if (args.includes('--create')) {
   check(create.status === 0, 'create exits 0', create.stdout + create.stderr);
   const config = fs.readFileSync(path.join(dir, 'src/app.config.ts'), 'utf8');
   check(config.includes("timezone: 'Europe/London'") && config.includes("currency: 'GBP'") && config.includes("accent: 'brand' as const") && config.includes("user: { name: 'Ada Park', role: 'Admin' }"), 'create wrote the timezone, currency, accent and user it was asked for');
-  check(!fs.existsSync(path.join(dir, 'app/system')) && !fs.existsSync(path.join(dir, 'skills')), 'create leaves out the Atlas and the skill source');
+  check(!fs.existsSync(path.join(dir, 'app/system')) && !fs.existsSync(path.join(dir, 'skills')) && !fs.existsSync(path.join(dir, 'tests/atlas-unknown-entry.test.ts')), 'create leaves out the Atlas, the shipped test of its pages, and the skill source');
   const pm = fs.existsSync(path.join(dir, 'pnpm-lock.yaml')) ? 'pnpm' : 'npm';
   const text = (f: string) => read(dir, f);
   check(text('AGENTS.md').includes(managedBlock(VERSION, pm)) && text('AGENTS.md').includes('# Built on ZZ Meridian'), `AGENTS.md holds the managed block, written for ${pm}`);

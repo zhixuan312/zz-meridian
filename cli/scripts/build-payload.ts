@@ -19,9 +19,11 @@ const worktree = process.argv.includes('--worktree');
 /** Never shipped: the package itself, CI, agent settings, Meridian's own demo deployment, and anything that could hold a secret. */
 // The CLI's own tests import cli/src, which a project never has, and the other cli-* tests hold the sample's own figures,
 // which a product replaces: shipped, either would fail its type check or its tests. Every top-level tests/cli-* and
-// tests/deep-* file stays out, .ts and .tsx alike. The fixtures under scripts/fixtures/ serve those tests alone and import
-// the template's own team-owned starters. The deep-* tests drive those fixtures in headless Chrome.
-export const PAYLOAD_EXCLUDE = /^(cli\/|\.github\/|\.claude\/|\.agents\/|\.mma\/|out\/|node_modules\/|scripts\/fixtures\/|tests\/(cli|deep)-[^/]*\.tsx?$|scripts\/perf-history\.json$|\.nvmrc$|.*\.tsbuildinfo$|(Dockerfile|captain-definition|\.dockerignore)$)|(?:^|\/)\.env(?!\.example$)[^/]*(?:\/|$)/;
+// tests/deep-* file stays out, .ts and .tsx alike. `tests/tsconfig-scope.test.ts` guards Meridian's own tsconfig, which a
+// project does not have (its tsconfig is team-owned, and an update never rewrites it), so it would fail there. The fixtures
+// under scripts/fixtures/ serve those tests alone and import the template's own team-owned starters. The deep-* tests
+// drive those fixtures in headless Chrome.
+export const PAYLOAD_EXCLUDE = /^(cli\/|\.github\/|\.claude\/|\.agents\/|\.mma\/|out\/|node_modules\/|scripts\/fixtures\/|tests\/(cli|deep)-[^/]*\.tsx?$|tests\/tsconfig-scope\.test\.ts$|scripts\/perf-history\.json$|\.nvmrc$|.*\.tsbuildinfo$|(Dockerfile|captain-definition|\.dockerignore)$)|(?:^|\/)\.env(?!\.example$)[^/]*(?:\/|$)/;
 
 if (import.meta.main) {
   fs.rmSync(OUT, { recursive: true, force: true });
