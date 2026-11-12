@@ -57,6 +57,18 @@ describe('DataTable', () => {
     expect(sortRows(rs, cols, 'n', 'asc').map((r) => r.id)).toEqual(['a', 'z', 'e']);
   });
 
+  it('keeps the phone head’s words for a screen reader and draws no sort button there', () => {
+    // Below 640 the head is clipped (sr-only): a button inside it would be a tab stop nobody can see, so the label is
+    // the head's own text and the button is not drawn. jsdom applies no CSS, so the classes are the contract here.
+    const { container } = table();
+    const sortable = [...container.querySelectorAll('thead th')].find((th) => th.querySelector('button'));
+    expect(sortable).toBeTruthy();
+    const label = [...sortable!.querySelectorAll('span')].find((s) => s.textContent === 'Customer');
+    expect(label?.className).toContain('@max-[640px]:inline');
+    expect(label?.className).toContain('hidden');
+    expect(sortable!.querySelector('button')?.className).toContain('@max-[640px]:hidden');
+  });
+
   it('states the order it keeps its own state in, so the head carries the caret for the order the rows are in', () => {
     render(<DataTable caption="Members" noun="members" rows={rows} columns={columns} rowKey={(r) => r.id} defaultState={{ sort: 'calls', dir: 'desc' }} />);
     // The calls column, pressed down by default: 643,000 over 375,000, and its head says so.

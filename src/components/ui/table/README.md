@@ -58,6 +58,7 @@ An agent reads the same rows through the view's tool. A row an agent changed car
 ## Accessibility
 
 - A real `table` with `caption` (visually hidden), `th scope="col"` and `aria-sort` on sortable heads.
+- `clipOnPhone` on a sortable head is for a table whose head is clipped below 640px (a DataTable's cards): the label stays as the head's text for a screen reader and the sort button is not drawn, so a clipped head never holds a focus stop nobody can see.
 - Head `ink-3` on `surface-sunk` 4.9:1; cells `ink` on `surface` 18.5:1 (light, cobalt).
 
 ## Content

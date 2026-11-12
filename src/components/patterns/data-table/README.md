@@ -75,7 +75,7 @@ Rows arrive whole for client-side sorting and paging (a few hundred at most), or
 
 ## Accessibility
 
-- A real `<table>` with a caption, at every width; sortable heads carry `aria-sort`. On a phone the header row is hidden, so a cell that needs its header to make sense carries it in its own words (`mobileCell`).
+- A real `<table>` with a caption, at every width; sortable heads carry `aria-sort`. On a phone the header row is clipped to the accessibility tree — its words reach a screen reader and it draws nothing — and its sort buttons are not drawn either: a clipped button would be a tab stop nobody can see, and the card layout has no sorting. A cell that needs its header to make sense carries it in its own words (`mobileCell`).
 - Selection checkboxes are named ("Select req_jqwm3le188pi", "Select all requests on this page").
 - `aria-busy` while loading; the error state is announced (`role="alert"`).
 

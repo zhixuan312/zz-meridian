@@ -96,7 +96,7 @@ if (atlasLine) console.log(atlasLine);
 
 type Report = {
   path: string; href: string; text: number;
-  sideways: string[]; clipped: string[]; spills: string[]; truncated: string[]; overlap: string[]; focusless: string[]; unnamed: string[]; unmeasured: string[]; scrollers: string[]; contrast: string[]; targets: string[]; headings: string[]; heads: { label: string; height: number; srOnly: boolean }[];
+  sideways: string[]; clipped: string[]; spills: string[]; truncated: string[]; overlap: string[]; focusless: string[]; unseen: string[]; unnamed: string[]; unmeasured: string[]; scrollers: string[]; contrast: string[]; targets: string[]; headings: string[]; heads: { label: string; height: number; srOnly: boolean }[];
   sizes: number[]; weights: number[]; radii: number[]; ratio: number;
 };
 
@@ -318,7 +318,7 @@ const MEASURE = `(() => {
   // A specimen's headings are the card's own, at the level the card uses where it is placed, not the documentation page's.
   const levels = [...deepQueryAll('h1,h2,h3,h4,h5,h6')].filter((h) => !deepClosest(h, '[aria-hidden="true"]') && !deepClosest(h, '[data-specimen]')).map((h) => +h.tagName[1]);
   levels.forEach((l, i) => { if (i && l > levels[i - 1] + 1) out.headings.push('h' + levels[i - 1] + ' then h' + l); });
-  out.focusless = [];
+  out.focusless = []; out.unseen = [];
   // What each element looks like unfocused, so the focus check can tell a ring from a decoration that is always there.
   window.__ringBefore = new WeakMap(); for (const n of all) window.__ringBefore.set(n, ringSignature(getComputedStyle(n)));
   const sorted = texts.sort((a, b) => a - b);
@@ -350,7 +350,7 @@ const measure = async (route: string, width: number, theme: string, embed: boole
   if (embed) await page.eval(`(() => { const d = document.documentElement; d.setAttribute('data-theme','${theme}'); window.__hostGround = '${theme}' === 'dark' ? '#1C1C20' : '#FFFFFF'; return true; })()`);
   // One implementation of the walk: the helper is injected, never copied. A page it cannot be injected into fails the audit.
   try {
-    if (!(await page.eval<boolean>(`${DEEP_SOURCE}\n;typeof deepAll === 'function' && typeof deepActive === 'function' && typeof deepParent === 'function' && typeof deepText === 'function'`))) throw new Error('the helper is not defined after injection');
+    if (!(await page.eval<boolean>(`${DEEP_SOURCE}\n;typeof deepAll === 'function' && typeof deepActive === 'function' && typeof deepParent === 'function' && typeof deepText === 'function' && typeof deepDrawn === 'function'`))) throw new Error('the helper is not defined after injection');
   } catch (e) {
     console.error(`audit: cannot inject the deep-DOM helper into ${route}: ${(e as Error).message}`);
     page.close();
@@ -375,18 +375,25 @@ const measure = async (route: string, width: number, theme: string, embed: boole
     // arrives, every stop reports a 0px ring (measured on `/` at 1440: `0px` at once, `2px` one frame on), and the audit
     // reported 907 issues that were its own timing rather than the page's. So it polls for the ring instead of sampling
     // once, up to ~5 frames, and only then calls the stop unmarked.
-    const miss = await page.eval<string | null>(`(async () => {
+    const stop = await page.eval<{ name: string; ring: boolean; drawn: boolean } | null>(`(async () => {
       const el = deepActive(); if (!el || el === document.body) return null;
       const frame = () => new Promise((done) => requestAnimationFrame(() => done(true)));
       // A ring is a change on focus, wherever on the element's frames it may be drawn (scripts/lib/deep.ts).
       const marked = () => ringChain(el).some((n) => ringed(n, window.__ringBefore && window.__ringBefore.get(n)));
       for (let i = 0; i < 6 && !marked(); i++) await frame();
-      if (marked()) return null;
-      return el.tagName.toLowerCase() + '.' + String(el.className).split(' ').slice(0, 3).join('.');
+      // The focus styles and the ring do not land in the same frame: a skip link's outline can be drawn a frame before
+      // it moves into view and turns opaque, so "draws nothing" is polled like the ring rather than sampled once.
+      const shown = () => deepDrawn(el);
+      for (let i = 0; i < 10 && !shown(); i++) await frame();
+      // A stop that draws nothing is a control a keyboard user lands on and cannot see: a clipped head's button, a
+      // transparent or zero-box control.
+      return { name: el.tagName.toLowerCase() + '.' + String(el.className).split(' ').slice(0, 3).join('.'), ring: marked(), drawn: shown() };
     })()`);
-    if (miss) r.focusless.push(miss);
+    if (stop && !stop.drawn) r.unseen.push(stop.name);
+    else if (stop && !stop.ring) r.focusless.push(stop.name);
   }
   r.focusless = [...new Set(r.focusless)].slice(0, 6);
+  r.unseen = [...new Set(r.unseen)].slice(0, 6);
   const scrollers = r.scrollers.filter((s) => !ALLOWED_SCROLLERS.test(s));
   const answer = answerProblem(route, page.status(), await page.eval<boolean>(DRAWS_NOT_FOUND), MISSING);
   const issues = [
@@ -421,6 +428,7 @@ const measure = async (route: string, width: number, theme: string, embed: boole
     ...(scrollers.length > 1 ? ['scrollers: ' + scrollers.join(', ')] : []),
     ...r.contrast.map((x) => 'contrast: ' + x),
     ...r.focusless.map((x) => 'no focus ring: ' + x),
+    ...r.unseen.map((x) => 'focus lands on a control that draws nothing: ' + x),
     ...[...new Set(page.errors)].slice(0, 4).map((x) => x),
   ];
   const tag = `${route} @${width} ${theme}`;
