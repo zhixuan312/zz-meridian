@@ -14,9 +14,9 @@ export const customerExplore: PreparedQuery<{ id: string }> = {
     requests: {
       collection: 'requests',
       filters: {
-        route: { ops: ['eq', 'ne', 'in'] },
-        statusClass: { ops: ['eq', 'ne', 'in'], values: ['2xx', '3xx', '4xx', '5xx'] },
-        status: { ops: ['eq', 'lt', 'gt'] },
+        route: { ops: ['eq', 'ne', 'in'], type: 'text' },
+        statusClass: { ops: ['eq', 'ne', 'in'], values: ['2xx', '3xx', '4xx', '5xx'], type: 'text' },
+        status: { ops: ['eq', 'lt', 'gt'], type: 'number' },
       },
       facets: ['route', 'statusClass'],
       measures: {

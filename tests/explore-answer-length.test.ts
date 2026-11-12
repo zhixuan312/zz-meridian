@@ -31,7 +31,7 @@ const QUERY: PreparedQuery = {
     days: {
       collection: 'days',
       date: 'day',
-      filters: { plan: { ops: ['eq'], values: ['a', 'b'] } },
+      filters: { plan: { ops: ['eq'], values: ['a', 'b'], type: 'text' } },
       facets: ['plan'],
       measures: many,
       drill: { columns: ['id', 'revenue'], address: (r) => `/days/${String(r.id)}` },

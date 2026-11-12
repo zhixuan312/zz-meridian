@@ -18,7 +18,7 @@ export const nowExplore: PreparedQuery = {
     days: {
       collection: 'days',
       date: 'date',
-      filters: { inBand: { ops: ['eq'], values: [true, false] } },
+      filters: { inBand: { ops: ['eq'], values: [true, false], type: 'boolean' } },
       facets: ['inBand'],
       buckets: ['week', 'month', 'weekday'],
       labels: { inBand: { true: 'inside the band', false: 'outside the band' } },
@@ -33,7 +33,7 @@ export const nowExplore: PreparedQuery = {
     models: {
       collection: 'usage',
       date: 'date',
-      filters: { model: { ops: ['eq', 'ne', 'in'] } },
+      filters: { model: { ops: ['eq', 'ne', 'in'], type: 'text' } },
       facets: ['model'],
       buckets: ['week', 'month'],
       measures: {
@@ -48,7 +48,7 @@ export const nowExplore: PreparedQuery = {
     compute: {
       collection: 'compute',
       date: 'date',
-      filters: { region: { ops: ['eq', 'ne', 'in'], values: REGION_NAMES } },
+      filters: { region: { ops: ['eq', 'ne', 'in'], values: REGION_NAMES, type: 'text' } },
       facets: ['region'],
       measures: {
         used: { label: 'GPU-hours used', unit: 'GPU-hours', definition: 'GPU-hours used over the complete days.', agg: 'sum', field: 'used' },
@@ -62,9 +62,9 @@ export const nowExplore: PreparedQuery = {
       collection: 'tickets',
       date: 'openedAt',
       filters: {
-        state: { ops: ['eq', 'ne', 'in'], values: ['open', 'waiting', 'closed'] },
-        priority: { ops: ['eq', 'ne', 'in'], values: ['low', 'normal', 'high'] },
-        service: { ops: ['eq', 'in'] },
+        state: { ops: ['eq', 'ne', 'in'], values: ['open', 'waiting', 'closed'], type: 'text' },
+        priority: { ops: ['eq', 'ne', 'in'], values: ['low', 'normal', 'high'], type: 'text' },
+        service: { ops: ['eq', 'in'], type: 'text' },
       },
       facets: ['state', 'priority', 'service'],
       measures: {
@@ -77,7 +77,7 @@ export const nowExplore: PreparedQuery = {
     runs: {
       collection: 'tests',
       date: 'startedAt',
-      filters: { state: { ops: ['eq', 'ne', 'in'], values: ['passed', 'failed', 'skipped'] }, suite: { ops: ['eq', 'in'] } },
+      filters: { state: { ops: ['eq', 'ne', 'in'], values: ['passed', 'failed', 'skipped'], type: 'text' }, suite: { ops: ['eq', 'in'], type: 'text' } },
       facets: ['state', 'suite'],
       buckets: ['day', 'week'],
       measures: {

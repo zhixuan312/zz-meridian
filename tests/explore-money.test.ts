@@ -28,7 +28,7 @@ const QUERY: PreparedQuery = {
     days: {
       collection: 'days',
       date: 'day',
-      filters: { plan: { ops: ['eq'], values: ['a', 'b'] } },
+      filters: { plan: { ops: ['eq'], values: ['a', 'b'], type: 'text' } },
       facets: ['plan'],
       measures: {
         revenue: { label: 'Revenue', unit: 'money', definition: 'What was billed.', agg: 'sum', field: 'revenue' },

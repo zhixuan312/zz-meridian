@@ -8,10 +8,10 @@ import type { PreparedQuery, Source } from '@/lib/explore';
 import { ticketsAddress } from './tickets-context';
 
 const filters: Source['filters'] = {
-  state: { ops: ['eq', 'ne', 'in'], values: ['open', 'waiting', 'closed'] },
-  priority: { ops: ['eq', 'ne', 'in'], values: ['low', 'normal', 'high'] },
-  service: { ops: ['eq', 'ne', 'in'] },
-  assigneeId: { ops: ['eq', 'ne', 'in'] },
+  state: { ops: ['eq', 'ne', 'in'], values: ['open', 'waiting', 'closed'], type: 'text' },
+  priority: { ops: ['eq', 'ne', 'in'], values: ['low', 'normal', 'high'], type: 'text' },
+  service: { ops: ['eq', 'ne', 'in'], type: 'text' },
+  assigneeId: { ops: ['eq', 'ne', 'in'], type: 'text' },
 };
 const facets = ['state', 'priority', 'service', 'assigneeId'];
 /** A ticket nobody has reads as the page says it. */

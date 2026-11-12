@@ -10,10 +10,10 @@ export const keysExplore: PreparedQuery = {
     keys: {
       collection: 'keys',
       filters: {
-        env: { ops: ['eq', 'in'], values: ['live', 'test'] },
-        owner: { ops: ['eq', 'ne', 'in'] },
-        lastUsed: { ops: ['lt', 'gt'] },
-        created: { ops: ['lt', 'gt'] },
+        env: { ops: ['eq', 'in'], values: ['live', 'test'], type: 'text' },
+        owner: { ops: ['eq', 'ne', 'in'], type: 'text' },
+        lastUsed: { ops: ['lt', 'gt'], type: 'date' },
+        created: { ops: ['lt', 'gt'], type: 'date' },
       },
       facets: ['env', 'owner'],
       measures: {

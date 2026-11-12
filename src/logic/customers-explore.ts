@@ -23,10 +23,10 @@ export function customersCallAddress(where: Condition[]): string {
 export const customersSource: Source = {
   collection: 'customers',
   filters: {
-    plan: { ops: ['eq', 'ne', 'in'], values: ['Enterprise', 'Scale', 'Starter'] },
-    status: { ops: ['eq', 'ne', 'in'], values: ['active', 'trial', 'past due', 'left'] },
-    region: { ops: ['eq', 'ne', 'in'] },
-    owner: { ops: ['eq', 'in'] },
+    plan: { ops: ['eq', 'ne', 'in'], values: ['Enterprise', 'Scale', 'Starter'], type: 'text' },
+    status: { ops: ['eq', 'ne', 'in'], values: ['active', 'trial', 'past due', 'left'], type: 'text' },
+    region: { ops: ['eq', 'ne', 'in'], type: 'text' },
+    owner: { ops: ['eq', 'in'], type: 'text' },
   },
   facets: ['plan', 'status', 'region', 'owner'],
   measures: {

@@ -33,7 +33,7 @@ export const homeExplore: PreparedQuery = {
     usage: {
       collection: 'usage',
       date: 'date',
-      filters: { model: { ops: ['eq', 'ne', 'in'] } },
+      filters: { model: { ops: ['eq', 'ne', 'in'], type: 'text' } },
       facets: ['model'],
       buckets: ['day', 'week', 'month'],
       measures: {
@@ -48,7 +48,7 @@ export const homeExplore: PreparedQuery = {
     compute: {
       collection: 'compute',
       date: 'date',
-      filters: { region: { ops: ['eq', 'ne', 'in'] } },
+      filters: { region: { ops: ['eq', 'ne', 'in'], type: 'text' } },
       facets: ['region'],
       buckets: ['day', 'week', 'month'],
       measures: {

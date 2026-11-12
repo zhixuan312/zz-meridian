@@ -13,7 +13,7 @@ export const servicesExplore: PreparedQuery = {
   sources: {
     services: {
       collection: 'services',
-      filters: { status: { ops: ['eq', 'ne', 'in'], values: STATES } },
+      filters: { status: { ops: ['eq', 'ne', 'in'], values: STATES, type: 'text' } },
       facets: ['status'],
       measures: {
         uptime: { label: 'Uptime, 90 days', unit: '%', definition: "The average of each service's uptime over its last 90 days, the figure the title states; a degraded day costs half an hour of it and a day of outage two hours.", agg: 'avg', field: 'uptimePercent' },
@@ -28,9 +28,9 @@ export const servicesExplore: PreparedQuery = {
     incidents: {
       collection: 'incidents',
       filters: {
-        state: { ops: ['eq', 'ne', 'in'], values: ['investigating', 'monitoring', 'resolved'] },
-        severity: { ops: ['eq', 'in'], values: ['minor', 'major'] },
-        service: { ops: ['eq', 'in'] },
+        state: { ops: ['eq', 'ne', 'in'], values: ['investigating', 'monitoring', 'resolved'], type: 'text' },
+        severity: { ops: ['eq', 'in'], values: ['minor', 'major'], type: 'text' },
+        service: { ops: ['eq', 'in'], type: 'text' },
       },
       facets: ['state', 'severity', 'service'],
       measures: {

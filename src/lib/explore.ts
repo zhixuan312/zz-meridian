@@ -14,6 +14,7 @@ import { z } from 'zod';
 import { app } from '@/app.config';
 import type { AggregateQuery, AggregateResult, AggregateValues, Condition, Query } from '@/lib/collection';
 import { formatCost, plural } from '@/lib/format';
+import { parseCalendarDate } from '@/lib/calendar-date';
 import { shiftDay } from '@/lib/format-date';
 import { PERIODS as PERIOD_KEYS, PERIOD_DAYS, type Period } from '@/lib/period';
 
@@ -41,7 +42,16 @@ export type Source = {
   collection: string;
   /** The field a window is cut on; a source without one has no window, and no `period` or `compare`. */
   date?: string;
-  filters: Record<string, { ops: ExploreOp[]; values?: readonly (string | number | boolean)[] }>;
+  filters: Record<string, {
+    ops: ExploreOp[];
+    values?: readonly (string | number | boolean)[];
+    /**
+     * The value's type. A condition whose value is another type is refused before anything is read — a number filter
+     * given "500" is a mistake, not an empty result. A `date` is a calendar day, `YYYY-MM-DD`, compared by the day it
+     * names in the reporting timezone (the same rule every other day cut uses).
+     */
+    type: 'number' | 'text' | 'date' | 'boolean';
+  }>;
   facets: string[];
   buckets?: ExploreBucket[];
   measures: Record<string, Measure>;
@@ -222,6 +232,10 @@ export function exploreSchema<I>(query: PreparedQuery<I>, rights: ExploreRights 
       const values = Array.isArray(w.value) ? w.value : [w.value];
       if (values.includes(null) && s.none?.[w.field] === undefined) refuse(`${w.field} always has a value, so it is never null.`);
       if (f.values && values.some((v) => v !== null && !f.values!.includes(v))) refuse(`${w.field} is one of ${f.values.join(', ')}.`);
+      // The value's declared type, before any read: a number filter given "500" is refused, never answered with 0 rows.
+      const takes = { number: 'a number', text: 'text', boolean: 'true or false', date: 'a date (YYYY-MM-DD)' } as const;
+      const fits = (v: Scalar | null) => v === null || (f.type === 'number' ? typeof v === 'number' : f.type === 'text' ? typeof v === 'string' : f.type === 'boolean' ? typeof v === 'boolean' : typeof v === 'string' && parseCalendarDate(v) !== null);
+      if (values.some((v) => !fits(v))) refuse(`${w.field} takes ${takes[f.type]}.`);
     }
     if (call.by !== undefined && call.bucket !== undefined) refuse('Ask by or bucket, not both.');
     if (call.by !== undefined && !o.facets.includes(call.by)) refuse(`${call.source} cannot be grouped by ${call.by}.`);
@@ -273,8 +287,14 @@ export async function runExplore<I>(query: PreparedQuery<I>, input: unknown, rig
   const q = query as PreparedQuery<never>;
   const parsed = exploreSchema(query, null, own).parse(input) as ExploreCall & Record<string, unknown>;
   const { source: name, measures: asked, by, bucket, compare = false, rows = 0 } = parsed;
-  const where: Condition[] = (parsed.where ?? []).map((w) => ({ field: w.field, op: w.op, value: w.value }));
   const s = q.sources[name];
+  const where: Condition[] = (parsed.where ?? []).map((w) => ({
+    field: w.field,
+    op: w.op,
+    value: w.value,
+    // A date filter is compared by the calendar day each side names in the reporting timezone, not by its characters.
+    ...(s.filters[w.field]?.type === 'date' ? { calendar: true as const } : {}),
+  }));
   const address = q.address ? q.address({ source: name, where, period: parsed.period }) : page;
   const reply = (answer: string) => ({ address, answer });
 

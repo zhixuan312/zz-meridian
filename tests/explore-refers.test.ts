@@ -24,7 +24,7 @@ const QUERY: PreparedQuery = {
   sources: {
     runs: {
       collection: 'tests',
-      filters: { releaseId: { ops: ['eq', 'in'] }, state: { ops: ['eq'] } },
+      filters: { releaseId: { ops: ['eq', 'in'], type: 'text' }, state: { ops: ['eq'], type: 'text' } },
       facets: ['releaseId', 'state'],
       measures: {
         runs: { label: 'Runs', unit: 'runs', definition: 'Runs.', agg: 'count' },

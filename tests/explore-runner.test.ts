@@ -27,7 +27,7 @@ const QUERY: PreparedQuery = {
     orders: {
       collection: 'orders',
       date: 'day',
-      filters: { team: { ops: ['eq', 'ne', 'in'], values: TEAMS }, v: { ops: ['gt', 'lt'] } },
+      filters: { team: { ops: ['eq', 'ne', 'in'], values: TEAMS, type: 'text' }, v: { ops: ['gt', 'lt'], type: 'number' } },
       facets: ['team'],
       buckets: ['day', 'week', 'month', 'weekday'],
       measures: {
@@ -50,7 +50,7 @@ const QUERY: PreparedQuery = {
     },
     plain: {
       collection: 'plain',
-      filters: { kind: { ops: ['eq'], values: ['a', 'b'] } },
+      filters: { kind: { ops: ['eq'], values: ['a', 'b'], type: 'text' } },
       facets: ['kind'],
       measures: { n: { label: 'Things', unit: 'things', definition: 'Things counted.', agg: 'sum', field: 'n' } },
       drill: { columns: ['id', 'kind'], address: (r) => `/plain/${String(r.id)}` },

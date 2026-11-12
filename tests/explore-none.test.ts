@@ -17,7 +17,7 @@ const QUERY: PreparedQuery = {
   sources: {
     requests: {
       collection: 'requests',
-      filters: { model: { ops: ['eq', 'ne', 'in'] }, status: { ops: ['eq', 'in'] } },
+      filters: { model: { ops: ['eq', 'ne', 'in'], type: 'text' }, status: { ops: ['eq', 'in'], type: 'text' } },
       facets: ['model', 'status'],
       measures: { requests: { label: 'Requests', unit: 'requests', definition: 'Requests in the log.', agg: 'count' } },
       drill: { columns: ['id', 'model'], address: (r) => `/requests/${String(r.id)}` },

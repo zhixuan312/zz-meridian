@@ -51,7 +51,7 @@ function explored(c: AnyCollection, query: Partial<PreparedQuery['sources'][stri
     sources: {
       staff: {
         collection: c.name,
-        filters: { team: { ops: ['eq', 'in'], values: ['Support', 'Sales'] } },
+        filters: { team: { ops: ['eq', 'in'], values: ['Support', 'Sales'], type: 'text' } },
         facets: ['team'],
         measures: { people: { label: 'People', unit: 'people', definition: 'People in the test.', agg: 'count' } },
         drill: { columns: ['id', 'name'], address: () => '/staff' },
@@ -171,7 +171,7 @@ describe('hidden fields', () => {
     type Key = { id: string; name: string; secret: string };
     const k = arrayCollection({ name: `vault${++n}`, label: 'Vault', description: 'Keys in a test.', fields: z.object({ name: z.string(), secret: z.string() }), key: 'id', title: (r: Key) => r.name, rows: [{ id: 'k_1', name: 'Production', secret: 'sk-live-123' }], allow: ['remove'], hidden: ['secret'] });
     // The page's author declared the secret anyway: the person's rights leave it out of what is offered and what is drilled.
-    const handed = explored(k, { filters: { secret: { ops: ['eq'] } }, facets: [], drill: { columns: ['id', 'name', 'secret'], address: () => '/staff' } });
+    const handed = explored(k, { filters: { secret: { ops: ['eq'], type: 'text' } }, facets: [], drill: { columns: ['id', 'name', 'secret'], address: () => '/staff' } });
     const ok = await chunks(await respond({ model: scripted(call('q1', 'explore_staff', { source: 'staff', measures: ['people'], rows: 5 }), say('ok')), secret: SECRET, now: NOW, messages: ask('Keys?'), page, guard, collections: [k], explore: handed }));
     const out = ok.find((e) => e.type === 'tool-output-available' && e.toolCallId === 'q1');
     expect(out.output.answer).toContain('- /staff: id k_1, name Production');

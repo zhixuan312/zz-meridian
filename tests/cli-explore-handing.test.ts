@@ -40,7 +40,7 @@ vi.mock('@/logic/tools', async () => {
   const { FEATURES } = await import('@/data/features');
   const hours = {
     collection: 'hours',
-    filters: { hour: { ops: ['eq'], values: Array.from({ length: 24 }, (_, h) => h) } },
+    filters: { hour: { ops: ['eq'], values: Array.from({ length: 24 }, (_, h) => h), type: 'number' } },
     facets: ['weekday'],
     measures: { r: { label: 'Requests', unit: 'requests', definition: 'Requests in the hour.', agg: 'sum', field: 'requests' } },
     drill: { columns: ['id'], address: () => '/usage' },

@@ -32,7 +32,7 @@ export const revenueExplore: PreparedQuery = {
     usage: {
       collection: 'usage',
       date: 'date',
-      filters: { model: { ops: ['eq', 'ne', 'in'] } },
+      filters: { model: { ops: ['eq', 'ne', 'in'], type: 'text' } },
       facets: ['model'],
       buckets: ['day', 'week', 'month'],
       measures: {

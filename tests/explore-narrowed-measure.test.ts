@@ -17,7 +17,7 @@ const QUERY: PreparedQuery<{ id: string }> = {
     runs: {
       collection: 'tests',
       date: 'startedAt',
-      filters: { state: { ops: ['eq'], values: ['passed', 'failed'] } },
+      filters: { state: { ops: ['eq'], values: ['passed', 'failed'], type: 'text' } },
       facets: ['state'],
       measures: { runs: { label: 'Runs', unit: 'runs', definition: 'The runs that started in the window, however they ended.', agg: 'count' } },
       drill: { columns: ['id', 'state'], address: (r) => `/tests?run=${String(r.id)}` },

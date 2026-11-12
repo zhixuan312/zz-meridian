@@ -6,7 +6,11 @@ import { WEEKDAY_NAMES_MONDAY_FIRST } from './insight.ts';
 type Op = 'create' | 'update' | 'remove';
 type Scalar = string | number | boolean | null;
 type Value = Scalar | Scalar[];
-type Condition = { field: string; op: 'eq' | 'ne' | 'gt' | 'lt' | 'contains' | 'in'; value: Value };
+/**
+ * One condition a query must meet. `calendar` compares both sides as the calendar day each names in the reporting
+ * timezone — a bare `YYYY-MM-DD` as written, an instant as its day — so `lastActive lt 2026-06-01` means that day.
+ */
+type Condition = { field: string; op: 'eq' | 'ne' | 'gt' | 'lt' | 'contains' | 'in'; value: Value; calendar?: true };
 export type { Condition };
 export type Query = { where?: Condition[]; sort?: { field: string; dir: 'asc' | 'desc' }; limit?: number; offset?: number };
 
@@ -184,8 +188,24 @@ function compare(a: unknown, b: unknown): number {
  * A field with no value (null, or not there) matches `ne` of any value but null, and is named by `eq null` or an `in`
  * list holding null; `gt`/`lt` need the field and the value to be the same kind.
  */
-function matches(row: Record<string, unknown>, { field, op, value }: Condition): boolean {
+function matches(row: Record<string, unknown>, { field, op, value, calendar }: Condition): boolean {
   const v = row[field];
+  if (calendar) {
+    // Both sides are cut to their calendar day in the reporting timezone: a stored instant is compared as the day it
+    // falls on, and a bare date as itself (issue #144).
+    const day = dayOf(v);
+    if (day === null) return op === 'ne';
+    const days = (Array.isArray(value) ? value : [value]).filter((d): d is string => typeof d === 'string');
+    const one = days[0];
+    switch (op) {
+      case 'eq': return day === one;
+      case 'ne': return day !== one;
+      case 'gt': return one !== undefined && compare(day, one) > 0;
+      case 'lt': return one !== undefined && compare(day, one) < 0;
+      case 'in': return days.includes(day);
+      default: return false;
+    }
+  }
   if (v === null || v === undefined) return op === 'ne' ? value !== null : op === 'eq' ? value === null : op === 'in' && Array.isArray(value) && value.includes(null);
   switch (op) {
     case 'eq': return v === value;

@@ -18,7 +18,7 @@ export const usageExplore: PreparedQuery = {
   sources: {
     hours: {
       collection: 'hours',
-      filters: { weekday: { ops: ['eq', 'in'], values: WEEKDAYS.map((_, d) => d) }, hour: { ops: ['eq', 'in', 'lt', 'gt'], values: HOURS } },
+      filters: { weekday: { ops: ['eq', 'in'], values: WEEKDAYS.map((_, d) => d), type: 'number' }, hour: { ops: ['eq', 'in', 'lt', 'gt'], values: HOURS, type: 'number' } },
       facets: ['weekday', 'hour'],
       // The sample keeps a weekday as 0 (Monday) to 6 (Sunday): an answer says it by name, and an hour as the page writes it,
       // in the reporting timezone its hours are cut in.
@@ -50,7 +50,7 @@ export const usageExplore: PreparedQuery = {
     usage: {
       collection: 'usage',
       date: 'date',
-      filters: { model: { ops: ['eq', 'ne', 'in'] } },
+      filters: { model: { ops: ['eq', 'ne', 'in'], type: 'text' } },
       facets: ['model'],
       buckets: ['day', 'week', 'month'],
       measures: {

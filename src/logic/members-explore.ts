@@ -13,11 +13,11 @@ export const membersExplore: PreparedQuery = {
     members: {
       collection: 'members',
       filters: {
-        status: { ops: ['eq', 'ne', 'in'], values: STATUSES },
-        role: { ops: ['eq', 'ne', 'in'], values: MAIN_ROLES },
-        team: { ops: ['eq', 'ne', 'in'], values: TEAMS },
-        name: { ops: ['eq', 'in'] },
-        lastActive: { ops: ['lt', 'gt'] },
+        status: { ops: ['eq', 'ne', 'in'], values: STATUSES, type: 'text' },
+        role: { ops: ['eq', 'ne', 'in'], values: MAIN_ROLES, type: 'text' },
+        team: { ops: ['eq', 'ne', 'in'], values: TEAMS, type: 'text' },
+        name: { ops: ['eq', 'in'], type: 'text' },
+        lastActive: { ops: ['lt', 'gt'], type: 'date' },
       },
       facets: ['status', 'role', 'team'],
       measures: {

@@ -12,7 +12,7 @@ const QUERY: PreparedQuery = {
   sources: {
     hours: {
       collection: 'hours',
-      filters: { weekday: { ops: ['eq', 'in'], values: [0, 1, 2, 3, 4, 5, 6] }, hour: { ops: ['eq'], values: [0, 22] } },
+      filters: { weekday: { ops: ['eq', 'in'], values: [0, 1, 2, 3, 4, 5, 6], type: 'number' }, hour: { ops: ['eq'], values: [0, 22], type: 'number' } },
       facets: ['weekday'],
       measures: { requests: { label: 'Requests', unit: 'requests', definition: 'Requests in the hour.', agg: 'sum', field: 'requests' } },
       drill: { columns: ['id'], address: () => '/usage' },
