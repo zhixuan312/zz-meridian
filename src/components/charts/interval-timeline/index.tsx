@@ -3,6 +3,7 @@
 import { useCallback, useMemo, useState, type KeyboardEvent } from 'react';
 import { Readout } from '@/components/charts/readout';
 import { cn } from '@/lib/cn';
+import { dayOf } from '@/lib/format-date';
 import { heldTicks } from '@/components/charts/scale';
 import { useSize } from '@/components/charts/use-size';
 
@@ -85,7 +86,7 @@ export function IntervalTimeline({
   };
   const pointing = active !== null && active < ordered.length ? ordered[active] : null;
   // An instant as the axis reads it, and a run's length in words: both are used by the axis and by every run's name.
-  const read = useCallback((iso: string) => (tick ? tick(iso) : iso.slice(0, 10)), [tick]);
+  const read = useCallback((iso: string) => (tick ? tick(iso) : dayOf(iso)), [tick]);
   const words = useCallback((run: TimelineRun) => {
     const a = ms(run.from), b = run.to === null ? null : ms(run.to);
     const s = a === null || b === null ? null : Math.max(0, Math.round((b - a) / 1000));

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { parseCalendarDate } from './calendar-date.ts';
+import { dayOfValue, shiftDay } from './format-date.ts';
 import { WEEKDAY_NAMES_MONDAY_FIRST } from './insight.ts';
 
 /** A named set of records the pages and the assistant read and change through one interface. */
@@ -16,7 +16,7 @@ export type Query = { where?: Condition[]; sort?: { field: string; dir: 'asc' | 
  */
 export type AggregateQuery = {
   where?: Condition[];                       // the operators a prepared query may use: eq, ne, in, lt, gt
-  window?: { field: string; from: string; to: string }; // inclusive dates YYYY-MM-DD, compared with the field's first ten characters
+  window?: { field: string; from: string; to: string }; // inclusive calendar days YYYY-MM-DD, compared with the day the field's value names in the reporting timezone
   group?: { field: string } | { field: string; bucket: 'day' | 'week' | 'month' | 'weekday' };
   measures: { name: string; agg: 'count' | 'sum' | 'avg' | 'min' | 'max' | 'p95'; field?: string; where?: Condition[] }[]; // `field` may be a dotted path; a count's `where` counts the rows that meet it
   top?: number;                              // groups returned: largest first by the first measure, or for a bucket the latest `top` buckets in date order (weekday: Monday to Sunday), the earlier ones in `others`; 8 when not given, at most 50
@@ -266,22 +266,21 @@ function valueAt(row: Record<string, unknown>, path: string): unknown {
   return path.split('.').reduce<unknown>((v, k) => (v !== null && typeof v === 'object' ? (v as Record<string, unknown>)[k] : undefined), row);
 }
 
-/** The date a value starts with, as YYYY-MM-DD: its first ten characters, or null when they are not a date. */
+/** A date value's calendar day: a bare `YYYY-MM-DD` as written, an instant as its day in the reporting timezone. */
 function dayOf(v: unknown): string | null {
-  const d = typeof v === 'string' ? v.slice(0, 10) : '';
-  return parseCalendarDate(d) ? d : null;
+  return dayOfValue(v);
 }
 
-/** A date's bucket key: the day, the week's Monday, `YYYY-MM`, or the weekday's English name. Worked out in UTC, as the data's days are. */
+/** A date's bucket key: the day, the week's Monday, `YYYY-MM`, or the weekday's English name, cut from its calendar day. */
 function bucketOf(v: unknown, bucket: string): string | null {
   const d = dayOf(v);
   if (d === null) return null;
   if (bucket === 'day') return d;
   if (bucket === 'month') return d.slice(0, 7);
-  const t = Date.parse(`${d}T00:00:00Z`);
-  const weekday = (new Date(t).getUTCDay() + 6) % 7;
+  // Calendar arithmetic on the date itself: a weekday and a Monday are whole days from it, whatever the timezone.
+  const weekday = (new Date(`${d}T00:00:00Z`).getUTCDay() + 6) % 7;
   if (bucket === 'weekday') return WEEKDAYS[weekday];
-  if (bucket === 'week') return new Date(t - weekday * 86_400_000).toISOString().slice(0, 10);
+  if (bucket === 'week') return shiftDay(d, -weekday);
   throw new Error(`Unsupported bucket ${JSON.stringify(bucket)}`);
 }
 

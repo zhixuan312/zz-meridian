@@ -6,12 +6,13 @@
  */
 import { app } from '@/app.config';
 import type { PreparedQuery } from '@/lib/explore';
+import { dayOfValue } from '@/lib/format-date';
 
 const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const HOURS = Array.from({ length: 24 }, (_, h) => h);
 
 /** The page pointed at one day: every complete day kept is the period, so any day of the calendar is in it. */
-const onDay = (row: Record<string, unknown>) => `/usage?period=all&day=${String(row.date).slice(0, 10)}`;
+const onDay = (row: Record<string, unknown>) => `/usage?period=all&day=${dayOfValue(row.date) ?? String(row.date)}`;
 
 export const usageExplore: PreparedQuery = {
   sources: {

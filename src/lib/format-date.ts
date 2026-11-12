@@ -1,5 +1,7 @@
-import { app } from '@/app.config';
-import { parseCalendarDate } from '@/lib/calendar-date';
+// Relative with its extension, and the collection seam imports this module under plain Node (a store fixture and the
+// multi-process test) where the `@/` alias does not resolve.
+import { app } from '../app.config.ts';
+import { parseCalendarDate } from './calendar-date.ts';
 /**
  * Every date this product displays goes through this module. Nothing calls
  * `toLocaleDateString` directly.
@@ -63,6 +65,19 @@ export function dayOf(input: DateInput, timeZone: string = DISPLAY_TIMEZONE): st
   let fmt = DAY_OF.get(timeZone);
   if (!fmt) DAY_OF.set(timeZone, (fmt = new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' })));
   return fmt.format(d);
+}
+
+/**
+ * The calendar day a stored value names, `2026-06-30`. A bare `YYYY-MM-DD` is already a day and is kept as written, wherever
+ * the product reports from; an instant is its day in the reporting timezone, through `dayOf`. Null for a value that is not
+ * a date. Every cut of a stored date — an aggregate's window and bucket, a drill's address — uses this one rule, so a day
+ * in a table, a day in a total and a day in an agent's window are the same day.
+ */
+export function dayOfValue(value: unknown, timeZone: string = DISPLAY_TIMEZONE): string | null {
+  if (typeof value !== 'string') return null;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return parseCalendarDate(value) ? value : null;
+  const day = dayOf(value, timeZone);
+  return day === '' ? null : day;
 }
 
 /** `09 Jun 2026` */

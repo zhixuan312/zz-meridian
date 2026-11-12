@@ -9,6 +9,7 @@
  * - Every token a specification names in backticks, and every var(--x) or (--x) a component uses, exists.
  * - No literal colour (hex of 3, 4, 6 or 8 digits; rgb, hsl, oklch, oklab, lab, lch, color) and no Tailwind default
  *   palette in the layers: colours come from roles.
+ * - A day is cut to its calendar day in the reporting timezone (`dayOf`/`dayOfValue`), never to a value's first ten characters.
  * - One implementation: the fixtures a collection serves are read through src/data/collections.ts, not imported again.
  * - In the template, `connection()` is called only where the request is meant to be read: the console layout and the
  *   not-found page; pages and views reach the sample through src/data, never src/system/fixtures; and a writer path
@@ -32,7 +33,7 @@ import path from 'node:path';
 import { importTarget, projectAliases } from './lib/aliases.ts';
 import { checkBrief, scanReferences } from './lib/context-check.ts';
 import { navTrailProblems, navUnderProblems } from './lib/nav-under.ts';
-import { blankedText, noDirectQuery, presentationDoesNotRead, resolveSpec as resolveProjectSpec, valueImports, walk as walkIn } from './lib/layer-rules.ts';
+import { blankedText, dayCutFiles, dayCutProblems, noDirectQuery, presentationDoesNotRead, resolveSpec as resolveProjectSpec, valueImports, walk as walkIn } from './lib/layer-rules.ts';
 import { APP_DIR, agentPageSpec, agentSection, specRoute, viewToolPages } from './lib/routes.ts';
 import { keepProblems, unresolved, parseJournal, parseKeep, parseResolutions, verifiedRetirements, type Hash, type Retirement } from './lib/update-session.ts';
 import { cards } from './registry.ts';
@@ -253,6 +254,12 @@ for (const f of LAYERS) {
     if (!defined.has(m) && !LOCAL.test(m)) problems.push(`${f}: uses --${m}, which is not defined`);
   }
 }
+
+// ── A day is the reporting timezone's day ────────────────────────────────────────────────────────────
+// A date is cut to its calendar day by `dayOf`/`dayOfValue`, never to ten characters — an instant's UTC day (issue #144).
+const dayCut = dayCutFiles(LAYERS);
+for (const p of dayCutProblems(dayCut, read)) problems.push(`${p.file}:${p.line}: ${p.message}`);
+judged.push(['the day cut', dayCut.length]);
 
 // ── One implementation: a collection's rows are read through the collection ──────────────────────────
 // The covered fixtures are the names src/data/collections.ts passes as `rows:` (read from the file, so a product's own

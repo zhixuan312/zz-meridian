@@ -7,10 +7,11 @@
  * the Home tool.
  */
 import type { PreparedQuery } from '@/lib/explore';
+import { dayOfValue } from '@/lib/format-date';
 import { customersCallAddress, customersSource } from './customers-explore';
 
 /** The page pointed at one day: every complete day kept is the period, so any day kept is in it. */
-const onDay = (row: Record<string, unknown>) => `/?period=all&day=${String(row.date).slice(0, 10)}`;
+const onDay = (row: Record<string, unknown>) => `/?period=all&day=${dayOfValue(row.date) ?? String(row.date)}`;
 
 export const homeExplore: PreparedQuery = {
   sources: {

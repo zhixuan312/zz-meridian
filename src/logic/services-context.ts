@@ -11,7 +11,7 @@ import { summarise } from '@/logic/summarise';
 import type { DailyPoint } from '@/data/sample';
 import { run, runOf, steady } from '@/lib/facts';
 import { formatDuration, formatPercent, plural } from '@/lib/format';
-import { dayOf, formatDate, formatDateTime } from '@/lib/format-date';
+import { dayOf, formatDate, formatDateTime, shiftDay } from '@/lib/format-date';
 import { freshnessOf, type Fact, type Insight, type SharedContext } from '@/lib/shared-context';
 import { handed, headInsights, inDays, type PageHead } from './fact-insight';
 
@@ -59,8 +59,8 @@ export const meanUptime = (services: readonly Pick<Service, 'uptime'>[]) => (ser
  * every other day the page cuts is: the UTC date of `end` is a day off east of UTC after local midnight.
  */
 export function stripDates(n: number, end: Date, timeZone?: string): string[] {
-  const today = Date.parse(`${dayOf(end, timeZone)}T00:00:00Z`);
-  return Array.from({ length: n }, (_, i) => new Date(today - (n - 1 - i) * 86_400_000).toISOString().slice(0, 10));
+  const today = dayOf(end, timeZone);
+  return Array.from({ length: n }, (_, i) => shiftDay(today, -(n - 1 - i)));
 }
 
 /** The days the page counts: those of the longest strip. Every strip ends today, so a service that keeps fewer days keeps the latest of them. */

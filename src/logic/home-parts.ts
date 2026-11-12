@@ -13,7 +13,7 @@ import type { ReleaseRow } from '@/data/engineering';
 import type { ComputeRow, CostRow, CustomerRecord, DailyPoint, Model, Ticket, UsageRow } from '@/data/sample';
 import { first, periods, record, steady, total, type Fact } from '@/lib/facts';
 import { changeOf, formatCompact, formatCost, formatDuration, formatPercent, plural } from '@/lib/format';
-import { formatDate } from '@/lib/format-date';
+import { formatDate, shiftDay } from '@/lib/format-date';
 import { median } from '@/lib/insight';
 import { PERIOD_DAYS, type Period } from '@/lib/period';
 import { totalsOf, type Totals } from '@/lib/totals';
@@ -96,10 +96,9 @@ export function yearOf(history: readonly DailyPoint[], period: Period): NonNulla
 export function weekdayAverages(history: readonly DailyPoint[]): { value: number; friday: string }[] {
   const weeks = new Map<string, DailyPoint[]>();
   for (const d of history) {
-    const at = new Date(`${d.date}T00:00:00Z`);
-    const wd = at.getUTCDay();
+    const wd = new Date(`${d.date}T00:00:00Z`).getUTCDay();
     if (wd === 0 || wd === 6) continue;
-    const monday = new Date(at.getTime() - (wd - 1) * 86_400_000).toISOString().slice(0, 10);
+    const monday = shiftDay(d.date, -(wd - 1));
     weeks.set(monday, [...(weeks.get(monday) ?? []), d]);
   }
   return [...weeks.values()].filter((w) => w.length === 5).map((w) => ({ value: sum(w.map((d) => d.requests)) / 5, friday: w[4].date }));

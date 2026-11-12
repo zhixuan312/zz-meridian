@@ -52,6 +52,7 @@ const RULES: Rule[] = [
   // Styles and components.
   { id: 'hand-written motion uses tokens', source: 'literal duration ${lit[0]}', batch: 'T', fails: [/src\/styles\/motion\.css:\d+: literal duration 300ms/] },
   { id: 'no literal colour', source: 'literal colour ${lit[0]}', pairedIn: { file: RULE_TESTS, needle: 'literal colour' } },
+  { id: 'a day is not cut to a ten-character UTC date', source: '${p.file}:${p.line}: ${p.message}', pairedIn: { file: 'tests/cli-check-day-cut.test.ts', needle: 'cuts a date to its UTC day' } },
   // The ownership guide's block is the rule's own rendering, checked in scripts/lib/ownership-guide.ts.
   { id: 'the ownership guide is the rule\'s rendering', source: 'ownershipGuideProblems(ROOT)', pairedIn: { file: 'tests/cli-check-rules.test.ts', needle: 'ownership' } },
   { id: 'no Tailwind utility outside the reset scales', source: "outside Meridian's scale", batch: 'T', fails: [/planted-lint\.tsx:\d+: font-bold is outside Meridian's scale/] },

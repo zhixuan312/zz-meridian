@@ -6,7 +6,7 @@
 import type { LoggedRequest } from '@/data/requests';
 import type { CustomerRecord } from '@/data/sample';
 import { formatCompact, formatCost, formatPercent, plural } from '@/lib/format';
-import { dayOf, formatDate } from '@/lib/format-date';
+import { dayOf, formatDate, shiftDay } from '@/lib/format-date';
 import { freshnessOf, type Fact, type Insight, type SharedContext } from '@/lib/shared-context';
 import { week } from './customers-context';
 import { against, inDays } from './fact-insight';
@@ -39,7 +39,6 @@ const CUSTOMER_DAYS = 30;
 /** How many of its requests in the sampled log its page shows, newest first. */
 export const LATEST = 5;
 
-const DAY = 86_400_000;
 const sum = (xs: readonly number[]) => xs.reduce((a, b) => a + b, 0);
 
 /**
@@ -84,8 +83,8 @@ export const thisWeekOf = (c: CustomerRecord) => (c.trend.length >= 14 ? sum(c.t
 export function busiestOf(c: CustomerRecord, now: string): { date: string; requests: number } | null {
   if (!c.trend.some((n) => n > 0)) return null;
   const at = c.trend.reduce((m, n, i) => (n > c.trend[m] ? i : m), 0);
-  const yesterday = Date.parse(`${dayOf(now)}T00:00:00Z`) - DAY;
-  return { date: new Date(yesterday - (c.trend.length - 1 - at) * DAY).toISOString().slice(0, 10), requests: c.trend[at] };
+  const yesterday = shiftDay(dayOf(now), -1);
+  return { date: shiftDay(yesterday, -(c.trend.length - 1 - at)), requests: c.trend[at] };
 }
 
 /** Its requests by endpoint over the 30 days, the largest first, leaving out the endpoints it never called. */
