@@ -151,6 +151,18 @@ export function stylesheetPath(layout: string, layoutSrc: string, tsconfig: stri
   return { unresolved: spec };
 }
 
+/**
+ * What is already at a payload path: absent, a regular file with exactly the packaged bytes, or a conflict. A directory,
+ * a symbolic link or any other non-file is a conflict and is never read: EISDIR escaped the clean refusal, and a link was
+ * read through before the write check refused it.
+ */
+export function existingFile(abs: string, content: string | Buffer): 'absent' | 'same' | 'conflict' {
+  const st = fs.lstatSync(abs, { throwIfNoEntry: false });
+  if (!st) return 'absent';
+  if (!st.isFile()) return 'conflict';
+  return fs.readFileSync(abs).equals(Buffer.from(content)) ? 'same' : 'conflict';
+}
+
 /** The template's stylesheet, with its paths made relative to where the project keeps its own. */
 function globals(cssRel: string, dir: string): string {
   const from = path.posix.dirname(cssRel);
@@ -275,18 +287,10 @@ https://github.com/zhixuan312/zz-meridian/blob/master/skills/zz-meridian/referen
   const conflicts: string[] = [];
   const notes: string[] = [];
   const own = (rel: string, content: string | Buffer) => {
-    const abs = path.join(root, rel);
-    const st = fs.lstatSync(abs, { throwIfNoEntry: false });
-    if (st) {
-      // Anything that is not a regular file is a conflict, named with the rest: reading a directory threw EISDIR, and a
-      // symlink was read through before the write check refused it.
-      if (!st.isFile()) { conflicts.push(rel); return; }
-      if (fs.readFileSync(abs).equals(Buffer.from(content))) { owned.push(rel); return; }
-      conflicts.push(rel);
-      return;
-    }
-    writes.set(rel, content);
-    owned.push(rel);
+    const how = existingFile(path.join(root, rel), content);
+    if (how === 'absent') { writes.set(rel, content); owned.push(rel); }
+    else if (how === 'same') owned.push(rel);
+    else conflicts.push(rel);
   };
 
   for (const rel of set) {

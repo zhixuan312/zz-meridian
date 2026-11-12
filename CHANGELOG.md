@@ -17,6 +17,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 
 ### Breaking
 
+- **`adopt` refuses a symbolic link at a payload path.** A link to a file carrying the packaged bytes used to read as already-owned; it is now a conflict, like a directory or a different file, and its target is never read. Replace the link with the file (or move it aside) and run adopt again.
 - **`update --verify` is refused.** It had been accepted and ignored since `--finalize` took over the verification, so a person who named it waited for a check nothing ran. The flag is unknown now; `--finalize` is the step that verifies.
 
 ### Known issues

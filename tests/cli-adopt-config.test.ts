@@ -7,7 +7,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { afterAll, describe, expect, it } from 'vitest';
-import { eslintConfigOf, projectConfig, stylesheetPath } from '../cli/src/adopt.ts';
+import { eslintConfigOf, existingFile, projectConfig, stylesheetPath } from '../cli/src/adopt.ts';
 import { installSkill, payloadBytes, skillPaths } from '../cli/src/files.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
@@ -162,5 +162,28 @@ describe("the stylesheet the root layout imports", () => {
 
   it('is refused rather than replaced when the import cannot be resolved, so the team sheet stays active', () => {
     expect(stylesheetPath('app/layout.tsx', "import '~/styles/globals.css';", tsconfig, 'app')).toEqual({ unresolved: '~/styles/globals.css' });
+  });
+});
+
+describe('a path adopt is about to copy to', () => {
+  const dirs: string[] = [];
+  afterAll(() => dirs.forEach((d) => fs.rmSync(d, { recursive: true, force: true })));
+  const tmp = (name: string) => { const d = fs.mkdtempSync(path.join(os.tmpdir(), 'zz-adopt-existing-')); dirs.push(d); return path.join(d, name); };
+  it('is absent, the packaged bytes, or a conflict — never read when it is not a regular file', () => {
+    const file = tmp('button.tsx');
+    expect(existingFile(file, 'A')).toBe('absent');
+    fs.writeFileSync(file, 'A');
+    expect(existingFile(file, 'A')).toBe('same');
+    expect(existingFile(file, 'B')).toBe('conflict');
+  });
+  it('treats a directory and a symbolic link as conflicts, whatever they point at', () => {
+    const dir = tmp('folder');
+    fs.mkdirSync(dir);
+    expect(existingFile(dir, 'A')).toBe('conflict');
+    const target = tmp('target.tsx');
+    fs.writeFileSync(target, 'A');
+    const link = tmp('link.tsx');
+    fs.symlinkSync(target, link);
+    expect(existingFile(link, 'A')).toBe('conflict');
   });
 });
