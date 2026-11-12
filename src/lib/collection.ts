@@ -529,8 +529,8 @@ export function visibleFields(c: AnyCollection): z.ZodObject {
 
 /**
  * The collection's fields an agent's tool may WRITE: its visible fields without the fields only a page may set
- * (`pageOnlyFields`). The create tool is built from this and the update tool's `set` from `patchOf` of it, so a field
- * a page owns is absent from the schema and, because the schema is strict, refused at execution if sent anyway.
+ * (`pageOnlyFields`). The update tool's `set` is `patchOf` of this and the create tool is `createFields` of it, so a
+ * field a page owns is absent from the schema and, because the schema is strict, refused at execution if sent anyway.
  *
  * It says nothing about reading: a page's prepared query may still filter, group or drill on a role or an add-on the
  * same as on any other visible field. Reading a field and changing it are different rules, and this is the second.
