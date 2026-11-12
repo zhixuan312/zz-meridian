@@ -311,10 +311,10 @@ export function DataTable<R>({
     );
   } else {
     const roleOf = (c: Column<R>): Mobile => (c === titleColumn ? 'title' : c === status ? 'status' : facts.includes(c) ? 'fact' : 'hidden');
-    // The head is visually hidden on a phone, not display:none: the cells still need their headers in the accessibility
-    // tree to say which fact is which.
+    // On a phone the head is visually hidden but stays in the accessibility tree: each th is sr-only, and the row is
+    // display: contents so its grid box and border draw nothing (a bare sr-only row left a 36px band).
     body = (
-      <Table caption={caption} aria-busy={loading || busy || undefined} className={cn('@max-[640px]:block @max-[640px]:[&>thead]:sr-only @max-[640px]:[&>tbody]:block', CELLS, selectable && SELECT, PHONE_ROWS, PHONE_CELLS, PHONE_ROLES, '[&>tbody]:transition-opacity [&>tbody]:duration-(--dur-hover)', busy && '[&>tbody]:opacity-60')}>
+      <Table caption={caption} aria-busy={loading || busy || undefined} className={cn('@max-[640px]:block @max-[640px]:[&_th]:sr-only @max-[640px]:[&>thead>tr]:contents @max-[640px]:[&>tbody]:block', CELLS, selectable && SELECT, PHONE_ROWS, PHONE_CELLS, PHONE_ROLES, '[&>tbody]:transition-opacity [&>tbody]:duration-(--dur-hover)', busy && '[&>tbody]:opacity-60')}>
         <TableHead>
           <tr role="row">
             {selectable ? (

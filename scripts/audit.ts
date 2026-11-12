@@ -37,6 +37,7 @@ import { atlasCoverage, atlasEntries } from './lib/atlas.ts';
 import { launch } from './lib/chrome.ts';
 import { DEEP_SOURCE } from './lib/deep.ts';
 import { discover } from './lib/routes.ts';
+import { phoneHeadProblem } from './lib/table-head.ts';
 import { settle } from './lib/settle.ts';
 import { detailRoutes, personaCookie } from './lib/team-config.ts';
 import { holdArgs } from './lib/args.ts';
@@ -95,7 +96,7 @@ if (atlasLine) console.log(atlasLine);
 
 type Report = {
   path: string; href: string; text: number;
-  sideways: string[]; clipped: string[]; spills: string[]; truncated: string[]; overlap: string[]; focusless: string[]; unnamed: string[]; unmeasured: string[]; scrollers: string[]; contrast: string[]; targets: string[]; headings: string[];
+  sideways: string[]; clipped: string[]; spills: string[]; truncated: string[]; overlap: string[]; focusless: string[]; unnamed: string[]; unmeasured: string[]; scrollers: string[]; contrast: string[]; targets: string[]; headings: string[]; heads: { label: string; height: number; srOnly: boolean }[];
   sizes: number[]; weights: number[]; radii: number[]; ratio: number;
 };
 
@@ -103,7 +104,7 @@ type Report = {
 const MEASURE = `(() => {
   // The layout viewport, never innerWidth: a phone's visual viewport widens to content that overflows it, so a page
   // 600px wide at 390 measured 616 there and its sideways scroll, the strip rule and every clip were judged at 616.
-  const W = document.documentElement.clientWidth, out = { path: location.pathname, href: location.href, text: 0, sideways: [], clipped: [], spills: [], truncated: [], overlap: [], unnamed: [], unmeasured: [], scrollers: [], contrast: [], targets: [], headings: [], sizes: [], weights: [], radii: [], ratio: 0 };
+  const W = document.documentElement.clientWidth, out = { path: location.pathname, href: location.href, text: 0, sideways: [], clipped: [], spills: [], truncated: [], overlap: [], unnamed: [], unmeasured: [], scrollers: [], contrast: [], targets: [], headings: [], heads: [], sizes: [], weights: [], radii: [], ratio: 0 };
   const label = (el) => (el.tagName.toLowerCase() + (el.id ? '#' + el.id : '') + (el.className && typeof el.className === 'string' ? '.' + el.className.trim().split(/\\s+/).slice(0, 3).join('.') : '')).slice(0, 90);
   const visible = (el) => { const r = el.getBoundingClientRect(); const c = getComputedStyle(el); /* visually hidden (sr-only, also under a variant) is for screen readers, not the eye */ return r.width > 0 && r.height > 0 && c.visibility !== 'hidden' && c.display !== 'none' && parseFloat(c.opacity) > 0.05 && !deepClosest(el, '.sr-only,[aria-hidden="true"]') && !(c.position === 'absolute' && r.width <= 1 && r.height <= 1); };
   const sr = document.scrollingElement;
@@ -323,6 +324,10 @@ const MEASURE = `(() => {
   const sorted = texts.sort((a, b) => a - b);
   out.ratio = sorted.length ? +(sorted[sorted.length - 1] / sorted[Math.floor(sorted.length / 2)]).toFixed(1) : 0;
   out.sizes = [...new Set(out.sizes)].sort((a, b) => a - b); out.weights = [...new Set(out.weights)].sort(); out.radii = [...new Set(out.radii)].sort((a, b) => a - b);
+  // A card-mode table's head is measured as it draws: a contents row leaves no box, a visible one is a band of words.
+  // A table that stays a table on a phone (the roles matrix) keeps its visible head, so it is not this rule's subject.
+  out.heads = deepQueryAll('thead').filter((h) => { const tb = h.closest('table') && h.closest('table').querySelector('tbody'); return tb !== null && getComputedStyle(tb).display === 'block'; })
+    .map((h) => ({ label: label(h), height: Math.round(h.getBoundingClientRect().height), srOnly: !!deepClosest(h, '.sr-only') }));
   out.contrast = [...new Set(out.contrast)].slice(0, 8); out.clipped = [...new Set(out.clipped)].slice(0, 8); out.unnamed = [...new Set(out.unnamed)].slice(0, 8); out.unmeasured = [...new Set(out.unmeasured)].slice(0, 8);
   // A page that rendered nothing fails every check above without being told to: nothing sideways, nothing clipped, no
   // unnamed control, no heading to skip, no colour, no target. So what was measured is recorded here — the path the
@@ -411,6 +416,7 @@ const measure = async (route: string, width: number, theme: string, embed: boole
     ...r.unnamed.map((x) => 'unnamed: ' + x),
     ...r.unmeasured.map((x) => 'unmeasured: ' + x),
     ...[...new Set(r.headings)].map((x) => 'heading skips a level: ' + x),
+    ...r.heads.flatMap((h) => { const problem = phoneHeadProblem(width, h.height, h.srOnly); return problem ? [`${problem}: ${h.label}`] : []; }),
     ...[...new Set(r.targets)].slice(0, 8).map((x) => 'touch target under 44px: ' + x),
     ...(scrollers.length > 1 ? ['scrollers: ' + scrollers.join(', ')] : []),
     ...r.contrast.map((x) => 'contrast: ' + x),
