@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useSyncExternalStore } from 'react';
 import { useSurface } from '@/components/base/surface';
 import { useShareView } from '@/components/base/use-share-view';
 import { EmbedFrame } from '@/components/patterns/embed-frame';
@@ -37,22 +37,36 @@ function proposalContext(state: ProposalState): SharedContext {
 }
 
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
-/** A terminal outcome survives the host remounting the view: otherwise an applied proposal came back "Needs you" and could run twice. */
-const OUTCOME_KEY = 'zz-meridian.proposal.rate-limit';
+/**
+ * A terminal outcome survives the host remounting the view, so an applied proposal does not come back "Needs you" and
+ * run twice. It lives on `window`, not in session storage: a remount keeps the window, a reload does not — and a reload
+ * must start from "Needs you" again, or the press walk lists Approve and then cannot find it, and the stored state would
+ * change the first client render against the server's.
+ */
+const OUTCOME_KEY = '__zzMeridianProposalRateLimit';
+/** The document's kept outcome, as an external store: a remount subscribes again, a reload starts from "pending". */
+const listeners = new Set<() => void>();
+const kept = (): ProposalState => {
+  try {
+    const held = (window as unknown as Record<string, unknown>)[OUTCOME_KEY];
+    return held === 'applied' || held === 'dismissed' || held === 'failed' ? held : 'pending';
+  } catch { return 'pending'; }
+};
+const keep = (next: ProposalState) => {
+  try { (window as unknown as Record<string, unknown>)[OUTCOME_KEY] = next; } catch { /* no window: this document only */ }
+  for (const l of listeners) l();
+};
 
 export function EmbedProposal() {
   const { callTool } = useSurface();
-  const [state, setState] = useState<ProposalState>(() => {
-    try {
-      const held = sessionStorage.getItem(OUTCOME_KEY);
-      return held === 'applied' || held === 'dismissed' || held === 'failed' ? held : 'pending';
-    } catch { return 'pending'; }
-  });
-  /** A terminal state is kept for the session; `applying` is not, so a remount in the middle can be tried again. */
+  // `applying` is this mount's alone; a terminal outcome is the document's. The server snapshot is "pending", so the
+  // first client render agrees with the server's and React reads the kept outcome on the next one.
+  const [applying, setApplying] = useState(false);
+  const keptState = useSyncExternalStore((cb) => { listeners.add(cb); return () => listeners.delete(cb); }, kept, () => 'pending' as ProposalState);
+  const state: ProposalState = applying ? 'applying' : keptState;
   const settle = (next: ProposalState) => {
-    setState(next);
-    if (next !== 'applied' && next !== 'dismissed' && next !== 'failed') return;
-    try { sessionStorage.setItem(OUTCOME_KEY, next); } catch { /* storage unavailable: the state lasts this mount */ }
+    setApplying(next === 'applying');
+    if (next !== 'applying') keep(next);
   };
   useShareView(proposalContext(state));
   return (
@@ -66,7 +80,7 @@ export function EmbedProposal() {
         // and it returns after catching a refusal.
         state={state}
         onApprove={async () => {
-          setState('applying');
+          settle('applying');
           try {
             // Connected: the product's own tool applies the change, through the host. Standalone: a simulated delay.
             // An MCP tool answers a refusal in its result rather than by throwing, so `isError` is read as one: the

@@ -4,8 +4,8 @@ import { Tooltip } from 'radix-ui';
 import { SurfaceOverride } from '@/components/base/surface';
 import { EmbedProposal } from '../app/embed/proposal/view';
 
-// Each case starts from a proposal nobody has answered: the outcome is kept for the session by design.
-beforeEach(() => sessionStorage.clear());
+// Each case starts from a proposal nobody has answered: the outcome is kept for this document by design.
+beforeEach(() => { delete (window as unknown as Record<string, unknown>).__zzMeridianProposalRateLimit; });
 
 /** The proposal embed, connected to a host whose apply tool answers `result`, and the card after Approve is pressed. */
 async function approveWith(result: unknown) {
@@ -39,11 +39,10 @@ describe('the proposal embed', () => {
   });
 
   test('an applied outcome survives the host remounting the view, so Approve cannot run it twice', async () => {
-    sessionStorage.clear();
     const { card, unmount } = await approveWith({ content: [] });
     expect(within(card).getByText('Applied')).toBeInTheDocument();
     unmount();
-    // The host mounts the view again: it reads the outcome it kept, not a fresh "pending".
+    // The host mounts the view again: the effect restores the outcome it kept, not a fresh "pending".
     render(
       <Tooltip.Provider>
         <SurfaceOverride surface={{ kind: 'embed', mode: 'inline', connected: true, callTool: vi.fn(), share: vi.fn() }}>
@@ -52,9 +51,8 @@ describe('the proposal embed', () => {
       </Tooltip.Provider>,
     );
     const again = screen.getByRole('article', { name: /Raise Northwind Labs' rate limit/ });
-    expect(within(again).getByText('Applied')).toBeInTheDocument();
+    expect(await within(again).findByText('Applied')).toBeInTheDocument();
     expect(within(again).queryByRole('button', { name: 'Approve' })).toBeNull();
-    sessionStorage.clear();
   });
 
   test('a tool call that threw shows Not applied, never Applied', async () => {
