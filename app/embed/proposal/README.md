@@ -30,6 +30,8 @@ An agent may read anything the person may read. It changes nothing on its own. E
 
 The proposal's fields come from the tool's result: `{ customer, from, to, reason, impact }`. In this demo they are fixed.
 
+A terminal outcome is kept for the document the view is mounted in, so a re-render or a remount inside that document keeps it. A host that recreates the view's document (a new iframe) starts at Needs you again: this demo has no stored proposal record, and its simulated apply sets the same values, so approving again after a recreation makes the same change. In a product the proposal's record is the truth, and the view reads its state from the tool result rather than from the client.
+
 ## Surfaces
 
 Embed only. On the console the assistant draws the same Proposal card in its thread.

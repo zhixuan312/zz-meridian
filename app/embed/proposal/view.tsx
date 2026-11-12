@@ -38,10 +38,10 @@ function proposalContext(state: ProposalState): SharedContext {
 
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 /**
- * A terminal outcome survives the host remounting the view, so an applied proposal does not come back "Needs you" and
- * run twice. It lives on `window`, not in session storage: a remount keeps the window, a reload does not — and a reload
- * must start from "Needs you" again, or the press walk lists Approve and then cannot find it, and the stored state would
- * change the first client render against the server's.
+ * A terminal outcome survives a re-render or a remount inside this document, so an applied proposal does not come back
+ * "Needs you" and run twice in it. It lives on `window`, not in session storage: a new document — a host recreating the
+ * iframe — starts from "Needs you" again, and this demo has no stored record behind it (the README states the limit);
+ * session storage would also change the first client render against the server's (React #418).
  */
 const OUTCOME_KEY = '__zzMeridianProposalRateLimit';
 /** The document's kept outcome, as an external store: a remount subscribes again, a reload starts from "pending". */

@@ -38,7 +38,7 @@ describe('the proposal embed', () => {
     expect(within(card).getByRole('button', { name: 'Try again' })).toBeInTheDocument();
   });
 
-  test('an applied outcome survives the host remounting the view, so Approve cannot run it twice', async () => {
+  test('an applied outcome survives a remount inside the document, so Approve cannot run it twice there', async () => {
     const { card, unmount } = await approveWith({ content: [] });
     expect(within(card).getByText('Applied')).toBeInTheDocument();
     unmount();
