@@ -75,7 +75,7 @@ const lines = (run: Run, re: RegExp) => run.out.split('\n').filter((l) => re.tes
 const summaryOf = (r: Run) => JSON.parse(r.out.trim().split('\n').pop()!.replace(/^sizes: /, '')) as { status: string };
 
 // ── scripts/sizes.ts ─────────────────────────────────────────────────────────────────────────────────
-const SIZES_FILES = ['scripts/sizes.ts', 'scripts/lib/args.ts', 'scripts/lib/sizes.ts', 'scripts/lib/budgets.ts', 'scripts/lib/next-config.ts', 'scripts/lib/tier2.ts', 'scripts/lib/attribution.ts'];
+const SIZES_FILES = ['scripts/sizes.ts', 'scripts/lib/args.ts', 'scripts/lib/sizes.ts', 'scripts/lib/budgets.ts', 'scripts/lib/next-config.ts', 'scripts/lib/report-lines.ts', 'scripts/lib/tier2.ts', 'scripts/lib/attribution.ts'];
 /** Incompressible bytes, so a page's gzipped size is its length. */
 const blob = (n: number) => {
   const parts: Buffer[] = [];
