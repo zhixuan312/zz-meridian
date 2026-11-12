@@ -75,7 +75,22 @@ const lines = (run: Run, re: RegExp) => run.out.split('\n').filter((l) => re.tes
 const summaryOf = (r: Run) => JSON.parse(r.out.trim().split('\n').pop()!.replace(/^sizes: /, '')) as { status: string };
 
 // ── scripts/sizes.ts ─────────────────────────────────────────────────────────────────────────────────
-const SIZES_FILES = ['scripts/sizes.ts', 'scripts/lib/args.ts', 'scripts/lib/sizes.ts', 'scripts/lib/budgets.ts', 'scripts/lib/next-config.ts', 'scripts/lib/report-lines.ts', 'scripts/lib/tier2.ts', 'scripts/lib/attribution.ts'];
+/** Every local file a script imports, transitively, so a temp project holds the whole closure (a hand list missed one). */
+function importClosure(entry: string): string[] {
+  const out = new Set<string>();
+  const visit = (rel: string) => {
+    if (out.has(rel)) return;
+    out.add(rel);
+    const src = fs.readFileSync(path.join(ROOT, rel), 'utf8');
+    for (const m of src.matchAll(/\bfrom\s+['"](\.{1,2}\/[^'"]+)['"]/g)) {
+      const base = path.posix.normalize(path.posix.join(path.posix.dirname(rel), m[1]!));
+      for (const candidate of [base, `${base}.ts`, `${base}/index.ts`, base.replace(/\.js$/, '.ts')]) if (fs.existsSync(path.join(ROOT, candidate))) { visit(candidate); break; }
+    }
+  };
+  visit(entry);
+  return [...out];
+}
+const SIZES_FILES = importClosure('scripts/sizes.ts');
 /** Incompressible bytes, so a page's gzipped size is its length. */
 const blob = (n: number) => {
   const parts: Buffer[] = [];
