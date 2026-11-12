@@ -38,6 +38,13 @@
   ],
   "exclude": [
     "node_modules",
-    "cli"
+    "cli",
+    "out",
+    "build",
+    "coverage",
+    "test-results",
+    ".turbo",
+    ".vercel",
+    ".meridian/update"
   ]
 }
