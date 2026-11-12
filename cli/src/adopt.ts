@@ -276,7 +276,11 @@ https://github.com/zhixuan312/zz-meridian/blob/master/skills/zz-meridian/referen
   const notes: string[] = [];
   const own = (rel: string, content: string | Buffer) => {
     const abs = path.join(root, rel);
-    if (fs.existsSync(abs)) {
+    const st = fs.lstatSync(abs, { throwIfNoEntry: false });
+    if (st) {
+      // Anything that is not a regular file is a conflict, named with the rest: reading a directory threw EISDIR, and a
+      // symlink was read through before the write check refused it.
+      if (!st.isFile()) { conflicts.push(rel); return; }
       if (fs.readFileSync(abs).equals(Buffer.from(content))) { owned.push(rel); return; }
       conflicts.push(rel);
       return;
