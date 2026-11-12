@@ -106,7 +106,10 @@ const MEASURE = `(() => {
   // 600px wide at 390 measured 616 there and its sideways scroll, the strip rule and every clip were judged at 616.
   const W = document.documentElement.clientWidth, out = { path: location.pathname, href: location.href, text: 0, sideways: [], clipped: [], spills: [], truncated: [], overlap: [], unnamed: [], unmeasured: [], scrollers: [], contrast: [], targets: [], headings: [], heads: [], sizes: [], weights: [], radii: [], ratio: 0 };
   const label = (el) => (el.tagName.toLowerCase() + (el.id ? '#' + el.id : '') + (el.className && typeof el.className === 'string' ? '.' + el.className.trim().split(/\\s+/).slice(0, 3).join('.') : '')).slice(0, 90);
-  const visible = (el) => { const r = el.getBoundingClientRect(); const c = getComputedStyle(el); /* visually hidden (sr-only, also under a variant) is for screen readers, not the eye */ return r.width > 0 && r.height > 0 && c.visibility !== 'hidden' && c.display !== 'none' && parseFloat(c.opacity) > 0.05 && !deepClosest(el, '.sr-only,[aria-hidden="true"]') && !(c.position === 'absolute' && r.width <= 1 && r.height <= 1); };
+  // Visually hidden (sr-only, also under a variant) is for screen readers, not the eye. sr-only's 1px box is padded by
+  // whatever padding the element carries, so a clipped absolute box is judged by either dimension: at most a pixel wide
+  // or tall cannot show a line, and a DataTable's phone head (sr-only cells carrying px-4) measured 20x1.
+  const visible = (el) => { const r = el.getBoundingClientRect(); const c = getComputedStyle(el); return r.width > 0 && r.height > 0 && c.visibility !== 'hidden' && c.display !== 'none' && parseFloat(c.opacity) > 0.05 && !deepClosest(el, '.sr-only,[aria-hidden="true"]') && !(c.position === 'absolute' && (r.width <= 1 || r.height <= 1)); };
   const sr = document.scrollingElement;
   if (sr.scrollWidth > W + 1) out.sideways.push('document ' + sr.scrollWidth + 'px wide at ' + W);
   const all = deepAll(document.body).filter((n) => n !== document.body);
