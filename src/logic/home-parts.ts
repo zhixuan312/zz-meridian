@@ -266,8 +266,8 @@ export function homeData(r: HomeReads): HomeData {
   let compute: HomeData['compute'] = null;
   const inPeriod = new Set(dates);
   const computeRows = (r.compute ?? []).filter((x) => inPeriod.has(x.date));
-  // No compute row in the period is no figure, not 0% of nothing: the card would have said nothing is in use.
-  if (read(r.compute, 'the compute') && days && computeRows.length) {
+  // A period with days but no compute row is no figure, not 0% of nothing; an empty period is a successfully read zero.
+  if (read(r.compute, 'the compute') && days && (computeRows.length || dates.length === 0)) {
     const held = overDays(r.compute, dates, before, inUse);
     const rows = computeRows;
     const regions = [...new Set(rows.map((x) => x.region))].map((region) => ({ region, value: inUse(rows.filter((x) => x.region === region)) }));
