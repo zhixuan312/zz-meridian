@@ -219,7 +219,11 @@ if (has('--no-atlas') || has('--product')) {
   write('src/app.config.ts', cfg);
   // The diagnostic config's mappings and smoke routes for the Atlas, with the comments over them, which a navigation run
   // would report as no route.
-  write('scripts/verify.config.ts', read('scripts/verify.config.ts').replace(/(?:\n\s*\/\/[^\n]*)*\n\s*\{ path: '\/system(?:\/[^']*)?'[^\n]*\},/g, '').replace(/,\s*'\/system(?:\/[^']*)?'/g, ''));
+  write('scripts/verify.config.ts', read('scripts/verify.config.ts')
+    .replace(/(?:\n\s*\/\/[^\n]*)*\n\s*\{ path: '\/system(?:\/[^']*)?'[^\n]*\},/g, '')
+    .replace(/,\s*'\/system(?:\/[^']*)?'/g, '')
+    // A detailRoutes entry is a bare string; its comment lines go with it, so no line names a route the page no longer has.
+    .replace(/(?:\n\s*\/\/[^\n]*)*\n\s*'\/system(?:\/[^']*)?',?/g, ''));
   // Build tracing: only the Atlas's `/system/**` entry goes; the tab icon's and the assistant's brief stay.
   write('next.config.ts', read('next.config.ts').replace(/\/\/ Card specifications[^\n]*/, '// The tab icon reads the tokens, and the assistant reads the brief, at build time.').replace(/'\/system\/\*\*':\s*\[[^\]]*\],\s*/, ''));
   // Route types generated for the removed pages would fail the type check until regenerated.
