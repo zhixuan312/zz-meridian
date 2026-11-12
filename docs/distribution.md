@@ -195,8 +195,11 @@ finalizes, so `test:t1`, the build and its route and size checks run on the resu
 
 `.meridian/keep.json` is a JSON array of exactly `{ "path", "reason" }` entries, for a managed file the team keeps
 its own version of on purpose. An update leaves a kept file as it is; when the new release removes it, it stays and is
-recorded as retired. The checks refuse an entry for a path Meridian never managed (or retired and left in place), and a
-kept file that is missing; an update never recreates one.
+recorded as retired. The checks refuse an entry for a path Meridian never managed (or retired and left in place). A
+managed file the team deleted is not a conflict: the update records it as kept deleted and leaves it out on every later
+update, and removing its entry brings it back on the next one. A file `create` never delivered — it removes the Atlas and
+its tests after copying — is in neither the manifest nor the project, and no update adds it. An aborted update takes back
+the kept-deletion entries it wrote, leaving the register as it found it.
 
 ### `brand`
 

@@ -85,6 +85,20 @@ function recordKeptDeletions(root: string, added: readonly KeepEntry[]): void {
   writeAtomic(file, `${JSON.stringify(entries, null, 2)}\n`);
 }
 
+/**
+ * Takes back the kept deletions a session recorded, so an aborted update leaves the register as it found it. Only the
+ * exact entries this session wrote are removed: an entry the team wrote itself, even for the same path, stays.
+ */
+function forgetKeptDeletions(root: string, added: readonly KeepEntry[]): void {
+  if (!added.length) return;
+  const file = path.join(root, '.meridian', 'keep.json');
+  let keep: KeepEntry[];
+  try { keep = parseKeep(fs.readFileSync(file, 'utf8')); } catch { return; }
+  const mine = new Set(added.map((k) => `${k.path}\u0000${k.reason}`));
+  const entries = keep.filter((k) => !mine.has(`${k.path}\u0000${k.reason}`));
+  if (entries.length !== keep.length) writeAtomic(file, `${JSON.stringify(entries, null, 2)}\n`);
+}
+
 /** What the project holds at `rel`: its hash, or `unsafe` when a symbolic link or a non-file is in the way. */
 function probe(root: string, rel: string): { side: FileSide; unsafe: boolean } {
   let abs: string;
@@ -137,10 +151,10 @@ function sessionState(root: string): { dir: string; phase: string; version: stri
   return { dir: `.meridian/update/${first}`, phase, version: first };
 }
 
-/** The retirements that completed sessions recorded, each checked against the manifest that session started from. */
-function historicalRetirements(root: string): Retirement[] {
+/** The journals of the sessions that completed, under `.meridian/history/`; one that is not readable is skipped. */
+function completedJournals(root: string): UpdateJournal[] {
   const base = path.join(root, '.meridian', 'history');
-  const out: Retirement[] = [];
+  const out: UpdateJournal[] = [];
   if (!fs.existsSync(base)) return out;
   for (const v of fs.readdirSync(base)) {
     const dir = path.join(base, v);
@@ -148,11 +162,24 @@ function historicalRetirements(root: string): Retirement[] {
     for (const id of fs.readdirSync(dir)) {
       try {
         const j = parseJournal(fs.readFileSync(path.join(dir, id, 'state.json'), 'utf8'));
-        if (j.phase === 'complete') out.push(...verifiedRetirements(j));
-      } catch { /* a history entry that is not a readable journal retires nothing */ }
+        if (j.phase === 'complete') out.push(j);
+      } catch { /* a history entry that is not a readable journal says nothing */ }
     }
   }
   return out;
+}
+
+/**
+ * What completed sessions left behind: the retirements they recorded, each checked against the manifest that session
+ * started from, and the paths they recorded as deleted by the team. Removing such a path's keep entry is how the team
+ * brings the file back, so the next update must read its absence as a restore rather than as a fresh deletion.
+ */
+function historical(root: string): { retired: Retirement[]; deleted: Set<string> } {
+  const journals = completedJournals(root);
+  return {
+    retired: journals.flatMap(verifiedRetirements),
+    deleted: new Set(journals.flatMap((j) => j.keptDeletions.map((k) => k.path))),
+  };
 }
 
 /** The files of the target's managed `.ts` and `.tsx` modules, for the import scan. */
@@ -175,7 +202,7 @@ function plan(ctx: Context, manifest: Manifest, startedAt: Date): Plan {
   if (fs.existsSync(keepFile)) {
     try { keep = parseKeep(fs.readFileSync(keepFile, 'utf8')); } catch (e) { throw new Refusal((e as Error).message); }
   }
-  const history = historicalRetirements(root);
+  const history = historical(root);
 
   const source = ctx.source(manifest);
   const target = ctx.target(manifest);
@@ -185,7 +212,7 @@ function plan(ctx: Context, manifest: Manifest, startedAt: Date): Plan {
   const drift = Object.entries(manifest.files).filter(([p, h]) => baseManaged.has(p) && source.hashes.get(p) !== h).map(([p]) => p).sort();
   if (drift.length) throw new Refusal(`the recorded files do not match a replay of ${manifest.version}, so nothing can be trusted; nothing was written:\n${drift.map((p) => `  ${p}`).join('\n')}`);
 
-  const invalid = keepProblems(keep, { managed: new Set([...baseManaged, ...targetManaged]), retired: history });
+  const invalid = keepProblems(keep, { managed: new Set([...baseManaged, ...targetManaged]), retired: history.retired });
   if (invalid.length) throw new Refusal(`invalid keep entry; nothing was written:\n${invalid.map((p) => `  ${p}`).join('\n')}`);
   const keptReason = new Map(keep.map((k) => [k.path, k.reason]));
 
@@ -203,17 +230,26 @@ function plan(ctx: Context, manifest: Manifest, startedAt: Date): Plan {
     const inTarget = targetManaged.has(p);
     const managed = inBase || inTarget;
     const disk = probe(root, p);
-    // What the recorded release wrote at this path: the manifest's hash, or — for a project `create` made, which received
-    // every payload file — the recorded release's own bytes, for a file still there. The second term is what made 0.29.0's
-    // tests unclassifiable: a test that release shipped but did not record (it managed none but `tests/setup.ts` then) had
-    // no hash to compare with, so an unedited copy of it collided instead of being replaced, and the update stopped for a
-    // decision on a file nobody had touched. A file that is not there is not read as recorded: with no keep entry it is
-    // restored on the next update.
+    // What the recorded release wrote at this path: the manifest's hash, or — for a project `create` made — the bytes its
+    // own `create` wrote. A release is replayed by running `create` with the project's recorded brand, so its hashes hold
+    // exactly the files that project received: a file `create` copies and then removes for a product (scripts/brand.ts
+    // --product: the Design Atlas and its tests) is in neither, so its absence is never read as a deletion to restore, and
+    // it is not added back on every update (issue #146). Read from the payload instead, such a path would look recorded
+    // while absent and be staged as a deletion the team never made. The second term is what made 0.29.0's tests
+    // unclassifiable: a test that release shipped but did not record (it managed none but `tests/setup.ts` then) had no
+    // hash to compare with, so an unedited copy of it collided instead of being replaced, and the update stopped for a
+    // decision on a file nobody had touched. A copy the team deleted is read as the recorded file and kept deleted, so
+    // removing its keep entry restores it on the next update.
     const recorded = manifest.files[p]
-      ?? (manifest.route === 'create' && sourcePayload.has(p) && disk.side.exists ? source.hashes.get(p) : undefined)
+      ?? (manifest.route === 'create' && source.hashes.has(p) ? source.hashes.get(p) : undefined)
       ?? (inBase && !sourcePayload.has(p) ? source.hashes.get(p) : undefined)
       ?? null;
     const targetHash = inTarget ? target.hashes.get(p) ?? null : null;
+    // An earlier update recorded this path as deleted and the team has since removed its keep entry: that is the restore
+    // the report promised, so the file comes back as an addition rather than being read as deleted once more. A manifest
+    // that names it again means the restore already happened, and an absence after that is a new deletion to record.
+    const restoring = !Object.hasOwn(manifest.files, p) && !disk.side.exists && !keptReason.has(p) && history.deleted.has(p);
+    const before = restoring ? null : recorded;
     if (disk.unsafe && (managed || keptReason.has(p))) throw new Refusal(`${p} is a symbolic link or not a regular file; nothing was written`);
     // A managed module the team only re-styled (its imports named another way, nothing else changed) is untouched: the
     // release's copy replaces it instead of staging a merge nobody needs (issue #16).
@@ -225,16 +261,16 @@ function plan(ctx: Context, manifest: Manifest, startedAt: Date): Plan {
     }
     // A managed file the recorded release wrote and the team has removed is a deliberate deletion, not a conflict to
     // re-stage on every update: it is recorded in keep.json as kept deleted, and this update leaves it out (issue #146).
-    // The recorded manifest stops naming it too, so removing the entry restores the file on the next update instead of
-    // being read as a second deletion.
-    const deletedByTeam = managed && recorded !== null && targetHash !== null && diskHash === null && !keptReason.has(p);
+    // The recorded manifest stops naming it too, so removing the entry is read as a restore on the next update, either
+    // from the manifest's silence or, for a file no manifest ever named, from the history this update wrote.
+    const deletedByTeam = managed && recorded !== null && targetHash !== null && diskHash === null && !keptReason.has(p) && !restoring;
     if (deletedByTeam) {
       const reason = `deleted by the team; found absent at update to ${ctx.version}`;
       keptReason.set(p, reason);
       keptDeletions.push({ path: p, reason });
     } else if (targetHash) targetFiles[p] = targetHash;
-    const { disposition, action } = classify({ recorded: recorded as Hash | null, target: targetHash as Hash | null, disk: diskHash, managed, kept: keptReason.has(p) });
-    operations.push({ path: p, disposition, action, base: sideOf(recorded), ours: disk.side, target: sideOf(targetHash), applied: false, appliedHash: null });
+    const { disposition, action } = classify({ recorded: before as Hash | null, target: targetHash as Hash | null, disk: diskHash, managed, kept: keptReason.has(p) });
+    operations.push({ path: p, disposition, action, base: sideOf(before), ours: disk.side, target: sideOf(targetHash), applied: false, appliedHash: null });
     if (disposition === 'retired-kept') retired.push({ path: p, baselineHash: recorded as Hash, reason: keptReason.get(p)! });
   }
 
@@ -943,6 +979,7 @@ export function abort(ctx: Context): number {
       }
       restored.add(op.path);
     }
+    forgetKeptDeletions(root, j.keptDeletions);
     j.phase = 'aborted';
     persistJournal(l);
     patchReport(l, 'aborted', root);
