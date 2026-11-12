@@ -76,7 +76,7 @@ const RULES: Rule[] = [
   { id: 'one update session at most', source: 'update sessions (', batch: 'M1', fails: ['.meridian/update: 2 update sessions (0.2.0, 0.3.0); finish or abort all but one'] },
   { id: 'an update session is resolved', source: 'open.map((o) =>', batch: 'M2', fails: ['.meridian/update/0.2.0: 0.2.0: the update was interrupted: run update --resume', 'npx zz-meridian@0.2.0 update --finalize'] },
   { id: 'an update journal reads back', source: '/state.json: ${(e as Error).message}', batch: 'M3', fails: ['.meridian/update/0.2.0/state.json: state.json: not valid JSON'] },
-  { id: 'keep.json names managed files that are present', source: 'keepProblems(parseKeep(', batch: 'M3', fails: ['.meridian/keep.json: src/lib/format.ts: kept, but Meridian neither manages nor retired it', '.meridian/keep.json: src/ghost-managed.ts: kept file is missing'] },
+  { id: 'keep.json names managed or retired files', source: 'keepProblems(parseKeep(', batch: 'M3', fails: ['.meridian/keep.json: src/lib/format.ts: kept, but Meridian neither manages nor retired it'] },
   { id: 'keep.json reads back', source: '.meridian/keep.json: ${(e as Error).message}', batch: 'M2', fails: ['.meridian/keep.json: keep.json: not valid JSON'] },
   { id: 'app.logo is a root-relative SVG path', source: 'is not a root-relative SVG path', batch: 'M3', fails: ['src/app.config.ts: app.logo "ghost.png" is not a root-relative SVG path'] },
   { id: 'app.logo names a file that exists', source: 'but public${source} does not exist', batch: 'M1', fails: ['src/app.config.ts: app.logo is /ghost.svg, but public/ghost.svg does not exist'] },
@@ -188,7 +188,7 @@ const journal = (id: string) => JSON.stringify({
   originalManifest: { version: '0.1.0', route: 'create', brand: {}, files: {} },
   targetManifest: { version: id, route: 'create', brand: {}, files: {} },
   targetIntegrity: 'x', planHash: `sha256-${'0'.repeat(64)}`, phase: 'applying',
-  operations: [], migrations: [], retired: [], validation: [], failure: null,
+  operations: [], migrations: [], retired: [], keptDeletions: [], validation: [], failure: null,
 });
 const BADGE = 'src/components/ui/badge/index.tsx';
 const manifest = (files: Record<string, string>) => put('.meridian/manifest.json', JSON.stringify({ version: '0.31.2', route: 'create', brand: {}, files }));

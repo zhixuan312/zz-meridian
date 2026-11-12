@@ -15,7 +15,7 @@ function journal(): UpdateJournal {
   const j = {
     id: '20261031T090000Z-abc123', sourceVersion: '0.28.0', targetVersion: '0.36.0', route: 'adopt',
     originalManifest: recorded, targetManifest: target, targetIntegrity: 'sha512-test', planHash: h('0'), phase: 'needs-resolution',
-    operations: [], migrations: [], retired: [], validation: [], failure: null,
+    operations: [], migrations: [], retired: [], keptDeletions: [], validation: [], failure: null,
   } as unknown as UpdateJournal;
   return { ...j, planHash: planHash(j) };
 }

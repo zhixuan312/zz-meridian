@@ -26,6 +26,7 @@ function journal(over: Partial<UpdateJournal> = {}): UpdateJournal {
     ],
     migrations: [{ id: 'script:demo', summary: 'Your demo script differs from Meridian\'s.', paths: ['package.json'], instructions: 'Point demo at node scripts/demo.ts.', checks: ['test:t1'] }],
     retired: [{ path: 'src/gone.ts', baselineHash: h('d'), reason: 'kept by the team' }],
+    keptDeletions: [],
     validation: [],
     failure: null,
     ...over,
@@ -115,11 +116,11 @@ describe('retirements and the keep register', () => {
       '[{"path":"src/a.ts","reason":"x"},{"path":"src/a.ts","reason":"y"}]', '[{"path":"/etc/x","reason":"x"}]', '[{"path":"../x","reason":"x"}]',
       '[{"path":"a\\\\b","reason":"x"}]', '[{"path":"","reason":"x"}]', 'not json']) expect(() => parseKeep(bad), bad).toThrow();
   });
-  it('reports a kept path Meridian never managed and a kept file that is missing', () => {
-    const ctx = { managed: new Set(['src/a.ts']), retired: [{ path: 'src/gone.ts', baselineHash: h('d'), reason: 'r' }], exists: (p: string) => p === 'src/gone.ts' };
+  it('reports only a kept path Meridian never managed; a kept file that is absent is a deletion the team kept', () => {
+    const ctx = { managed: new Set(['src/a.ts']), retired: [{ path: 'src/gone.ts', baselineHash: h('d'), reason: 'r' }] };
     const out = keepProblems([{ path: 'src/team.ts', reason: 'x' }, { path: 'src/a.ts', reason: 'x' }, { path: 'src/gone.ts', reason: 'x' }], ctx).join('\n');
     expect(out).toMatch(/src\/team\.ts/);
-    expect(out).toMatch(/src\/a\.ts.*missing|missing.*src\/a\.ts/);
+    expect(out).not.toMatch(/src\/a\.ts/);
     expect(out).not.toMatch(/src\/gone\.ts/);
   });
   it('parses resolutions strictly', () => {

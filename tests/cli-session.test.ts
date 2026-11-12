@@ -259,6 +259,39 @@ describe('finalize', () => {
   });
 });
 
+describe('a deliberate deletion', () => {
+  const keepOf = (root: string) => JSON.parse(read(root, '.meridian/keep.json')) as { path: string; reason: string }[];
+  /** The template's files as the recorded release had them, with one managed card removed and nothing else changed. */
+  const clean = () => project({ disk: { [ui('b')]: 'b1', [ui('d')]: 'd1', [ui('k')]: 'k1', '.meridian/keep.json': '[]' }, absent: [ui('a'), ui('f')] });
+
+  it('is recorded once as kept deleted, and no later update stages it again', () => {
+    const root = clean();
+    expect(start(ctx(root).c, opts)).toBe(0);
+    expect(has(root, ui('a'))).toBe(false);
+    expect(keepOf(root)).toEqual([{ path: ui('a'), reason: 'deleted by the team; found absent at update to 0.5.0' }]);
+    const merge = fs.readdirSync(path.join(root, '.meridian/history/0.5.0')).map((d) => read(root, `.meridian/history/0.5.0/${d}/MERGE.md`)).join('\n');
+    expect(merge).toContain(`${ui('a')}: kept deleted`);
+    expect(merge).toMatch(/remove its entry and run the update again/);
+
+    // The next release ships the same files: the register explains the absence, and nothing is staged or added again.
+    const next = ctx(root, { version: '0.6.0', base: release('0.5.0', TARGET), target: release('0.6.0', TARGET) });
+    expect(start(next.c, { ...opts, allowDirty: true })).toBe(0);
+    expect(has(root, ui('a'))).toBe(false);
+    expect(keepOf(root)).toHaveLength(1);
+  }, 60_000);
+
+  it('restores the file on the next update once its keep entry is removed', () => {
+    const root = clean();
+    expect(start(ctx(root).c, opts)).toBe(0);
+    expect(has(root, ui('a'))).toBe(false);
+    fs.writeFileSync(path.join(root, '.meridian/keep.json'), '[]\n');
+    const next = ctx(root, { version: '0.6.0', base: release('0.5.0', TARGET), target: release('0.6.0', TARGET) });
+    expect(start(next.c, { ...opts, allowDirty: true })).toBe(0);
+    expect(read(root, ui('a'))).toBe('a2');
+    expect(keepOf(root)).toEqual([]);
+  }, 60_000);
+});
+
 describe('resume', () => {
   it('takes over a stale lock after reading the journal', () => {
     const root = project();

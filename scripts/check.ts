@@ -19,7 +19,7 @@
  * - Markdown stays inert: no raw-HTML plugin in the dependencies or the source.
  * - The agent context holds: docs/brief.md has its five sections, and every path and package script the managed block in
  *   AGENTS.md, the skill and the brief name exists.
- * - An update session is resolved, `.meridian/keep.json` names files that are managed and present, and `app.logo` is an
+ * - An update session is resolved, `.meridian/keep.json` names managed files (a kept file that is absent is a deletion the team kept), and `app.logo` is an
  *   SVG under public/. A managed file whose bytes are not the release's and that keep.json does not keep is named on a
  *   `drift:` line, a warning the gate carries: nothing else says so between releases.
  * - Every nav item's `needs` has the shape the rail can read: 'public', a grant `object:read|create|update|remove`, or an
@@ -415,7 +415,7 @@ let drift: string[] = [];
   }
   if (fs.existsSync(path.join(ROOT, '.meridian/keep.json'))) {
     try {
-      problems.push(...keepProblems(parseKeep(read('.meridian/keep.json')), { managed: new Set(Object.keys(effective?.files ?? {})), retired: retirements, exists: (p) => fs.existsSync(path.join(ROOT, p)) }).map((m) => `.meridian/keep.json: ${m}`));
+      problems.push(...keepProblems(parseKeep(read('.meridian/keep.json')), { managed: new Set(Object.keys(effective?.files ?? {})), retired: retirements }).map((m) => `.meridian/keep.json: ${m}`));
     } catch (e) {
       problems.push(`.meridian/keep.json: ${(e as Error).message}`);
     }

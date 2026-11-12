@@ -70,6 +70,21 @@ export function writeAtomic(abs: string, data: string | Buffer, mode?: number) {
   }
 }
 
+/**
+ * Records the deletions this update found in `.meridian/keep.json`, leaving every other entry as the team wrote it, so a
+ * later update reads them as kept rather than staging the file again.
+ */
+function recordKeptDeletions(root: string, added: readonly KeepEntry[]): void {
+  if (!added.length) return;
+  const file = path.join(root, '.meridian', 'keep.json');
+  let keep: KeepEntry[] = [];
+  try { keep = parseKeep(fs.readFileSync(file, 'utf8')); } catch { keep = []; }
+  const byPath = new Map(keep.map((k) => [k.path, k]));
+  for (const k of added) byPath.set(k.path, k);
+  const entries = [...byPath.values()].sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0));
+  writeAtomic(file, `${JSON.stringify(entries, null, 2)}\n`);
+}
+
 /** What the project holds at `rel`: its hash, or `unsafe` when a symbolic link or a non-file is in the way. */
 function probe(root: string, rel: string): { side: FileSide; unsafe: boolean } {
   let abs: string;
@@ -150,7 +165,7 @@ function managedSources(target: Release, managed: ReadonlySet<string>): Map<stri
   return out;
 }
 
-type Plan = { journal: UpdateJournal; missingKept: string[]; texts: Map<string, string>; source: Release; target: Release; packageChanges: string[] };
+type Plan = { journal: UpdateJournal; texts: Map<string, string>; source: Release; target: Release; packageChanges: string[] };
 
 /** Everything the update will do, decided from the recorded release, the running one and the project as it is now. */
 function plan(ctx: Context, manifest: Manifest, startedAt: Date): Plan {
@@ -170,10 +185,9 @@ function plan(ctx: Context, manifest: Manifest, startedAt: Date): Plan {
   const drift = Object.entries(manifest.files).filter(([p, h]) => baseManaged.has(p) && source.hashes.get(p) !== h).map(([p]) => p).sort();
   if (drift.length) throw new Refusal(`the recorded files do not match a replay of ${manifest.version}, so nothing can be trusted; nothing was written:\n${drift.map((p) => `  ${p}`).join('\n')}`);
 
-  const invalid = keepProblems(keep, { managed: new Set([...baseManaged, ...targetManaged]), retired: history, exists: () => true });
+  const invalid = keepProblems(keep, { managed: new Set([...baseManaged, ...targetManaged]), retired: history });
   if (invalid.length) throw new Refusal(`invalid keep entry; nothing was written:\n${invalid.map((p) => `  ${p}`).join('\n')}`);
   const keptReason = new Map(keep.map((k) => [k.path, k.reason]));
-  const missingKept = keep.filter((k) => !probe(root, k.path).side.exists).map((k) => k.path);
 
   const paths = [...new Set([...Object.keys(manifest.files), ...targetManaged, ...keep.map((k) => k.path)])].sort(compact);
   for (const p of paths) if (!isSafePath(p) || FORBIDDEN.test(p)) throw new Refusal(`unsafe path ${JSON.stringify(p)}; nothing was written`);
@@ -182,23 +196,24 @@ function plan(ctx: Context, manifest: Manifest, startedAt: Date): Plan {
 
   const operations: FileOperation[] = [];
   const retired: Retirement[] = [];
+  const keptDeletions: KeepEntry[] = [];
   const targetFiles: Record<string, string> = {};
   for (const p of paths) {
     const inBase = baseManaged.has(p);
     const inTarget = targetManaged.has(p);
     const managed = inBase || inTarget;
+    const disk = probe(root, p);
     // What the recorded release wrote at this path: the manifest's hash, or — for a project `create` made, which received
-    // every payload file — the recorded release's own bytes. The second term is what made 0.29.0's tests unclassifiable:
-    // a test that release shipped but did not record (it managed none but `tests/setup.ts` then) had no hash to compare
-    // with, so an unedited copy of it collided instead of being replaced, and the update stopped for a decision on a file
-    // nobody had touched.
+    // every payload file — the recorded release's own bytes, for a file still there. The second term is what made 0.29.0's
+    // tests unclassifiable: a test that release shipped but did not record (it managed none but `tests/setup.ts` then) had
+    // no hash to compare with, so an unedited copy of it collided instead of being replaced, and the update stopped for a
+    // decision on a file nobody had touched. A file that is not there is not read as recorded: with no keep entry it is
+    // restored on the next update.
     const recorded = manifest.files[p]
-      ?? (manifest.route === 'create' && sourcePayload.has(p) ? source.hashes.get(p) : undefined)
+      ?? (manifest.route === 'create' && sourcePayload.has(p) && disk.side.exists ? source.hashes.get(p) : undefined)
       ?? (inBase && !sourcePayload.has(p) ? source.hashes.get(p) : undefined)
       ?? null;
     const targetHash = inTarget ? target.hashes.get(p) ?? null : null;
-    if (targetHash) targetFiles[p] = targetHash;
-    const disk = probe(root, p);
     if (disk.unsafe && (managed || keptReason.has(p))) throw new Refusal(`${p} is a symbolic link or not a regular file; nothing was written`);
     // A managed module the team only re-styled (its imports named another way, nothing else changed) is untouched: the
     // release's copy replaces it instead of staging a merge nobody needs (issue #16).
@@ -208,6 +223,16 @@ function plan(ctx: Context, manifest: Manifest, startedAt: Date): Plan {
       const base = fs.readFileSync(inside(source.tree, p), 'utf8');
       if (ours !== null && canonicalImports(p, ours, aliases) === canonicalImports(p, base, aliases)) diskHash = recorded as Hash;
     }
+    // A managed file the recorded release wrote and the team has removed is a deliberate deletion, not a conflict to
+    // re-stage on every update: it is recorded in keep.json as kept deleted, and this update leaves it out (issue #146).
+    // The recorded manifest stops naming it too, so removing the entry restores the file on the next update instead of
+    // being read as a second deletion.
+    const deletedByTeam = managed && recorded !== null && targetHash !== null && diskHash === null && !keptReason.has(p);
+    if (deletedByTeam) {
+      const reason = `deleted by the team; found absent at update to ${ctx.version}`;
+      keptReason.set(p, reason);
+      keptDeletions.push({ path: p, reason });
+    } else if (targetHash) targetFiles[p] = targetHash;
     const { disposition, action } = classify({ recorded: recorded as Hash | null, target: targetHash as Hash | null, disk: diskHash, managed, kept: keptReason.has(p) });
     operations.push({ path: p, disposition, action, base: sideOf(recorded), ours: disk.side, target: sideOf(targetHash), applied: false, appliedHash: null });
     if (disposition === 'retired-kept') retired.push({ path: p, baselineHash: recorded as Hash, reason: keptReason.get(p)! });
@@ -244,10 +269,10 @@ function plan(ctx: Context, manifest: Manifest, startedAt: Date): Plan {
     targetIntegrity: ctx.targetIntegrity,
     planHash: 'sha256-' as Hash,
     phase: 'prepared',
-    operations, migrations, retired, validation: [], failure: null,
+    operations, migrations, retired, keptDeletions, validation: [], failure: null,
   };
   journal.planHash = planHash(journal);
-  return { journal, missingKept, texts, source, target, packageChanges: pkg.changes };
+  return { journal, texts, source, target, packageChanges: pkg.changes };
 }
 
 /** The staged copies, the new files and the preimages: everything the session folder holds besides state and the report. */
@@ -279,11 +304,11 @@ export type ResumeOptions = { install: boolean; verbose: boolean };
 const pin = (version: string, flag: string) => `npx zz-meridian@${version} update ${flag}`;
 
 /** The conflict list, the migrations, the timings and, unless `next` is null, the outcome and the next command. */
-function report(ctx: Context, j: UpdateJournal, o: { verbose: boolean; keepWarnings: string[]; packageChanges?: string[] }, outcome: string, times: string, next: string | null) {
+function report(ctx: Context, j: UpdateJournal, o: { verbose: boolean; keptDeletions: string[]; packageChanges?: string[] }, outcome: string, times: string, next: string | null) {
   const { log } = ctx;
   for (const line of formatReport(j.operations.map((x) => ({ path: x.path, disposition: x.disposition, action: x.action })), { verbose: o.verbose }).split('\n')) {
     if (line.startsWith('summary:')) {
-      for (const w of o.keepWarnings) log(`kept             ${w}`);
+      for (const d of o.keptDeletions) log(`kept deleted     ${d}`);
       for (const x of j.operations.filter((y) => y.disposition === 'retired-kept')) log(`retired-kept     ${x.path}  left in place; the new release removed it`);
       for (const c of o.packageChanges ?? []) log(`note: package.json ${c}`);
       for (const m of j.migrations) log(`migration  ${m.id}  pending`);
@@ -397,9 +422,9 @@ export function start(ctx: Context, o: StartOptions): number {
     const staged = j.operations.filter((x) => x.action === 'stage');
     const pending = staged.length + j.migrations.length > 0;
     const sessionRel = `.meridian/update/${j.targetVersion}`;
-    const keepWarnings = p.missingKept.map((k) => `${k}: kept file is missing; update never recreates it. Restore it or remove it from .meridian/keep.json.`);
+    const keptDeletions = j.keptDeletions.map((k) => `${k.path}: kept deleted — the team removed this managed file, and this update recorded it in .meridian/keep.json. To bring it back, remove its entry and run the update again.`);
 
-    const print = (outcome: Outcome, times: string, next: string) => report(ctx, j, { verbose: o.verbose, keepWarnings, packageChanges: p.packageChanges }, outcome, times, next);
+    const print = (outcome: Outcome, times: string, next: string) => report(ctx, j, { verbose: o.verbose, keptDeletions, packageChanges: p.packageChanges }, outcome, times, next);
     const pinned = (flag: string) => pin(j.targetVersion, flag);
 
     if (o.dryRun) {
@@ -409,7 +434,7 @@ export function start(ctx: Context, o: StartOptions): number {
 
     // Persist the plan: state, report, resolutions, staged copies and preimages. The project is not yet touched.
     const session = inside(root, sessionRel);
-    const write = (outcome: Outcome) => writeAtomic(path.join(session, 'MERGE.md'), renderMergeReport({ journal: j, session: sessionRel, outcome, pm, keepWarnings, changelog: p.target.changelog, hashOf, packageChanges: p.packageChanges }));
+    const write = (outcome: Outcome) => writeAtomic(path.join(session, 'MERGE.md'), renderMergeReport({ journal: j, session: sessionRel, outcome, pm, keptDeletions, changelog: p.target.changelog, hashOf, packageChanges: p.packageChanges }));
     const persist = () => writeAtomic(path.join(session, 'state.json'), `${JSON.stringify(j, null, 2)}\n`);
     fs.mkdirSync(session, { recursive: true });
     persist();
@@ -451,6 +476,7 @@ export function start(ctx: Context, o: StartOptions): number {
     }
     const applyMs = performance.now() - tApply;
     if (failure) return failed(failure, `plan ${secs(planned)} · apply ${secs(applyMs)}`);
+    recordKeptDeletions(root, j.keptDeletions);
 
     // Install, through the project's own package manager; the lockfile it changes is journaled like any other write.
     let installMs = 0;
@@ -469,7 +495,7 @@ export function start(ctx: Context, o: StartOptions): number {
     const times = `plan ${secs(planned)} · apply ${secs(applyMs)} · ${installNote}`;
     if (!pending && o.install) {
       // Nothing is left to decide and the install ran: finalize in this same command.
-      report(ctx, j, { verbose: o.verbose, keepWarnings, packageChanges: p.packageChanges }, outcome, times, null);
+      report(ctx, j, { verbose: o.verbose, keptDeletions, packageChanges: p.packageChanges }, outcome, times, null);
       const loaded = loadSession(ctx);
       return typeof loaded === 'string' ? refuse(loaded) : finalizeLoaded(ctx, loaded);
     }
@@ -831,6 +857,7 @@ export function resume(ctx: Context, o: ResumeOptions): number {
       persistJournal(l);
     }
     const applyMs = performance.now() - t0;
+    recordKeptDeletions(root, j.keptDeletions);
 
     const pm = packageManager(root);
     const done = j.validation.find(isInstall);
@@ -844,7 +871,7 @@ export function resume(ctx: Context, o: ResumeOptions): number {
         persistJournal(l);
         patchReport(l, 'failed', root);
         log(`zz-meridian update: ${r.failure}`);
-        report(ctx, j, { verbose: o.verbose, keepWarnings: [] }, 'failed', `apply ${secs(applyMs)} · ${installNote}`, `fix the cause, then ${pin(j.targetVersion, '--resume')} (or ${pin(j.targetVersion, '--abort')})`);
+        report(ctx, j, { verbose: o.verbose, keptDeletions: [] }, 'failed', `apply ${secs(applyMs)} · ${installNote}`, `fix the cause, then ${pin(j.targetVersion, '--resume')} (or ${pin(j.targetVersion, '--abort')})`);
         return 1;
       }
     }
@@ -857,13 +884,13 @@ export function resume(ctx: Context, o: ResumeOptions): number {
     patchReport(l, outcome, root);
     const times = `apply ${secs(applyMs)} · ${installNote}`;
     if (!pending && installed) {
-      report(ctx, j, { verbose: o.verbose, keepWarnings: [] }, outcome, times, null);
+      report(ctx, j, { verbose: o.verbose, keptDeletions: [] }, outcome, times, null);
       return finalizeLoaded(ctx, l);
     }
     const next = pending
       ? `resolve the items in ${l.rel}/MERGE.md, then ${pin(j.targetVersion, '--finalize')} (or ${pin(j.targetVersion, '--abort')})`
       : `${pin(j.targetVersion, '--resume')} to install, then ${pin(j.targetVersion, '--finalize')} (or ${pin(j.targetVersion, '--abort')})`;
-    report(ctx, j, { verbose: o.verbose, keepWarnings: [] }, outcome, times, next);
+    report(ctx, j, { verbose: o.verbose, keptDeletions: [] }, outcome, times, next);
     return 2;
   });
 }

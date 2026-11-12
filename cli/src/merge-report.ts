@@ -11,8 +11,8 @@ export type ReportInput = {
   session: string;
   outcome: string;
   pm: string;
-  /** One line per kept file that is missing from the project. */
-  keepWarnings: string[];
+  /** One line per managed file this update found deleted and recorded as kept deleted. */
+  keptDeletions: string[];
   /** The target release's CHANGELOG.md, or ''. */
   changelog: string;
   /** What `reconcilePackage` added, raised, updated or removed in `package.json`, one line each. */
@@ -78,7 +78,7 @@ export function renderMergeReport(i: ReportInput): string {
   }
 
   const warnings = [
-    ...i.keepWarnings,
+    ...i.keptDeletions,
     ...j.operations.filter((o) => o.disposition === 'retired-kept').map((o) => `${o.path}: Meridian removed this file; your kept copy stays and is now yours alone. It is recorded as retired.`),
   ];
   out.push('## Kept and retired files', '');
