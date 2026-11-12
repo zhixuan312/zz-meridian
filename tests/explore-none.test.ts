@@ -47,7 +47,7 @@ describe('the rows with no value', () => {
 
   it('are offered as null only where the source has a word for them', async () => {
     const schema = exploreSchema(QUERY, OWNER);
-    expect(JSON.stringify(z.toJSONSchema(schema))).toContain('model eq|ne|in, null for no model');
+    expect(JSON.stringify(z.toJSONSchema(schema))).toContain('model (text; eq, ne, in; null for no model)');
     expect(schema.safeParse({ source: 'requests', measures: ['requests'], where: [{ field: 'model', op: 'eq', value: null }] }).success).toBe(true);
     const refused = schema.safeParse({ source: 'requests', measures: ['requests'], where: [{ field: 'status', op: 'eq', value: null }] });
     expect(refused.success).toBe(false);

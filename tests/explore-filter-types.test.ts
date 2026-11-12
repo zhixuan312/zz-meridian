@@ -8,7 +8,7 @@ vi.mock('@/app.config', async (orig) => {
 });
 
 import { aggregateRows, type AggregateQuery } from '@/lib/collection';
-import { runExplore, type ExploreIO, type ExploreRights, type PreparedQuery } from '@/lib/explore';
+import { exploreSchema, runExplore, type ExploreIO, type ExploreRights, type PreparedQuery } from '@/lib/explore';
 
 /**
  * A filter declares the type of its value (issue #145). A condition of another type is refused before anything is read,
@@ -49,6 +49,12 @@ const ask = (where: { field: string; op: string; value: unknown }[]) =>
   runExplore(q, { source: 'calls', measures: ['count'], where }, rights, io, '/');
 
 describe('a filter declares its value type', () => {
+  it('is stated in the offer the model reads, before it makes a call of the wrong type', () => {
+    const described = (exploreSchema(q, rights).shape.where as { description?: string }).description ?? '';
+    expect(described).toContain('latency (a number; gt, lt)');
+    expect(described).toContain('lastActive (a date, YYYY-MM-DD; lt, gt)');
+  });
+
   it('refuses a string where a number is declared, naming the field and the type, before any read', async () => {
     seen.length = 0;
     await expect(ask([{ field: 'latency', op: 'gt', value: '500' }])).rejects.toThrow('latency takes a number.');
@@ -58,8 +64,8 @@ describe('a filter declares its value type', () => {
   it('refuses a wrongly typed value for text, boolean and date filters too', async () => {
     await expect(ask([{ field: 'plan', op: 'eq', value: 7 }])).rejects.toThrow('plan takes text.');
     await expect(ask([{ field: 'inBand', op: 'eq', value: 'true' }])).rejects.toThrow('inBand takes true or false.');
-    await expect(ask([{ field: 'lastActive', op: 'lt', value: 'yesterday' }])).rejects.toThrow('lastActive takes a date (YYYY-MM-DD).');
-    await expect(ask([{ field: 'lastActive', op: 'lt', value: '2026-02-30' }])).rejects.toThrow('lastActive takes a date (YYYY-MM-DD).');
+    await expect(ask([{ field: 'lastActive', op: 'lt', value: 'yesterday' }])).rejects.toThrow('lastActive takes a date, YYYY-MM-DD.');
+    await expect(ask([{ field: 'lastActive', op: 'lt', value: '2026-02-30' }])).rejects.toThrow('lastActive takes a date, YYYY-MM-DD.');
   });
 
   it('answers a valid call unchanged', async () => {

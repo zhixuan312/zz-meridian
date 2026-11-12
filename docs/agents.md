@@ -69,7 +69,7 @@ Every view tool declares one. `explore` is required on `defineViewTool`, so a vi
 A prepared query names at most five sources. Each is one collection with:
 
 - `date`, the field a window is cut on; a source without one has no window and no window before;
-- `filters`, the fields that narrow it, each with its operators (`eq`, `ne`, `in`, `lt`, `gt`) and, where it has them, its values;
+- `filters`, the fields that narrow it, each with the type of its value (`number`, `text`, `date` or `boolean`), its operators (`eq`, `ne`, `in`, `lt`, `gt`) and, where it has them, its values; a `date` is a calendar day, `YYYY-MM-DD`, in the reporting timezone. The schema states the type beside each field, so a model calls with the right one, and a value of another type is refused before anything is read;
 - `facets`, the fields that group it, and `buckets`, the time buckets of its date (day, week, month, weekday);
 - `measures`, each with its label, unit and definition: a count (of the rows that meet conditions the author declares, when it has them), a field's sum, average, minimum, maximum or p95 (a field may be a path, such as `revenueByPlan.Enterprise`), or a ratio `a / (b * scale)` or a margin `(1 - b / a) / scale` of two measures, of this source or `<source>.<measure>` of another, read over the same window on that source's own date, where a margin takes a `scale` as a ratio does (1 when not given, `0.01` to state it in %); `unit` is the word a figure is written with, or `money`, an amount in `app.currency` that the answer writes as the pages write money (`formatCost`) and the schema names by the currency's code;
 - `drill`, the columns of a row, the collection's key among them, and the console address that opens it;

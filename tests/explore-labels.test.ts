@@ -28,6 +28,6 @@ describe('the schema a model is handed', () => {
     expect(json).toContain('6 (Sunday)');
     expect(json).toContain('0 (Monday)');
     // A filter without labels lists its values as they are.
-    expect(json).toMatch(/hour eq of 0, 22/);
+    expect(json).toMatch(/hour \(a number; eq; of 0, 22\)/);
   });
 });
