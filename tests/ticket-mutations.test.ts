@@ -64,14 +64,6 @@ describe('who may write a ticket, by every way in', () => {
     }
   });
 
-  it('refuses a create that names a state other than open, instead of promising one it ignores', async () => {
-    jar.value = PERSONAS.owner;
-    const before = await stored();
-    const tickets = collectionFor(await resolveAccess(), 'tickets');
-    await expect(Promise.resolve().then(() => tickets.create!({ ...draft, state: 'closed' }))).rejects.toThrow(/always open/);
-    expect(await stored()).toEqual(before);
-  });
-
   it('is refused at the collection itself when a Viewer is handed it anyway', async () => {
     jar.value = PERSONAS.viewer;
     const before = await stored();

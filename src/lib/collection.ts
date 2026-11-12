@@ -102,6 +102,8 @@ export type Collection<T extends Record<string, unknown>, K extends keyof T & st
    * through its own action — the roles and add-ons on the Members page, for one, which only `assignRole` may change.
    */
   pageOnlyFields?: (keyof T & string)[];
+  /** Fields an agent's create must not offer though its update may set them: a ticket's state, which the server sets. */
+  createOmit?: (keyof T & string)[];
   /** Fields only a page may see: left out of every assistant tool's input and result. */
   hidden?: (keyof T)[];
 };
@@ -387,6 +389,7 @@ export function arrayCollection<T extends Record<string, unknown>, K extends key
   allow: readonly Op[];
   pageOnly?: Op[];
   pageOnlyFields?: (keyof T & string)[];
+  createOmit?: (keyof T & string)[];
   hidden?: (keyof T)[];
   /** The tenant whose store and listeners this collection binds; the sample has one. */
   tenantId?: string;
@@ -428,6 +431,7 @@ export function arrayCollection<T extends Record<string, unknown>, K extends key
     title: def.title,
     pageOnly: def.pageOnly,
     pageOnlyFields: def.pageOnlyFields,
+    createOmit: def.createOmit,
     hidden: def.hidden,
     async query(q) {
       const { rows: hits, total } = queryRows(rows(), key, q);
@@ -533,4 +537,9 @@ export function visibleFields(c: AnyCollection): z.ZodObject {
  */
 export function writableFields(c: AnyCollection): z.ZodObject {
   return without(visibleFields(c), (c.pageOnlyFields ?? []) as string[]);
+}
+
+/** The fields an agent's create offers: the writable ones less what only the server sets on a new record. */
+export function createFields(c: AnyCollection): z.ZodObject {
+  return without(writableFields(c), (c.createOmit ?? []) as string[]);
 }

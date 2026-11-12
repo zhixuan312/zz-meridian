@@ -346,6 +346,9 @@ export const tickets: Collection<Ticket, 'id'> = arrayCollection({
   }),
   rows: TICKETS,
   allow: ['create', 'update'],
+  // A new ticket is always open and the boundary sets it; the create tool must not offer a state it would ignore. An
+  // update still moves it along.
+  createOmit: ['state'],
   pageOnlyFields: ['openedAt', 'updatedAt', 'closedAt', 'incidentId'],
 });
 

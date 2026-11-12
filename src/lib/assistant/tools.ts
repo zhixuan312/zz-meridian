@@ -1,6 +1,6 @@
 import { jsonSchema, tool, type JSONSchema7, type SingleToolApprovalFunction, type ToolSet, type UIMessageStreamWriter } from 'ai';
 import { z } from 'zod';
-import { patchOf, writableFields, type AnyCollection } from '@/lib/collection';
+import { createFields, patchOf, writableFields, type AnyCollection } from '@/lib/collection';
 import { exploreSchema, runExplore, type ExploreIO, type ExploreRights } from '@/lib/explore';
 import { contextText, type ViewTool } from '@/lib/shared-context';
 
@@ -191,7 +191,7 @@ export function assistantTools(collections: AnyCollection[], writer: UIMessageSt
     if (allowed('create')) {
       tools[`create_${c.name}`] = tool({
         description: `Add a record to ${c.label.toLowerCase()}.`,
-        inputSchema: fields,
+        inputSchema: createFields(c),
         execute: (input, { toolCallId }) => guarded(toolCallId, 'create', undefined, () => c.create!(input), { titles: [c.title(input)] }),
       });
       toolApproval[`create_${c.name}`] = ((input: Row, { toolCallId }) =>

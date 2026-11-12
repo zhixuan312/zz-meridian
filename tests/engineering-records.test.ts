@@ -195,7 +195,8 @@ describe('what an agent is asked when it writes a ticket', () => {
 
   it('never asks an agent for what the server sets: a new ticket\'s state and its two times', () => {
     const create = schemaOf('create_tickets');
-    for (const field of ['openedAt', 'updatedAt']) expect(Object.keys(create.properties ?? {}), field).not.toContain(field);
+    // The server sets the state too; a create tool that offered it would promise one the boundary ignores.
+    for (const field of ['state', 'openedAt', 'updatedAt']) expect(Object.keys(create.properties ?? {}), field).not.toContain(field);
     for (const field of ['state', 'openedAt', 'updatedAt']) expect(create.required ?? [], field).not.toContain(field);
     for (const field of ['title', 'service', 'priority']) expect(create.required ?? [], field).toContain(field);
     const set = schemaOf('update_tickets').properties?.set;
