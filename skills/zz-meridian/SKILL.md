@@ -300,8 +300,9 @@ building, testing or rendering beside it. Each suite prints one line per case an
 reached; nothing it could not measure is reported as passed. A full run refuses, listing every gap, until
 `scripts/verify.config.ts` describes the product you built (`references/standard.md`, "The floors"). When something
 fails, `references/validation.md` names the diagnostic that isolates it and what its line means: fix the cause,
-never the check, and run it again. A passing run is half the evidence: the other half is the renders, judged and
-scored, because the checks measure what can be measured and the eye judges the rest.
+never the check, and run it again. Its "When a red is fixed, and when a limit may move" says when a red is fixed,
+when it goes to the person, and when a limit may move. A passing run is half the evidence: the other half is the
+renders, judged and scored, because the checks measure what can be measured and the eye judges the rest.
 
 ## 7. Hand over
 

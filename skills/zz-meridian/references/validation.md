@@ -12,8 +12,8 @@ Tier 2 is the file convention `*.perf.test.ts(x)` and the broad browser sweeps; 
 Tier 1. `tests/deep-*`, the browser-fixture tests of the checks, are Tier 1 and run as their own stage, kept out of the
 main run by their size. `test:t1` never runs a Tier 2 check. A command writes `out/last-green` after a passing run and
 reads it before the next; a missing marker falls back to the diff against master, and a checkout with neither runs the
-whole tier. Follow `optional:docs/testing.md`, which says when each command runs and the rules a red, a limit and a
-release follow, rather than deciding per change.
+whole tier. Follow "When a red is fixed, and when a limit may move" below for what a red and a limit mean, rather
+than deciding per change.
 
 `test:t2` runs the browser sweeps (`scripts/browser.ts --depth fn`); `test:release` adds the timed ones on a quiet
 machine (`--depth timed`). Each script also runs directly against a served build when a question needs it, with the
@@ -125,6 +125,26 @@ suite again with `--rate 1.6`, which slows the phone 1.6 times beyond this host'
 
 Each diagnostic prints its own report. Fix the cause; never weaken a check to make it pass. pnpm may first print a lockfile
 and supply-chain check before a script runs; that is pnpm, not an install, and not a failure.
+
+## When a red is fixed, and when a limit may move
+
+A red is fixed in the product or in the check, never by skipping, narrowing or deleting the check. A check is made
+more faithful, never looser.
+
+- **The cause is named, and the fix is proven.** A red is fixed when its cause is named and a test that failed on the
+  old code passes, at the lowest layer that can show it: a unit test before a browser sweep, a component test before
+  either.
+- **A measurement no test can reproduce** (a time, a dropped frame) is fixed after three consecutive passes on a quiet
+  machine. One pass of a measurement is not evidence.
+- **A red whose cause is not named**, after a run narrowed to its route or page with the render instrumented, goes to
+  the person with what was measured, before any limit is touched.
+- **A flaky Tier 1 check is a red**, fixed like any other; a retry that passes does not clear it.
+
+A limit is a value, changed by the person's decision, never what is measured. A Tier 2 value is judged against the
+release before and reported, never a failure: every run records each value (per tap, per sample) in
+`out/perf-record.json` and ends with one table sorted by change (check, page, baseline → now, change), and a flagged
+change is a report that blocks nothing. A functional bound is not a budget: a control that never answers, a page that
+never readies or a link that never responds is a red under a fixed, generous bound, never a timing budget.
 
 ## Gate failures
 
