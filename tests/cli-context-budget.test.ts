@@ -1,6 +1,6 @@
 // @vitest-environment node
 // Named cli-* so the payload leaves it out: it reads the sample's personas and records, which a product replaces.
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const jar = vi.hoisted(() => ({ value: undefined as string | undefined }));
 /** `times` repeats a collection's rows, each copy a record of its own, so a context is read with more in it than the sample holds. */
@@ -26,6 +26,8 @@ import { contextText, type SharedContext } from '@/lib/shared-context';
 import { readAll } from '@/data/read';
 import { PERIODS } from '@/lib/period';
 import { viewTools } from '@/logic/tools';
+import { homeContext, type HomeData } from '@/logic/home-context';
+import { usageContext, type UsageData } from '@/logic/usage-context';
 import { settingsContext } from '@/views/settings';
 
 const BUDGET = 2600;
@@ -52,26 +54,69 @@ async function lengthOf(name: string, input: Record<string, unknown>): Promise<{
   }
 }
 
+/** The period's complete days the tool points at, in the order its own read names them. */
+function daysOf(name: string, data: unknown): { date: string }[] {
+  const shaped = data as { series?: { date: string }[]; days?: { series: { date: string }[] } };
+  return shaped.series ?? shaped.days?.series ?? [];
+}
+
+/**
+ * The index into the series the view's own `read` works out for `day`: Home counts the period's days, Usage the period's
+ * days and then the day in progress (`src/logic/tools.ts`).
+ */
+function indexOf(name: string, data: unknown, date: string): number {
+  const shaped = data as { series?: { date: string }[]; days?: { series: { date: string }[]; running?: { date: string } } };
+  const series = name === 'home' ? shaped.series ?? [] : [...(shaped.days?.series ?? []), ...(shaped.days?.running ? [shaped.days.running] : [])];
+  return series.findIndex((x) => x.date === date);
+}
+
+/**
+ * The context the view's own `read` would return pointed at `day`, built from the one read of its period: a read with a
+ * day differs from one without it only in the `day` field the page reads, and the context is the same function of the
+ * index into the series the tool passes it. The case below proves the two contexts are the same.
+ */
+function contextAt(name: string, data: unknown, date: string): SharedContext {
+  const index = indexOf(name, data, date);
+  return name === 'home' ? homeContext(data as HomeData, index >= 0 ? index : null) : usageContext(data as UsageData, index >= 0 ? index : null);
+}
+
 beforeEach(() => { jar.value = undefined; store.times.clear(); });
 
-describe(`every view's context fits ${BUDGET} characters and names its address`, () => {
+/** One view read as one persona, or null when that persona may not read the view at all. */
+type Read = { name: string; input: Record<string, unknown>; got: { length: number; context: SharedContext } | null };
+
+/**
+ * Every view read once as each persona, computed once for the file: the reads are the expensive half of every case
+ * below, and they are all made with only the persona's own access in the jar. Each case asserts the results of its own
+ * persona, and the run's cases are read-only.
+ */
+const reads = new Map<string, Read[]>();
+beforeAll(async () => {
   for (const [persona, id] of Object.entries(PERSONAS)) {
-    it(`for the ${persona}, at every period and for every record it names`, async () => {
-      jar.value = id;
+    jar.value = id;
+    const out: Read[] = [];
+    for (const t of viewTools) for (const input of await inputsOf(t.name)) out.push({ name: t.name, input, got: await lengthOf(t.name, input) });
+    reads.set(persona, out);
+  }
+  jar.value = undefined;
+}, 240_000);
+
+describe(`every view's context fits ${BUDGET} characters and names its address`, () => {
+  for (const [persona] of Object.entries(PERSONAS)) {
+    it(`for the ${persona}, at every period and for every record it names`, () => {
       let read = 0;
-      for (const t of viewTools) {
-        for (const input of await inputsOf(t.name)) {
-          const got = await lengthOf(t.name, input);
-          if (!got) continue;
-          read++;
-          expect(got.length, `${t.name} ${JSON.stringify(input)}`).toBeLessThanOrEqual(BUDGET);
-          expect(got.context.address, `${t.name} names its address`).toMatch(/^\//);
-        }
+      for (const { name, input, got } of reads.get(persona)!) {
+        if (!got) continue;
+        read++;
+        expect(got.length, `${name} ${JSON.stringify(input)}`).toBeLessThanOrEqual(BUDGET);
+        expect(got.context.address, `${name} names its address`).toMatch(/^\//);
       }
       expect(read).toBeGreaterThan(0);
     }, 120_000);
   }
 
+  // One read a (view, period, persona) and each day built from its index, rather than a read a day: the tool re-reads
+  // the collections for a day it was already handed, and a period holds 127 days.
   it('pointed at a day: each view that takes a day, at every day of every period, for an Owner and a Viewer', async () => {
     const pointed = viewTools.filter((t) => 'day' in (t.input.shape as Record<string, unknown>)).map((t) => t.name);
     for (const id of [PERSONAS.owner, PERSONAS.viewer]) {
@@ -79,19 +124,33 @@ describe(`every view's context fits ${BUDGET} characters and names its address`,
       for (const name of pointed) {
         for (const period of PERIODS.filter((p) => p !== 'all')) {
           const { data } = await tool(name).read({ period } as never);
-          // Home hands its days at the top; Usage, inside the period's read.
-          const shaped = data as { series?: { date: string }[]; days?: { series: { date: string }[] } };
-          const series = shaped.series ?? shaped.days?.series ?? [];
-          expect(series.length, `${name} ${period} has days`).toBeGreaterThan(0);
-          for (const { date } of series) {
-            const got = await lengthOf(name, { period, day: date });
-            expect(got!.length, `${name} ${period} ${date}`).toBeLessThanOrEqual(BUDGET);
-            expect(got!.context.address).toContain(`day=${date}`);
+          const days = daysOf(name, data);
+          expect(days.length, `${name} ${period} has days`).toBeGreaterThan(0);
+          for (const { date } of days) {
+            const context = contextAt(name, data, date);
+            expect(contextText(context).length, `${name} ${period} ${date}`).toBeLessThanOrEqual(BUDGET);
+            expect(context.address).toContain(`day=${date}`);
           }
         }
       }
     }
   }, 240_000);
+
+  // The shortcut above is the tool's own answer, not a second one: for one day of each view and persona, the context
+  // built from the period's read is exactly the context the tool returns for that day.
+  it('builds the same context the tool returns for a day', async () => {
+    const pointed = viewTools.filter((t) => 'day' in (t.input.shape as Record<string, unknown>)).map((t) => t.name);
+    for (const id of [PERSONAS.owner, PERSONAS.viewer]) {
+      jar.value = id;
+      for (const name of pointed) {
+        const { data } = await tool(name).read({ period: '30d' } as never);
+        const date = daysOf(name, data)[Math.floor(daysOf(name, data).length / 2)].date;
+        const { context } = await tool(name).read({ period: '30d', day: date } as never);
+        expect(contextAt(name, data, date), `${name} ${date}`).toEqual(context);
+        expect(contextText(contextAt(name, data, date)), `${name} ${date}`).toBe(contextText(context));
+      }
+    }
+  }, 60_000);
 
   it("Settings, whose values the page reports: with every section's line at its longest", () => {
     const long = 'x'.repeat(400);

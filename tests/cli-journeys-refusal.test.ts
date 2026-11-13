@@ -54,19 +54,35 @@ const MISSING = '<main><p>404 · Not found</p><h1>This page isn’t here</h1><di
 /** The rail's Members entry, which a Viewer may not open. */
 const members = async () => (await import('../src/app.config.ts')).nav.flatMap((g) => g.items).find((i) => i.href === '/members')!;
 
+/**
+ * A visit whose page never changes: the journey polls for 6 s before reporting what it found, which is a browser
+ * readiness wait and not something this test asserts. The clock is advanced to that deadline rather than waited out, so
+ * the answer is the journey's own, arrived at once.
+ */
+async function visitStatic(j: Journey, page: Page, who: string, item: Awaited<ReturnType<typeof members>>, may: boolean): Promise<string | null> {
+  vi.useFakeTimers();
+  try {
+    const answer = j.visit(page, who, item, may);
+    await vi.advanceTimersByTimeAsync(7_000);
+    return await answer;
+  } finally {
+    vi.useRealTimers();
+  }
+}
+
 describe("a refused destination, as the product's refusal chooses", () => {
   it('under explain, is the no-access page that names it, and the missing page is not', async () => {
     const j = await journeys({ refusal: 'explain' });
     const item = await members();
     expect(await j.visit(served(NO_ACCESS), 'viewer', item, false)).toBeNull();
-    expect(await j.visit(served(MISSING), 'viewer', item, false)).toMatch(/You don't have access to Members/);
+    expect(await visitStatic(j, served(MISSING), 'viewer', item, false)).toMatch(/You don't have access to Members/);
   }, 30_000);
 
   it('under absent, is the missing page, and a no-access page is not', async () => {
     const j = await journeys({ refusal: 'absent' });
     const item = await members();
     expect(await j.visit(served(MISSING), 'viewer', item, false)).toBeNull();
-    expect(await j.visit(served(NO_ACCESS), 'viewer', item, false)).toMatch(/missing page/);
+    expect(await visitStatic(j, served(NO_ACCESS), 'viewer', item, false)).toMatch(/missing page/);
     expect(await j.visit(served(`${MISSING.slice(0, -7)}<div data-no-access=""></div></main>`), 'viewer', item, false)).toMatch(/no no-access page/);
   }, 30_000);
 
