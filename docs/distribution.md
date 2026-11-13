@@ -37,7 +37,7 @@ rebuilding each page on Meridian's components, the fake API, and reading what th
 - **Payload**: a snapshot of the template, built by `cli/scripts/build-payload.ts` into `cli/payload/` with `git archive
   HEAD`, never from a walk of the folder, so a build output, a local `.env` or an uncommitted edit cannot ship
   (`--worktree` exists for trying a change before committing). The package itself, CI, agent settings and `.env` files
-  are left out, and so is every test but `tests/setup.ts` and `tests/examples/`: the other tests check the CLI's own
+  are left out, and so are `docs/`, `decisions/`, `CONTRIBUTING.md`, the Atlas (`app/system/` and the `src/system/` modules only it imports) and every card's `preview.tsx` (every card's `README.md` and the changelog ship), and so is every test but `tests/setup.ts` and `tests/examples/`: the other tests check the CLI's own
   source or hold the sample's own figures, which a product replaces. The package carries `dist/`, `payload/`, its README and nothing else: no dependencies, no install
   scripts.
 - **No runtime dependency**: nothing in a dashboard imports `zz-meridian`. It needs Node 22.18 or newer.
@@ -47,8 +47,8 @@ rebuilding each page on Meridian's components, the fake API, and reading what th
 
 ### `create <dir>`
 
-Copies the template (without `.git`, the Atlas, card specifications and previews, `docs/`, `decisions/`, the
-changelog, and Meridian's own tests: of `tests/`, only `setup.ts`, which is Meridian's, and `examples/`, the team's starting
+Copies the template (without `.git`, the Atlas, card previews and page specifications, `docs/`, `decisions/`,
+`CONTRIBUTING.md`, the changelog, and Meridian's own tests: of `tests/`, only `setup.ts`, which is Meridian's, and `examples/`, the team's starting
 point, ship), installs the skill into the new project (see below), writes the manifest, and prints the next step. Brand
 arguments (`--name`, `--hex`, …) pass through to `scripts/brand.ts --product`. Replaces SKILL.md step 3's
 clone-then-delete.
@@ -65,7 +65,7 @@ Brings Meridian into the project in the current folder. It refuses, and copies n
 
 Then, in this order:
 
-1. Copies the Route A set: `tokens/`, `src/styles/`, `src/components/` (without `README.md` and `preview.tsx`),
+1. Copies the Route A set: `tokens/`, `src/styles/`, `src/components/` (with each card's `README.md`, without `preview.tsx`),
    `src/app.config.ts` (written with the project's own pages as its navigation), `src/views/console-chrome.tsx`, the `src/lib` modules the components import, the three `src/logic/` helpers they import
    (`after-start.ts`, `derivations.ts`, `summarise.ts`), `src/lib/assistant/prompt.ts`,
    `app/icon.ts`, `scripts/`, `tests/setup.ts` and the config files. The list is in `cli/src/ownership.ts` (`adoptSetOf`); the
@@ -81,7 +81,7 @@ Then, in this order:
    when they have none.
 5. Installs the skill and writes the manifest.
 6. Runs their package manager's install (pnpm with `--no-frozen-lockfile`, since adopt has just changed `package.json`), `next typegen` and `tsc --noEmit`, and prints the result and the next step:
-   the skill's Route A from step 2, with the template to read from at the same version.
+   the skill's Route A from step 2, with the template to read from at the same version. A failed type check exits 1; the files stay adopted.
 
 Three things make the copy safe in someone else's project. Meridian's own files import each other by relative path,
 pinned to the exact module (`…/button/index`), so a team's `components/ui/button.tsx` can never be resolved in place

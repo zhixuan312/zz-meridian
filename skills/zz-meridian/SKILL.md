@@ -172,9 +172,10 @@ workspaces in `src/app.config.ts` (`references/customize.md`, "Navigation").
 
 It copies the template, brands it, installs the dependencies, initialises git, installs this skill into the project
 (`optional:.agents/skills/`, `optional:.claude/skills/`) and records every file in `optional:.meridian/manifest.json`. The person gets their
-dashboard, not a copy of the design system: the Design Atlas, the card and page specifications, `optional:docs/`, `decisions/`
-and the changelog are left out, and the README and AGENTS.md are written for their product. To look a component up
-while building, read it in the template on GitHub (`src/components/<layer>/<card>/README.md`).
+dashboard, not a copy of the design system: the Design Atlas, the card previews, the page specifications, `optional:docs/`,
+`decisions/` and the changelog are left out, and the README and AGENTS.md are written for their product. Every card keeps
+its `README.md` next to its component. To look a component up while building, read
+`src/components/<layer>/<card>/README.md` in the project, the specification of the version it has, not the one on GitHub.
 
 Every product name, sample address and MCP tool name follows `--name`, so nothing of the template's own name is left
 behind. A brand colour goes in as `--hex`: the OKLCH hue and chroma are derived (chroma capped at 0.18; the theme sets

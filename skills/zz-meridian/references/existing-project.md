@@ -251,7 +251,7 @@ Meridian's components are React, so the honest options are:
 
 - **A new Meridian project** for the dashboard, talking to their existing backend (usually the best result), or
 - **Tokens only**: copy `src/styles/tokens.css` (plain CSS custom properties, framework-agnostic) and rebuild their
-  components against those roles by hand, following the card specifications in `src/components/*/*/README.md`. Tell
+  components against those roles by hand, following the card specifications in `src/components/*/*/README.md` of a created project (or of an adopted one: adopt copies them too). Tell
   them the test commands cannot validate a non-React app; run the contrast check on the tokens and audit their pages with
   `node scripts/audit.ts --base <their dev server URL> --routes <their routes>` from a Meridian checkout.
 

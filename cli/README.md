@@ -50,9 +50,10 @@ beside it as `*.before.css`); preserves string keys and values in your TypeScrip
 brands it; adds Meridian's managed block to your `AGENTS.md` between two markers, keeping your own text there byte
 for byte; writes an empty `docs/brief.md` (your product, users, data, decisions and glossary) if you have none; installs the skill into
 `.agents/skills/` (Codex) and `.claude/skills/` (Claude Code); records every Meridian file it copied in `.meridian/manifest.json`;
-installs and reports route-generation and TypeScript diagnostics. An installation failure exits nonzero; diagnostic
-failures are reported as `types: fails` but adoption still exits zero, because your existing routes may need repairs.
-This is not a clean-typecheck guarantee: fix those diagnostics before running the gate. Your routes, your data layer
+installs and reports route-generation and TypeScript diagnostics. An installation failure exits nonzero, and so does a
+failed type check (`types: fails`); the files stay adopted, so fix those diagnostics, which may be repairs your existing
+routes need, and run the gate. Every card's `README.md` is copied next to its component, managed, so an agent reads the
+specification of the version the project has. Your routes, your data layer
 and your own components are not touched. Meridian's files import each other by relative path, so a
 `components/ui/button` of your own is never confused with Meridian's; your code imports Meridian as `@meridian/…`.
 Supported dependency specifications below Meridian's required floor are raised, including within the same major;
@@ -129,6 +130,9 @@ Meridian's own template or sample data.
 ## Maintaining this package
 
 From the repository root, run `node cli/scripts/build-payload.ts` before `pnpm exec tsc -p cli/tsconfig.json` and packing. The producer reads committed `HEAD` by default; use `--worktree` to try uncommitted tracked changes. It also generates `cli/src/update-session.ts` from the canonical standalone `scripts/lib/update-session.ts`, using the same source provenance as the payload. Edit only the canonical module, never its generated CLI companion.
+The payload leaves out Meridian's own documentation (`docs/`, `decisions/`, `CONTRIBUTING.md`), the Atlas and every card's
+`preview.tsx`. A created and an adopted project both receive each card's `README.md`; the changelog stays in the package,
+where `update` reads it for the release notes in `MERGE.md`.
 The payload excludes `.env` and its variants at every directory depth, even when tracked; deliberate `.env.example`
 files remain available as public configuration templates. Never put credentials in an example file.
 
