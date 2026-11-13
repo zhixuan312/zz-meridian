@@ -338,16 +338,8 @@ async function release(): Promise<number> {
 
 /** Packs this working tree and runs the consumer smoke a change owes, with CI's flags: the path an adopter walks. */
 function consumerSmoke(kind: 'create' | 'update' | 'verify'): number {
-  const pack = path.join(ROOT, 'out', 'smoke-pack');
-  fs.rmSync(pack, { recursive: true, force: true });
-  fs.mkdirSync(pack, { recursive: true });
-  if (run('smoke: the template snapshot', process.execPath, ['cli/scripts/build-payload.ts', '--worktree']) !== 0) return 1;
-  if (run('smoke: the CLI compiles', bin('tsc'), ['-p', 'cli/tsconfig.json']) !== 0) return 1;
-  const packed = spawnSync('npm', ['pack', '--ignore-scripts', '--pack-destination', pack], { cwd: path.join(ROOT, 'cli'), encoding: 'utf8' });
-  const tarball = (packed.stdout ?? '').trim().split('\n').filter(Boolean).at(-1);
-  if (packed.status !== 0 || !tarball) return 1;
-  const args = ['cli/scripts/smoke.ts', '--tarball', path.join(pack, tarball), ...(kind === 'create' ? ['--create', '--created-report'] : kind === 'update' ? ['--adopt', '--update', '--verify'] : ['--adopt', '--verify'])];
-  return run(`smoke: the consumer path (${kind})`, process.execPath, args, { ...process.env, CI: 'true' });
+  const flags = kind === 'create' ? ['--create', '--created-report'] : kind === 'update' ? ['--adopt', '--update', '--verify'] : ['--adopt', '--verify'];
+  return run(`smoke: the consumer path (${kind})`, process.execPath, ['cli/scripts/consumer.ts', ...flags], { ...process.env, CI: 'true' });
 }
 
 async function affected(tier: 't1' | 't2'): Promise<number> {

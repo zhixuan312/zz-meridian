@@ -3,7 +3,6 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
-import { readPayload } from '../cli/src/files.ts';
 import { RELEASE_MIGRATIONS, releaseMigrations } from '../cli/src/migrations.ts';
 
 const tmp: string[] = [];
@@ -603,59 +602,6 @@ describe('the 0.36.0 navigation migration', () => {
     expect(releaseMigrations(local(''), '0.28.0', '0.36.0').map((x) => x.id)).toContain('nav-item-fields');
     // nav-needs reads the same type, so a local one without `needs` is reported there too.
     expect(byId('nav-needs').applies(project({ 'src/app.config.ts': "type NavItem = { href: string };\nexport const nav: NavGroup[] = [\n  { items: [{ href: '/', needs: 'public' }] },\n];\n" }), '0.35.0')).toEqual(['src/app.config.ts']);
-  });
-});
-
-describe('the 0.36.0 migration', () => {
-  it("names a created project's sample files that differ from the release's and the sample modules it lacks, and nothing else", () => {
-    const m = byId('sample-with-its-tests');
-    expect(m.since).toBe('0.36.0');
-    const created = (route: string, files: Record<string, string>) => project({ '.meridian/manifest.json': JSON.stringify({ route }), ...files });
-    // One page as an older release wrote it, one as this release writes it, and the members page deleted with its folder.
-    const files = { 'proxy.ts': 'export const config = {};\n', 'src/views/request.tsx': 'export const old = 1;\n', 'src/views/requests.tsx': readPayload('src/views/requests.tsx') };
-    expect(m.applies(created('create', files), '0.35.0')).toEqual(['proxy.ts', 'src/lib/totals.ts', 'src/views/request.tsx']);
-    expect(m.applies(created('create', { 'src/views/requests.tsx': readPayload('src/views/requests.tsx'), 'src/lib/totals.ts': readPayload('src/lib/totals.ts') }), '0.35.0')).toBeNull();
-    // An adopted project holds no sample, and the template holds no manifest.
-    expect(m.applies(created('adopt', files), '0.35.0')).toBeNull();
-    expect(m.applies(path.resolve(import.meta.dirname, '..'), '0.35.0')).toBeNull();
-  });
-
-  it('rechecks owned sample source on later upgrades, and stops reporting it once synchronized', () => {
-    const rel = 'src/data/derived.ts';
-    const root = project({
-      '.meridian/manifest.json': JSON.stringify({ route: 'create', version: '0.36.0' }),
-      [rel]: 'export const derived = [];\n',
-      // This one-off 0.36.0 migration must not recur alongside the sample check.
-      'src/app.config.ts': 'export type NavItem = { href: string; needs: Need };\n',
-    });
-    for (const [source, target] of [['0.36.0', '0.36.1'], ['0.36.1', '0.36.2']]) {
-      expect(releaseMigrations(root, source!, target!).map(({ id, paths }) => ({ id, paths }))).toEqual([
-        { id: 'sample-with-its-tests', paths: [rel] },
-      ]);
-    }
-    fs.writeFileSync(path.join(root, rel), readPayload(rel));
-    expect(releaseMigrations(root, '0.36.0', '0.36.1')).toEqual([]);
-  });
-
-  it('does not recheck sample drift for a same-version update, downgrade, or target before its introduction', () => {
-    const root = project({
-      '.meridian/manifest.json': JSON.stringify({ route: 'create' }),
-      'src/data/derived.ts': 'export const derived = [];\n',
-    });
-    expect(releaseMigrations(root, '0.36.0', '0.36.0')).toEqual([]);
-    expect(releaseMigrations(root, '0.36.1', '0.36.0')).toEqual([]);
-    expect(releaseMigrations(root, '0.34.0', '0.35.0').map(({ id }) => id)).not.toContain('sample-with-its-tests');
-  });
-
-  it('requires missing sample additions only when crossing their introduction, not after deliberate later deletion', () => {
-    const root = project({
-      '.meridian/manifest.json': JSON.stringify({ route: 'create' }),
-      'src/data/derived.ts': readPayload('src/data/derived.ts'),
-    });
-    expect(releaseMigrations(root, '0.35.0', '0.36.0').find(({ id }) => id === 'sample-with-its-tests')?.paths).toEqual(['src/lib/totals.ts']);
-    expect(releaseMigrations(root, '0.35.0', '0.36.1').find(({ id }) => id === 'sample-with-its-tests')?.paths).toEqual(['src/lib/totals.ts']);
-    expect(releaseMigrations(root, '0.36.0', '0.36.1')).toEqual([]);
-    expect(releaseMigrations(root, '0.36.1', '0.36.2')).toEqual([]);
   });
 });
 

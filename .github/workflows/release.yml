@@ -181,12 +181,10 @@ jobs:
           retention-days: 30
 
   # The consumer path, from the tarball `build` made: adopt and create from the release before, update both to this
-  # one, adopt a new dashboard from the tarball and run that dashboard's own `test:release`. It runs beside `gates`,
+  # one, create a new dashboard from the tarball and run that dashboard's `test:t1` and `next build`. It runs beside `gates`,
   # each on its own clock: the two together outlived this workflow's 120-minute job cap in run 42600180906, and one
-  # clock cannot hold both. Measured locally on Node 26: 46 minutes in all, the created dashboard's release suite
-  # 38.7 of them. The runner's own release suite took 76 minutes (run 42600180906), and the smoke runs one of that
-  # same size; 120 minutes sits above the measured work with room for the runner's variance, and never below the suite
-  # it drives. This job holds no publishing permission and no credential.
+  # clock cannot hold both. The created dashboard's full `test:release` is weekly's, not this job's.
+  # This job holds no publishing permission and no credential.
   consumer:
     needs: build
     runs-on: ubuntu-24.04
@@ -218,7 +216,7 @@ jobs:
           T="/tmp/pack/zz-meridian-$VERSION.tgz"
           [ "$(sha256sum "$T" | cut -d' ' -f1)" = "$SHA256" ] || { echo "::error::the tarball is not the one build made"; exit 1; }
           node cli/scripts/smoke.ts --tarball "$T" --adopt --create --update
-      # A red here names its cause: when the created dashboard's own test:release fails, the smoke writes its whole
+      # A red here names its cause: when the created dashboard's test:t1 or build fails, the smoke writes its whole
       # stdout and stderr here (`out/consumer-test-release.*.txt`) and prints its verdict and FAIL lines to the log.
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()

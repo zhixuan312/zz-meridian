@@ -25,7 +25,7 @@ function job(name: string): string {
 
 describe('the weekly consumer job', () => {
   it('runs a dashboard created from the tarball through its own test:release', () => {
-    expect(job('consumer')).toContain('node cli/scripts/smoke.ts --tarball "$(ls /tmp/pack/zz-meridian-*.tgz)" --adopt --create --update --origins 3 --update-all --verify');
+    expect(job('consumer')).toContain('node cli/scripts/smoke.ts --tarball "$(ls /tmp/pack/zz-meridian-*.tgz)" --adopt --create --created-release --update --origins 3 --update-all --verify');
   });
 
   it('uploads out/, where a failed nested run is kept', () => {

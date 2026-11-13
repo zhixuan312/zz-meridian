@@ -122,9 +122,7 @@ navigation, `workspaceOf` says which workspace an address belongs to) and `optio
 chooses what the rail lists, never what a person may open. Keep a workspace with the key `main`: the adapter and the
 refusal page fall back to it for an address no entry owns. The sample's browser journeys (`optional:journeys/workspaces.ts`)
 also name `business` and `engineering`, so `node scripts/rail.ts --as` fails on a renamed workspace until the journeys are changed
-with it or removed, and the gate fails on the tests that hold the sample's three until you rewrite them for yours:
-`optional:tests/workspaces.test.ts`, `optional:tests/workspace-access.test.ts`, `optional:tests/workspace-chrome.test.tsx`,
-`optional:tests/workspace-menu-access.test.tsx` and `optional:tests/no-access.test.tsx`. `optional:docs/product-workspaces.md` is the sample's own guide
+with it or removed, and a test of your own that holds the sample's three fails until you rewrite it for yours. `optional:docs/product-workspaces.md` is the sample's own guide
 to all of this.
 
 **Take them out** when the product has one navigation. In `src/app.config.ts` delete `workspaces`, `WorkspaceId` and the
@@ -135,14 +133,9 @@ to all of this.
 - Delete `optional:src/views/workspace-chrome.tsx`, `optional:src/views/workspaces.ts` and `optional:journeys/workspaces.ts`
   (its entry in `browserChecks` in `scripts/verify.config.ts` goes with it).
 - In `optional:src/views/no-access.tsx` the refusal page's way out reads `navOf` and `workspaces.main`: make it the first
-  destination of `nav` the person may open, or `/`, and rewrite the two cases of `optional:tests/no-access.test.tsx` that
-  expect a workspace's first destination and Main's home.
+  destination of `nav` the person may open, or `/`.
 - Take `${workspaces.<id>.audience}` out of the descriptions of the Home, Revenue, Usage and Now pages, or delete
   the pages, and out of `LINE_ROOM` in `optional:src/logic/now-parts.ts`, which keeps room for Engineering's beside Now's line.
-- Delete `optional:tests/workspaces.test.ts`, `optional:tests/workspace-access.test.ts`,
-  `optional:tests/workspace-chrome.test.tsx` and `optional:tests/workspace-menu-access.test.tsx`. In `optional:tests/shell-alerts.test.ts` drop the `workspaceOf` check, and in
-  `optional:tests/workspace-home.test.tsx` the test that reads `workspaces.main.audience`, with the two imports only
-  it uses.
 - A clone that keeps the Atlas also changes `optional:src/system/atlas-shell.tsx` and `optional:src/system/strata.tsx`, which
   list the workspaces, and `optional:tests/atlas-layers.test.ts`, which expects three; a created project has no Atlas.
 
@@ -299,8 +292,8 @@ orders is the sample's, not the product's.
   day and its latest), `run` (how long a state has held, its longest only when no run kept is longer, worked out by
   `runOf`, which the Status list draws) and `steady` (how many complete days were inside a band, and the days outside
   it by date). A rule returns its fact with the one line it wrote, or nothing, and nothing weaker stands in for a fact
-  that stopped holding. `optional:tests/facts.test.ts` and `optional:tests/facts-engineering.test.ts` hold the rules
-  and stay with them.
+  that stopped holding. Meridian's `optional:tests/facts.test.ts` and `optional:tests/facts-engineering.test.ts` hold the rules in its
+  repository; hold yours with a test of your own.
 - **No word of praise**, in a title or in a fact: the figure is what is said. The rules' test refuses twelve words.
 - **The title is shared.** The page's context leads its insights with the sentence the page is headed by, word for
   word, and each fact follows as the rule's own line (`factInsight` and `headInsights` in
@@ -390,57 +383,22 @@ orders is the sample's, not the product's.
   Revenue at `/business`, Now at `/engineering`). "Navigation" above says how to declare your own or take them out.
 - **The checks of the sample's pages**: `optional:journeys/workspaces.ts`, which walks every destination of the three
   workspaces as an Owner and as a Viewer, the `navigationChecks`, `detailRoutes`, `browserChecks` and `personas` in
-  `scripts/verify.config.ts` that name the sample's routes and people, and the shipped tests that hold the sample (the
+  `scripts/verify.config.ts` that name the sample's routes and people, and the tests that hold the sample (the
   next item). Give each rail page of your own its `navigationChecks`
   entry (`node scripts/navigate.ts` fails a rail route without one) and take the sample's out with its pages.
   `optional:journeys/workspaces.ts` expects of a refused destination what your `refusal` chooses, as `node scripts/rail.ts --as`
   does, and gates each step on the destinations it walks.
-- **The shipped tests that hold the sample**: a test under `optional:tests/` holds the sample when it imports a sample
-  page, view or fixture, and also when it reads the sample through a module you keep (`optional:src/data/collections.ts`,
-  `optional:src/data/read.ts`, `optional:src/data/access.ts`, the assistant and live routes) and names the sample's
-  clock, collections, records, people or routes. The gate fails on each once you replace what it names. Keep what each
-  holds for your own data: rewrite its cases for your collections, people and records, and delete a case about a
-  collection, page or person you dropped. Every one that names a demo member, a sample fixture, a sample page or view is
-  listed by `grep -lE "members_[0-9]+|system/fixtures|app/\(dashboard\)|@/views/" tests/*.test.ts tests/*.test.tsx`;
-  the lists below are not every file, but the ones whose cases need more than the find. Among them, by what they hold:
-  - The clock and the collections of the company: `optional:tests/day-in-progress.test.ts` (today is 03 Oct 2026; four
-    usage rows, four compute rows and one cost row a day; 361 days kept) and `optional:tests/data-model.test.ts` (the
-    collections models, usage, compute and costs with their keys and fields, the four model ids and the routes they
-    serve, what each persona may read). What they hold is the product's: the day in progress is counted in no period, a
-    read of all history pages past the 500 rows one read returns, a collection holds the fields its pages read and only
-    the roles the table names read it.
-  - The people of the demo, by member id (`members_1` is Maya Chen, the Owner; `members_12` is Grace Liu, a Viewer):
-    `optional:tests/demo-policy.test.ts`, `optional:tests/view-as.test.ts`, `optional:tests/sign-in-persona.test.ts`,
-    `optional:tests/sign-in-honest.test.tsx`, `optional:tests/verify-personas.test.ts`,
-    `optional:tests/member-mutations.test.ts`, `optional:tests/data-access.test.ts`, `optional:tests/data-write.test.ts`,
-    `optional:tests/assistant-tools.test.ts` (the members collection's write schema),
-    `optional:tests/assistant-prompt-truth.test.ts`, `optional:tests/assistant-access.test.ts` (who of them may use which
-    view tool), `optional:tests/assistant-prompt-writes.test.ts`, `optional:tests/assistant-settings.test.tsx` (the
-    settings page's sections) and `optional:tests/view-tool-needs.test.ts`; `grep -l "members_[0-9]"` finds the rest.
-    While the demo signs in as your own people (`PERSONAS`), write their ids into every case that names one; once your
-    sign-in replaces the demo, delete the first four with `optional:src/data/view-as.ts` and the sign-in page, and
-    rewrite the rest for your sign-in's people.
-  - The records and routes of the company: `optional:tests/shell-alerts.test.ts` (more than one past-due customer, one
-    of them Lumen Studio at `/customers/lumen-studio`, a high-priority ticket nobody has, the failing verifications:
-    rewrite it for the exceptions your `readAlerts` raises), `optional:tests/feature-access.test.ts` (the sample's
-    seventeen features by id and each action's need), `optional:tests/data-read.test.ts`,
-    `optional:tests/live-route.test.ts` and `optional:tests/live-actions.test.ts` (the members and keys collections),
-    `optional:tests/assistant-guard.test.ts` (the members collection), `optional:tests/engineering-records.test.ts`
-    (tickets, verification runs and releases, and who of the demo's people writes them), `optional:tests/engineering-workflows.test.ts`
-    (the tickets feature's actions and Engineering's destinations), `optional:tests/requests-summary-newest.test.ts` (the requests
-    collection), `optional:tests/action-needs.test.tsx` (the API keys and request views),
-    `optional:tests/atlas-product-slice.test.tsx` (the Customers page drawn through the records template),
-    `optional:tests/counts-and-lists.test.tsx` (the Customers page and the Tickets action: a ticket Jonas Weber owns on
-    the Edge gateway, more customers than one read answers, the plans Enterprise, Scale and Starter, the status options
-    and the `verifications:failing` alert), `optional:tests/customers-payload.test.tsx` (a sample customer's row and
-    record fields, `byEndpoint` and `pastDueSince` among them), `optional:tests/customer-empty-period.test.ts` (the
-    customers collection and `readCustomer`), `optional:tests/linked-records.test.ts` (incidents, tickets, requests,
-    models, services and days, and how they name each other), `optional:tests/usage-summary.test.tsx` (the Usage view on
-    the sample's dates, stating four figures over the last 30 complete days) and `optional:tests/workspace-figures.test.ts` (the verification
-    runs' fields).
-
-  Most of the sample's own figures, pages and answers are in `cli-*` tests, which a created project does not receive.
-  A shipped test that still fails after this names something of the sample's too: change it the same way.
+- **The tests that hold the sample**: a created project ships no test of Meridian's. Its `tests/` holds `tests/setup.ts`,
+  which is Meridian's, and `example:tests/examples/example-data.test.ts` and `example:tests/examples/example-page.test.tsx`,
+  the team's starting point. A test holds the sample when it imports a sample page, view or fixture, or reads the
+  sample through a module you keep (`optional:src/data/collections.ts`, `optional:src/data/read.ts`,
+  `optional:src/data/access.ts`, the assistant and live routes) and names the sample's clock, collections, records, people
+  or routes. The gate fails on each once you replace what it names. Rewrite the two examples for your collections, people
+  and records, and write each test of your own the same way. Every file that names a demo member, a sample fixture, a
+  sample page or view is listed by
+  `grep -lE "members_[0-9]+|system/fixtures|app/\(dashboard\)|@/views/" tests/*.test.ts tests/*.test.tsx`. Meridian's
+  own tests of the sample's figures, pages and answers stay in Meridian's repository, which a created project does not
+  receive.
 - **The choice `explain`**: the sample answers an address a person may not open with the no-access page, which names the
   page and who to ask. Choose `absent` when a product must not tell a person that a page they may not open exists.
 - **The counts each context's lists are capped at**: six services, two open incidents and three resolved on Services,
@@ -513,10 +471,10 @@ orders is the sample's, not the product's.
   exactly one written "100%"; incidents that cannot be read leave their part saying so while every service stands; and
   no service yet is one card with the page headed by its name. The masthead's freshness reads the sample's clock
   (`DEMO_UPDATED_AT`), as Now's does: a product passes when its own data last arrived. Write your own.
-- **`optional:tests/titles.test.ts`** and **`optional:tests/titles-engineering.test.ts`**, which hold the sample's
-  words branch by branch; **`optional:tests/facts-config.test.ts`**, which holds the sample's values of `facts`; and
-  the cases of `optional:tests/shared-context.test.tsx` that read the sample's headings and facts. Rewrite their cases
-  for your titles and your values: a title no test holds is a sentence nobody checked.
+- **The tests of your titles and your values**: Meridian's `optional:tests/titles.test.ts` and
+  `optional:tests/titles-engineering.test.ts` hold the sample's words branch by branch, and
+  `optional:tests/facts-config.test.ts` its values of `facts`. A created project has none of them: write cases for your
+  titles and your values, because a title no test holds is a sentence nobody checked.
 - **The values of `facts` in `src/app.config.ts`**: `firsts.requestsADay` (10, 25 and 50 million requests a day),
   `recordNeedsPeriods` (six periods), `band` (a p95 under 350 ms and an error rate under 1%), `nextPlanAt` (three
   quarters of what the next plan's smallest customer pays) and `concentrationAt` (a tenth of the revenue of the last
@@ -596,7 +554,7 @@ writes go through `Proposal` (see `optional:app/embed/proposal/`). Read `agents.
 
 ## Clean-up before validation
 
-Delete the sample pages, views, embed views and API routes (`optional:app/api/export/requests/`) the product does not use, with their nav lines and the tests that import them, and change the tests that read the sample through a module you keep ("The shipped tests that hold the sample" above). Do not delete
+Delete the sample pages, views, embed views and API routes (`optional:app/api/export/requests/`) the product does not use, with their nav lines and the tests of your own that import them, and change the tests that read the sample through a module you keep ("The tests that hold the sample" above). Do not delete
 `optional:src/system/fixtures/` or `optional:src/system/sample-cells.tsx` yet: `optional:src/data/collections.ts`, `optional:src/data/sample.ts`
 and `optional:src/data/sign-in.ts` (the 30 days the sign-in page draws) import the fixtures. Once your collections' `rows` and `clock`, and the clock in the quiet bell of `optional:src/views/shell-alerts.tsx`
 (`DEMO_NOW`), come from your own data and nothing imports them, delete them and `optional:src/data/sample.ts` (with the Atlas kept, the previews read them: leave them, and remove the

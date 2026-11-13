@@ -2,6 +2,18 @@
 
 Every release of ZZ Meridian, newest first. Versions follow semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Each entry says what breaks and what to do instead.
 
+## [Unreleased]
+
+### Changed
+
+- **`node cli/scripts/consumer.ts` runs the consumer path from the working tree.** It builds the payload, compiles the CLI, packs it and runs the consumer smoke against that tarball; `scripts/test-run.ts` packs through it, so there is one packing path.
+- **A created project's smoke suite is its Tier 1 run and a build.** The release's consumer job runs `test:t1` then `next build` in the new dashboard instead of a second full `test:release`; the weekly job still runs the created project's whole `test:release` (`--created-release`).
+
+### Breaking
+
+- **A created project carries no Meridian tests.** Only `tests/setup.ts` is Meridian's; `tests/examples/` holds two tests that are the team's to rewrite. The next `update` deletes each Meridian test a project has not edited and stages each one it has.
+- **The recurring `sample-with-its-tests` migration is removed.** Nothing pins the sample now, so no update reports sample files that differ from the release.
+
 ## [0.39.2] · 2026-11-12
 
 ### Fixed

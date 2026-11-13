@@ -37,8 +37,8 @@ rebuilding each page on Meridian's components, the fake API, and reading what th
 - **Payload**: a snapshot of the template, built by `cli/scripts/build-payload.ts` into `cli/payload/` with `git archive
   HEAD`, never from a walk of the folder, so a build output, a local `.env` or an uncommitted edit cannot ship
   (`--worktree` exists for trying a change before committing). The package itself, CI, agent settings and `.env` files
-  are left out, and so is every top-level `tests/cli-*` and `tests/deep-*` file, `.ts` and `.tsx` alike: they test the
-  CLI's own source or hold the sample's own figures, which a product replaces. The package carries `dist/`, `payload/`, its README and nothing else: no dependencies, no install
+  are left out, and so is every test but `tests/setup.ts` and `tests/examples/`: the other tests check the CLI's own
+  source or hold the sample's own figures, which a product replaces. The package carries `dist/`, `payload/`, its README and nothing else: no dependencies, no install
   scripts.
 - **No runtime dependency**: nothing in a dashboard imports `zz-meridian`. It needs Node 22.18 or newer.
 - **Shared session source**: `scripts/lib/update-session.ts` is the one authored standalone, erasable-TypeScript implementation used by an adopted project's plain-Node checks. The payload producer also generates `cli/src/update-session.ts` from the same `HEAD` snapshot, or tracked working-tree source under `--worktree`. Run the producer before CLI compilation and packing; never edit the generated companion.
@@ -48,7 +48,8 @@ rebuilding each page on Meridian's components, the fake API, and reading what th
 ### `create <dir>`
 
 Copies the template (without `.git`, the Atlas, card specifications and previews, `docs/`, `decisions/`, the
-changelog), installs the skill into the new project (see below), writes the manifest, and prints the next step. Brand
+changelog, and Meridian's own tests: of `tests/`, only `setup.ts`, which is Meridian's, and `examples/`, the team's starting
+point, ship), installs the skill into the new project (see below), writes the manifest, and prints the next step. Brand
 arguments (`--name`, `--hex`, …) pass through to `scripts/brand.ts --product`. Replaces SKILL.md step 3's
 clone-then-delete.
 
@@ -160,9 +161,7 @@ Two environment variables exist for the updater's own tests and are used only wh
 
 `cli/src/migrations.ts` holds `RELEASE_MIGRATIONS`: the changes a release makes in the team's own files, which `update`
 reports as `migration:<id>` because it cannot make them. Normally an entry applies when the project's recorded version
-is older than its `since` and the target is not. `sample-with-its-tests` is recurring: it is checked on every forward
-upgrade at or after its introduction, so updated managed tests do not silently outrun team-owned sample helpers.
-`verify-modes` is recurring too: a stale call to a command the release removed is reported on every forward upgrade
+is older than its `since` and the target is not. `verify-modes` is recurring: a stale call to a command the release removed is reported on every forward upgrade
 until the team rewrites it, wherever it sits.
 `applies(root, source)` receives the project's recorded source version and returns the paths needing review, or null.
 Route, page, layout and page-spec migrations recognize both `app/` and `src/app/`, and report the actual project paths.
@@ -171,7 +170,7 @@ A migration only reads team-owned files (the ownership rule's managed paths are 
 A project already on the new shape gets no line. Every entry names the command that proves it — `test:release` where the change reaches the build, `test:t1` where a test run is enough — and its
 instructions name the section of a reference (`cache.md`, `live.md`, `validation.md`, `agents.md`, `customize.md`), of the Start guide or of `docs/assistant.md` to follow.
 
-Thirty arrived after 0.5.0 and are resolved as the skill's `references/update.md` says: `share-view-context` and `agent-reads-section` (0.9.0), `assistant-view-tools` (0.10.0), `nav-needs` (0.13.0), `agent-reads-own-group` (0.15.0), `refusal-declared`, `managed-exports-removed`, `view-tool-page-explore`, `agent-does-here-section` and `sample-pages-renamed` (0.16.0), `marker-measured-on-observe` (0.16.2), `view-page-matched-as-next`, `journey-moved` and `today-in-timezone` (0.16.3), `no-data-mark` (0.19.0), `table-grid` (0.26.0), `four-layers` (0.28.0), which moves thirty-eight modules into `src/logic/`, `env-reset-before-each` (0.29.0), `direct-query-escape` and `app-description` (0.30.0), `live-stream-shutdown` (0.31.1), `missing-routes` and `computed-series-slot` (0.32.0), `use-size-callback-ref` (0.33.0), `self-hosted-fonts` (0.34.0), and `nav-item-fields`, `workspace-homes-moved` and `sample-with-its-tests` (0.36.0), the last of which names a created project's sample files the release's shipped tests no longer pass, and `proposal-approve-required` and `open-command-moved` (0.37.0). The ten of 0.5.0 are:
+Twenty-nine arrived after 0.5.0 and are resolved as the skill's `references/update.md` says: `share-view-context` and `agent-reads-section` (0.9.0), `assistant-view-tools` (0.10.0), `nav-needs` (0.13.0), `agent-reads-own-group` (0.15.0), `refusal-declared`, `managed-exports-removed`, `view-tool-page-explore`, `agent-does-here-section` and `sample-pages-renamed` (0.16.0), `marker-measured-on-observe` (0.16.2), `view-page-matched-as-next`, `journey-moved` and `today-in-timezone` (0.16.3), `no-data-mark` (0.19.0), `table-grid` (0.26.0), `four-layers` (0.28.0), which moves thirty-eight modules into `src/logic/`, `env-reset-before-each` (0.29.0), `direct-query-escape` and `app-description` (0.30.0), `live-stream-shutdown` (0.31.1), `missing-routes` and `computed-series-slot` (0.32.0), `use-size-callback-ref` (0.33.0), `self-hosted-fonts` (0.34.0), and `nav-item-fields` and `workspace-homes-moved` (0.36.0), and `proposal-approve-required` and `open-command-moved` (0.37.0). The ten of 0.5.0 are:
 
 | Id | Reported when a team-owned file still has | Completion step |
 |----|-------------------------------------------|-----------------|
@@ -187,7 +186,7 @@ Thirty arrived after 0.5.0 and are resolved as the skill's `references/update.md
 | `authorized-endpoints` | `app/api/assistant/route.ts`, or an `actions.ts` Server Action file, without a `resolveAccess` call | `cache.md`, "The assistant route": call `resolveAccess()` first and bring `tools.ts` and `respond.ts` over |
 
 The consumer smoke (`--update`) updates a project adopted and a project created with each of the newest releases before this one (`--origins`: one at release, three weekly). It resolves the migrations the update reports, as `references/update.md` tells an agent: a created origin, whose files are the template's,
-takes the release's versions of the affected team-owned files and the files that arrived with them; an adopted origin,
+takes the release's versions of the affected team-owned files (never a test) and the files that arrived with them; an adopted origin,
 whose pages are the team's own, makes the minimal edit the instruction names. It then records the resolutions and
 finalizes, so `test:t1`, the build and its route and size checks run on the result, and checks the team's own files kept their bytes.
 
@@ -197,8 +196,8 @@ finalizes, so `test:t1`, the build and its route and size checks run on the resu
 its own version of on purpose. An update leaves a kept file as it is; when the new release removes it, it stays and is
 recorded as retired. The checks refuse an entry for a path Meridian never managed (or retired and left in place). A
 managed file the team deleted is not a conflict: the update records it as kept deleted and leaves it out on every later
-update, and removing its entry brings it back on the next one. A file `create` never delivered — it removes the Atlas and
-its tests after copying — is in neither the manifest nor the project, and no update adds it. An aborted update takes back
+update, and removing its entry brings it back on the next one. A file `create` never delivered — it removes the Atlas
+after copying, and ships no test of Meridian's but `tests/setup.ts` — is in neither the manifest nor the project, and no update adds it. An aborted update takes back
 the kept-deletion entries it wrote, leaving the register as it found it.
 
 ### `brand`
@@ -251,7 +250,7 @@ Modelled on the release pipeline of the owner's earlier packages, one package in
 4. **Consumer smoke, from the tarball** (`smoke.ts --adopt --create --update`):
    - `adopt` into `cli/test/fixture-next-app` (a minimal App Router app with two pages, its own stylesheet, a button and a data module), then
      install, `tsc --noEmit` and `next build`, all green. This is the test that keeps the Route A list complete.
-   - `create` into a clean folder, then its `pnpm test:release`.
+   - `create` into a clean folder, then its `test:t1` and `next build`; the weekly run adds the created project's own `pnpm test:release` (`--created-release`).
    - `update` from the release before (adopted and created, read from the registry): a dry-run that writes nothing, the
      update, what it reports resolved, finalize with the Tier 1 checks, the build and its route and size checks, and the team's bytes unchanged. One origin
      at release and the last three weekly, so the time stays the same however many releases there are; the updater's

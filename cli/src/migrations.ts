@@ -5,7 +5,6 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { payloadBytes, payloadFiles } from './files.js';
 import { aliasesOf } from './imports.js';
 import { nextConfigFiles, setsPprFlags } from './next-config.js';
 import { FIXED } from './ownership.js';
@@ -718,15 +717,6 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     checks: ['test:t1'],
   },
   {
-    id: 'sample-with-its-tests',
-    since: '0.36.0',
-    recurring: true,
-    applies: sampleBehindItsTests,
-    summary: "The release's sample differs from team-owned files, while its shipped tests are managed. Review those differences before finalizing.",
-    instructions: "A project `create` made holds the template's sample (its pages, views, data, figures, their helpers and the demo gate in `proxy.ts`) as its own files, which an update never touches, while the shipped tests are Meridian's and arrive with it. The update reports differing sample files on every upgrade, even when a previous release already reported this migration. Each named file differs from the release's copy, or is a sample module introduced after your project's recorded version; the checks may depend on its changes. Write the release's copies into a scratch folder with `npx zz-meridian@<the version you are updating to> create <scratch folder> --no-install`. For a file your team never changed, copy the release's file over it, and copy each module the release added. For a file your team made its own, preserve the intended product behavior while updating its contracts and meaningful behavior and security tests. Keep coverage for functionality the product still exposes; do not delete failures merely to finalize. Retire tests with removed sample features, or when they only pin wording or implementation details, and record intentionally deleted managed tests in `.meridian/keep.json`. A sample file your team deleted after its introduction is not named.",
-    checks: TEST_RELEASE,
-  },
-  {
     id: 'proposal-approve-required',
     since: '0.37.0',
     applies: (root) => matching(root, (rel, src) => SOURCE.test(rel) && importsOf(rel, src).some(({ from }) => from === 'src/components/patterns/proposal') && tags(src, 'Proposal').some((t) => !/\bstate\s*=/.test(t) && !/\bonApprove\s*=/.test(t) && !/\{\s*\.\.\./.test(t))),
@@ -743,30 +733,6 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     checks: ['test:t1'],
   },
 ];
-
-/**
- * The template's sample as `create` writes it: the team's own sources among the pages, views, data, logic and library,
- * and the demo gate (`proxy.ts`). `next.config.ts` is not: the brand step rewrites it, so it never matches the release's.
- */
-const isSample = (rel: string) => SOURCE.test(rel) && isTeamOwned(rel) && ((rel.startsWith('app/') && !rel.startsWith('app/system/')) || /^src\/(?:views|data|logic|lib)\//.test(rel) || rel.startsWith('src/system/fixtures/') || rel === 'src/system/sample-cells.tsx' || rel === 'proxy.ts');
-/** The sample modules 0.36.0 added: a project created before has none, and the release's pages and tests import them. */
-const SAMPLE_ADDED = ['src/lib/totals.ts'];
-
-/**
- * In a project `create` made, each sample file that differs from the release's, and each sample module introduced
- * after the source release that the project lacks. A file the team deleted after its introduction is not named.
- */
-function sampleBehindItsTests(root: string, source: string): string[] | null {
-  if (!/"route"\s*:\s*"create"/.test(text(root, '.meridian/manifest.json') ?? '')) return null;
-  const hits = payloadFiles().filter(isSample).filter((rel) => {
-    try {
-      return !fs.readFileSync(path.join(root, rel)).equals(payloadBytes(rel));
-    } catch {
-      return SAMPLE_ADDED.includes(rel) && isNewer('0.36.0', source);
-    }
-  });
-  return hits.length > 0 ? hits : null;
-}
 
 /** 0.32.0: a verify configuration that lists detail routes and declares no routes meant to be missing. */
 function detailRoutesWithoutMissing(root: string): string[] | null {

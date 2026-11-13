@@ -2,12 +2,16 @@
  * The consumer's path, end to end, from the packed tarball: what CI runs before publishing.
  *
  *   node cli/scripts/smoke.ts [--tarball cli/zz-meridian-0.5.0.tgz] [--adopt] [--create] [--update [--origins N]] [--update-all] [--keep]
+ *                             [--created-release | --created-t2 | --created-report]
  *
  * With no section flag the adopt section runs. --adopt names it explicitly, so it can run beside the others.
  * adopt: into a copy of cli/test/fixture-next-app (a create-next-app project with its own button, utils and data
  * layer), committed to git as a team's would be. The team's files must come out unchanged, the tests must pass under
  * the team's own eslint config, and next build must succeed.
- * --create: a new dashboard from the tarball, then its pnpm test:release (every test, lint and the type check).
+ * --create: a new dashboard from the tarball, then its test:t1 and its next build: what a person who creates a dashboard
+ * does first. --created-release runs its test:release instead (weekly passes it), --created-t2 its test:t2, and
+ * --created-report only the shipped reporting.
+ * `node cli/scripts/consumer.ts` packs this working tree and runs this file against that tarball.
  * --verify runs the adopted project's own pnpm test:t2 as well: the browser sweeps report the browser not run until the
  * project says where its presses go, and a scratch copy that sets noLiveApi: true runs them.
  * --keep leaves the fixture projects in the temporary folder for inspection; without it they are removed, pass, fail, error or interrupt.
@@ -57,7 +61,7 @@ const work = fs.mkdtempSync(path.join(os.tmpdir(), 'zz-meridian-smoke-'));
  * an adopted project has no shipped tests, so its finalize is the static checks, the type check and the build —
  * 0.38.0's finalize ran that scope in 37.0 s on the 4-CPU release runner (its build 13.8 s of it, run 42600180906),
  * and 90 s is the standing limit it was held to, kept rather than loosened.
- * A created project's finalize runs its whole shipped Tier 1 set, 340 files and 2338 tests: 33 s plus the type check
+ * A created project's finalize runs its whole shipped Tier 1 set (the same `test:t1` and `next build` the created suite runs here by default), 340 files and 2338 tests: 33 s plus the type check
  * and the build, about 1.3 min on this Mac, and about 3 min on the 4-CPU runner, where the 496-file set of the template
  * itself took 188 s; 240 s holds that with headroom for the runner's variance. A finalize that grows past these is red
  * here, in `gates`, before every adopter pays for it.
@@ -854,9 +858,11 @@ if (args.includes('--create')) {
   check(text('next.config.ts').includes("'/api/assistant': ['./docs/brief.md']"), "next.config.ts still traces docs/brief.md for /api/assistant");
   const createOffenders = unmanaged(JSON.parse(text('.meridian/manifest.json')));
   check(JSON.parse(text('.meridian/manifest.json')).version === VERSION && createOffenders.length === 0, 'the create manifest is the running version and holds only managed paths', createOffenders.join('\n'));
-  // A created project's own release suite by default. `--created-report` runs the shipped reporting in this project
-  // instead — the step that once read `cli/package.json` and crashed every project's release — in about a second rather
-  // than the created dashboard's whole suite, or the 20-sample protocol a CI=true `test:t2` adds (32 minutes).
+  // A created project's test:t1 and next build by default: its first run is what a person who creates a dashboard does.
+  // `--created-release` (weekly) runs its whole test:release instead, `--created-t2` its test:t2. `--created-report` runs
+  // the shipped reporting in this project instead — the step that once read `cli/package.json` and crashed every
+  // project's release — in about a second rather than the created dashboard's whole suite, or the 20-sample protocol a
+  // CI=true `test:t2` adds (32 minutes).
   if (args.includes('--created-report')) {
     const t = Date.now();
     const report = sh(process.execPath, ['--experimental-strip-types', '-e', `import('./scripts/lib/tier2.ts').then(async (m) => { const r = await m.reportOrWarn({ root: process.cwd(), values: [{ check: 'vitals.lcp', page: '/', unit: 's', value: 1 }], seed: { 'vitals.lcp': 2.5 }, previousTag: process.env.PREVIOUS_TAG }); console.log(r.lines.join('\\n')); if (r.lines.some((l) => l.startsWith('warn tier2: could not report'))) process.exit(1); })`], dir);
@@ -865,18 +871,21 @@ if (args.includes('--create')) {
     check(report.status === 0, 'the created project\'s shipped reporting writes its table and record', report.stdout + report.stderr);
     check(record !== null && typeof record.version === 'string' && Array.isArray(record.values) && record.values.length === 1, 'the created report names this project\'s Meridian version', JSON.stringify(record)?.slice(0, 400));
   }
-  const createdSuite = args.includes('--created-t2') ? 'test:t2' : args.includes('--created-report') ? '' : 'test:release';
-  if (createdSuite) {
+  const createdCommands = args.includes('--created-t2') ? ['test:t2'] : args.includes('--created-report') ? [] : args.includes('--created-release') ? ['test:release'] : ['test:t1', 'build'];
+  for (const command of createdCommands) {
     const t0 = performance.now();
-    const t = sh(pm, ['run', createdSuite], dir);
-    console.log(`     ${createdSuite} (created, ${secs(performance.now() - t0)}s)`);
+    const t = sh(pm, ['run', command], dir);
+    console.log(`     ${command} (created, ${secs(performance.now() - t0)}s)`);
     // The cause, not the tail: the last 40 lines of stderr hid it in run 42646698631. The whole output goes to out/,
     // which the release and weekly consumer jobs upload; the verdict and FAIL lines go to the job log.
-    if (t.status === 0) check(true, `${pm} run ${createdSuite} passes in the new dashboard`);
+    if (t.status === 0) check(true, `${pm} run ${command} passes in the new dashboard`);
     else {
       const files = writeNestedRun(path.join(ROOT, 'out'), 'consumer-test-release', t);
-      check(false, `${pm} run ${createdSuite} passes in the new dashboard`, `the full output is in ${files.map((f) => `out/${f}`).join(' and ')}`);
-      console.log(causeLines(t.stdout, t.stderr).join('\n') || 'no test:release verdict or FAIL line in the output');
+      check(false, `${pm} run ${command} passes in the new dashboard`, `the full output is in ${files.map((f) => `out/${f}`).join(' and ')}`);
+      // test:t1 and test:t2 end with their own `test:tN:` verdict and mark each failing stage `FAIL <stage>`.
+      const stage = [...t.stdout.split('\n'), ...t.stderr.split('\n')].filter((l) => /^test:t[12]: FAIL|^FAIL\s+\S/.test(l));
+      console.log([...causeLines(t.stdout, t.stderr), ...stage].filter((l, i, all) => all.indexOf(l) === i).join('\n') || `no ${command} verdict or FAIL line in the output`);
+      break;
     }
   }
 }

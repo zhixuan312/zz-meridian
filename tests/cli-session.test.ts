@@ -313,11 +313,11 @@ describe('a managed file on the create route', () => {
     const r = release(version, kept);
     return { ...r, payload: [...r.payload, ...removed].sort() };
   };
-  const release2 = { ...BASE, 'tests/atlas.test.tsx': 'atlas1' };
-  const target2 = { ...TARGET, 'tests/atlas.test.tsx': 'atlas2' };
+  const release2 = { ...BASE, [ui('atlas')]: 'atlas1' };
+  const target2 = { ...TARGET, [ui('atlas')]: 'atlas2' };
   const created = () => {
     const root = mk();
-    const disk = Object.fromEntries(Object.entries(release2).filter(([p]) => p !== 'tests/atlas.test.tsx'));
+    const disk = Object.fromEntries(Object.entries(release2).filter(([p]) => p !== ui('atlas')));
     put(root, {
       ...disk,
       'package.json': '{\n  "name": "team-app"\n}\n', 'tsconfig.json': '{ "compilerOptions": { "incremental": true } }\n', '.gitignore': 'node_modules\n.env.local\n',
@@ -329,45 +329,44 @@ describe('a managed file on the create route', () => {
     return root;
   };
 
-  it('never delivered is left alone, while a test the target release adds is delivered', () => {
+  it('never delivered is left alone, while a component the target release adds is delivered', () => {
     const root = created();
-    const base = branded('0.3.0', release2, ['tests/atlas.test.tsx']);
-    const target = branded('0.5.0', { ...target2, 'tests/new.test.tsx': 'new2' }, ['tests/atlas.test.tsx']);
+    const base = branded('0.3.0', release2, [ui('atlas')]);
+    const target = branded('0.5.0', { ...target2, [ui('new')]: 'new2' }, [ui('atlas')]);
     expect(start(ctx(root, { base, target }).c, opts)).toBe(0);
-    expect(has(root, 'tests/atlas.test.tsx')).toBe(false);
-    expect(Object.keys(manifest(root).files)).not.toContain('tests/atlas.test.tsx');
-    expect(read(root, 'tests/new.test.tsx')).toBe('new2');
+    expect(has(root, ui('atlas'))).toBe(false);
+    expect(Object.keys(manifest(root).files)).not.toContain(ui('atlas'));
+    expect(read(root, ui('new'))).toBe('new2');
     expect(has(root, '.meridian/keep.json')).toBe(false);
 
     // The next release still ships it, and it is still not added: the rule reads the replayed release, not progress.
     const next = ctx(root, { version: '0.6.0', base: target, target: { ...target, version: '0.6.0' } });
     expect(start(next.c, { ...opts, allowDirty: true })).toBe(0);
-    expect(has(root, 'tests/atlas.test.tsx')).toBe(false);
+    expect(has(root, ui('atlas'))).toBe(false);
   }, 60_000);
 
   it('delivered but never recorded, then deleted, is recorded as a deletion and restored once its entry is removed', () => {
-    // A project `create` made before 0.29.0: the test was written by `create`, and the manifest recorded no test but
-    // `tests/setup.ts`. The team has since deleted this one.
+    // A managed file the create route delivered but the manifest never recorded; the team has since deleted it.
     const root = created();
-    const gone = ['tests/atlas.test.tsx'];
-    const files = { ...release2, 'tests/old.test.tsx': 'old1' };
-    const later = { ...target2, 'tests/old.test.tsx': 'old2', 'tests/new.test.tsx': 'new2' };
+    const gone = [ui('atlas')];
+    const files = { ...release2, [ui('old')]: 'old1' };
+    const later = { ...target2, [ui('old')]: 'old2', [ui('new')]: 'new2' };
     expect(start(ctx(root, { base: branded('0.3.0', files, gone), target: branded('0.5.0', later, gone) }).c, opts)).toBe(0);
-    expect(has(root, 'tests/old.test.tsx')).toBe(false);
-    expect(JSON.parse(read(root, '.meridian/keep.json'))).toEqual([{ path: 'tests/old.test.tsx', reason: 'deleted by the team; found absent at update to 0.5.0' }]);
-    expect(Object.keys(manifest(root).files)).not.toContain('tests/old.test.tsx');
+    expect(has(root, ui('old'))).toBe(false);
+    expect(JSON.parse(read(root, '.meridian/keep.json'))).toEqual([{ path: ui('old'), reason: 'deleted by the team; found absent at update to 0.5.0' }]);
+    expect(Object.keys(manifest(root).files)).not.toContain(ui('old'));
 
     fs.writeFileSync(path.join(root, '.meridian/keep.json'), '[]\n');
     const next = ctx(root, { version: '0.6.0', base: branded('0.5.0', later, gone), target: branded('0.6.0', later, gone) });
     expect(start(next.c, { ...opts, allowDirty: true })).toBe(0);
-    expect(read(root, 'tests/old.test.tsx')).toBe('old2');
+    expect(read(root, ui('old'))).toBe('old2');
 
     // Deleted again once restored, it is a new deletion to record, not another restore.
-    fs.rmSync(path.join(root, 'tests/old.test.tsx'));
+    fs.rmSync(path.join(root, ui('old')));
     const again = ctx(root, { version: '0.7.0', base: branded('0.6.0', later, gone), target: branded('0.7.0', later, gone) });
     expect(start(again.c, { ...opts, allowDirty: true })).toBe(0);
-    expect(has(root, 'tests/old.test.tsx')).toBe(false);
-    expect(JSON.parse(read(root, '.meridian/keep.json'))).toEqual([{ path: 'tests/old.test.tsx', reason: 'deleted by the team; found absent at update to 0.7.0' }]);
+    expect(has(root, ui('old'))).toBe(false);
+    expect(JSON.parse(read(root, '.meridian/keep.json'))).toEqual([{ path: ui('old'), reason: 'deleted by the team; found absent at update to 0.7.0' }]);
   }, 60_000);
 });
 

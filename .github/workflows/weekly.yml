@@ -188,7 +188,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p out
-          node cli/scripts/smoke.ts --tarball "$(ls /tmp/pack/zz-meridian-*.tgz)" --adopt --create --update --origins 3 --update-all --verify 2>&1 | tee out/weekly-consumer.txt
+          node cli/scripts/smoke.ts --tarball "$(ls /tmp/pack/zz-meridian-*.tgz)" --adopt --create --created-release --update --origins 3 --update-all --verify 2>&1 | tee out/weekly-consumer.txt
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:

@@ -64,7 +64,7 @@ Both agent skill destinations are checked before adoption writes anything; skill
 links, including dangling links, are refused even when their targets hold identical packaged content.
 
 **create** copies the template into a new folder, branded as your product, with the Design Atlas and the design
-system's own documents left out.
+system's own documents left out. Of `tests/`, only `tests/setup.ts` (Meridian's) and `tests/examples/` (the team's starting point) come with it.
 
 **update** moves a project adopted or created with 0.3.0 or later to this release. `update --dry-run` shows the plan and
 writes nothing; run it first.
@@ -82,7 +82,7 @@ writes nothing; run it first.
 - It reports a migration for each interface the release changed where one of your own files still has the old shape,
   such as `cache-components-config` or `nav-needs`. `cli/src/migrations.ts` holds every one; resolve them as the skill's
   `references/update.md` says.
-- Team-owned sample files are checked again on every forward upgrade, even after their migration's introduction, so newer managed tests do not silently outrun the sample they exercise. They remain team-owned: the migration asks for review and never overwrites them.
+- A created project receives no test of Meridian's but `tests/setup.ts`, which is managed; `tests/examples/` is the team's starting point and stays the team's. A test an earlier release shipped is deleted when you left it untouched and staged when you edited it.
 - Everything it did and everything left to do is in `.meridian/update/<version>/MERGE.md`. Resolve the items, then run
   the pinned `npx zz-meridian@<version> update --finalize`; `--resume` continues an interrupted run and `--abort` restores
   what it changed. Only finalize records the new version: it runs `test:t1` (the Tier 1 tests affected by the change,

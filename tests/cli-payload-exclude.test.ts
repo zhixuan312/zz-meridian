@@ -1,5 +1,5 @@
 // @vitest-environment node
-// Named cli-* so the payload leaves it out: it reads the template's own git index and the CLI's build script.
+// Under tests/, so the payload leaves it out: it reads the template's own git index and the CLI's build script.
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -76,17 +76,15 @@ describe('the payload exclusion', () => {
     expect(files.filter((f) => /^tests\/(cli|deep)-[^/]*$/.test(f) && !PAYLOAD_EXCLUDE.test(f))).toEqual([]);
   });
 
-  it('leaves out the repository-scope checks, which judge the template\'s own tree and config', () => {
-    expect(PAYLOAD_EXCLUDE.test('tests/tsconfig-scope.test.ts')).toBe(true);
-    // The Atlas test is not excluded: brand.ts removes it with the Atlas a created project does not have.
-    expect(PAYLOAD_EXCLUDE.test('tests/atlas-unknown-entry.test.ts')).toBe(false);
-    expect(PAYLOAD_EXCLUDE.test('tests/table-head-phone.test.ts')).toBe(false);
-  });
-
-  it('still ships the helper the suites inject, and tests that are not the CLI\'s or the deep ones', () => {
-    for (const f of ['scripts/lib/deep.ts', 'scripts/audit.ts', 'tests/format.test.ts', 'tests/shared-context.test.tsx', 'tests/deep.ts', 'tests/sub/deep-dom.test.ts', 'tests/sub/cli-home.test.tsx']) {
+  it('leaves out every test and helper under tests/ except tests/setup.ts and tests/examples/', () => {
+    for (const f of ['tests/tsconfig-scope.test.ts', 'tests/atlas-unknown-entry.test.ts', 'tests/table-head-phone.test.ts', 'tests/format.test.ts', 'tests/shared-context.test.tsx', 'tests/deep.ts', 'tests/sub/deep-dom.test.ts', 'tests/sub/cli-home.test.tsx']) {
+      expect(PAYLOAD_EXCLUDE.test(f), f).toBe(true);
+    }
+    for (const f of ['tests/setup.ts', 'tests/examples/example-data.test.ts', 'scripts/lib/deep.ts', 'scripts/audit.ts']) {
       expect(PAYLOAD_EXCLUDE.test(f), f).toBe(false);
     }
+    const files = execFileSync('git', ['ls-files', '-z', '--cached', '--others', '--exclude-standard'], { cwd: ROOT, encoding: 'utf8' }).split('\0').filter((f) => f && fs.existsSync(path.join(ROOT, f)));
+    expect(files.filter((f) => f.startsWith('tests/') && !PAYLOAD_EXCLUDE.test(f) && f !== 'tests/setup.ts' && !f.startsWith('tests/examples/'))).toEqual([]);
   });
 
   it('ships no file of the tree that names a deep test or a deep fixture', () => {

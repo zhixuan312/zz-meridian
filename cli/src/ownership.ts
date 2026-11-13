@@ -32,7 +32,7 @@ export const OWNERSHIP: readonly string[] = [
   'Managed: the distributed scripts under `scripts/`, except `scripts/verify.config.ts`, the size baseline `optional:scripts/verify.baseline.json` (first-load JS and the HTML of each page) and a team-local `optional:scripts/check.local.ts`.',
   'Managed: the library helpers `src/lib/cn.ts`, `src/lib/format.ts`, `src/lib/format-date.ts`, `src/lib/calendar-date.ts`, `src/lib/period.ts`, `src/lib/color.ts`, `src/lib/host.ts`, `src/lib/preferences.ts`, `src/lib/csv.ts`, `src/lib/safe-markdown.ts`, `src/lib/logo.ts`, `src/lib/collection.ts`, `src/lib/explore.ts`, `src/lib/live.ts`, `src/lib/shared-context.ts`, `src/lib/agent-guidance.ts`, `src/lib/insight.ts`, `src/lib/facts.ts`, `src/lib/rank.ts`, `src/lib/sort.ts` and `src/lib/contrast-pairs.ts`, and the assistant prompt `src/lib/assistant/prompt.ts`.',
   'Managed: the three `src/logic/` helpers a shipped component imports — `src/logic/after-start.ts`, `src/logic/derivations.ts` and `src/logic/summarise.ts` — so a payload\'s cards build in an adopted project; every other module under `src/logic/` is the team\'s.',
-  'Managed: `src/views/console-chrome.tsx`, `tests/setup.ts`, and — in a project `create` made — every test the release ships, with the helpers under `tests/` they import. A shipped test pins the behaviour of the module it covers, so a release that changes one changes the other; a test the team edits is staged for its decision like any other edited file.',
+  'Managed: `src/views/console-chrome.tsx` and `tests/setup.ts`. `tests/setup.ts` is the only test file Meridian owns in a project: `optional:tests/examples/` and every other test are the team\'s.',
   'Managed: `optional:scripts/package.json`, only when the adopt or create that set the project up generated it for this project shape.',
   'Managed: both installed skill trees, `optional:.agents/skills/zz-meridian/` and `optional:.claude/skills/zz-meridian/`, taken from the release\'s skill payload.',
   'Managed: the brand token and stylesheet paths under `tokens/` and `src/styles/` that the release generated from the recorded brand.',
@@ -47,10 +47,9 @@ export const renderOwnership = (): string => OWNERSHIP.map((l) => `- ${l}`).join
 /**
  * The managed set as one path pattern, for a caller that holds a manifest but no payload list — the consumer smoke checks
  * a manifest read from a tarball it never enumerates. `managedPaths` is the rule; this is that rule said once more in a
- * regex, and `tests/cli-ownership.test.ts` holds the two together over the payload paths it knows. The tests clause is the
- * `create` route's, so it is permissive for an adopted project — whose manifest never names a test but `tests/setup.ts`.
+ * regex, and `tests/cli-ownership.test.ts` holds the two together over the payload paths it knows.
  */
-export const MANAGED_PATH = /^(tokens\/|src\/styles\/|src\/components\/|scripts\/|src\/lib\/|\.agents\/|\.claude\/)|^(src\/views\/console-chrome\.tsx|tests\/[^/]+\.tsx?|src\/logic\/(?:after-start|derivations|summarise)\.ts)$/;
+export const MANAGED_PATH = /^(tokens\/|src\/styles\/|src\/components\/|scripts\/|src\/lib\/|\.agents\/|\.claude\/)|^(src\/views\/console-chrome\.tsx|tests\/setup\.ts|src\/logic\/(?:after-start|derivations|summarise)\.ts)$/;
 
 /** A path inside the managed folders that is the team's all the same: their own views, their app, their docs, their config. */
 export const NEVER_MANAGED = (p: string) => p === 'src/app.config.ts' || p === 'scripts/verify.config.ts' || p.startsWith('app/') || p.startsWith('docs/') || (p.startsWith('src/views/') && p !== 'src/views/console-chrome.tsx');
@@ -93,12 +92,6 @@ export function adoptSetOf(payloadFiles: readonly string[]): string[] {
  */
 export function managedPaths(payloadFiles: readonly string[], route: 'adopt' | 'create', generated: readonly string[] = []): Set<string> {
   const out = new Set(adoptSetOf(payloadFiles));
-  // A created project's tests are Meridian's: it wrote every one of them, and each pins the behaviour of the module it
-  // covers. Left the team's, a release that changed `splitFigure` could not change the test that reads it, and the
-  // project's own gate failed after an update that was otherwise correct (0.29.0's consumer smoke). The helpers the tests
-  // import are Meridian's as well: a test an update delivers without the helper it imports fails. Adopt still copies none
-  // of them: that project has a test suite of its own.
-  if (route === 'create') for (const f of payloadFiles) if (/^tests\/[^/]+\.tsx?$/.test(f)) out.add(f);
   for (const g of generated) if (g.startsWith('tokens/') || g.startsWith('src/styles/') || g === 'scripts/package.json') out.add(g);
   const prefix = 'skills/zz-meridian/';
   for (const f of payloadFiles) {

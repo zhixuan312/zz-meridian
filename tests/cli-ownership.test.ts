@@ -39,10 +39,6 @@ describe('adoptSetOf', () => {
 });
 
 describe('managedPaths', () => {
-  // A created project's tests are the release's, because each pins the behaviour of the module it covers. 0.29.0's
-  // consumer smoke found the alternative: an unedited `tests/format.test.ts` kept asserting the `splitFigure` of 0.28.0
-  // while `src/lib/format.ts` moved, and the project's own gate failed after an update that was otherwise correct.
-  // Adopt copies none of them: that project brings a test suite of its own.
   // The consumer smoke checks a manifest read from a tarball, which it cannot enumerate, so it asks the rule as a path
   // pattern. That copy drifted the first time the rule changed — 0.29.0's tests became managed and the smoke called every
   // one of them unmanaged, failing the release twice. This holds the two together in the direction that matters: a path
@@ -52,12 +48,13 @@ describe('managedPaths', () => {
     for (const p of ['src/app.config.ts', 'app/(dashboard)/page.tsx', 'docs/brief.md', 'src/views/members.tsx', 'scripts/verify.config.ts']) expect(MANAGED_PATH.test(p) && !NEVER_MANAGED(p), p).toBe(false);
   });
 
-  it('takes the tests it ships in a created project, and none of them in an adopted one', () => {
-    expect(managedPaths(payload, 'create').has('tests/format.test.ts')).toBe(true);
-    expect(managedPaths(payload, 'create').has('tests/key-value.test.tsx')).toBe(true);
-    // A test the project wrote itself is not in the payload, so it is never managed on either route.
-    expect(managedPaths(payload, 'create').has('tests/our-own.test.ts')).toBe(false);
-    expect(managedPaths(payload, 'adopt').has('tests/format.test.ts')).toBe(false);
+  it('takes tests/setup.ts and no other test, on either route', () => {
+    for (const route of ['adopt', 'create'] as const) {
+      expect(managedPaths(payload, route).has('tests/setup.ts'), route).toBe(true);
+      expect(managedPaths(payload, route).has('tests/format.test.ts'), route).toBe(false);
+      expect(managedPaths(payload, route).has('tests/key-value.test.tsx'), route).toBe(false);
+    }
+    expect([...managedPaths(payload, 'create')].sort()).toEqual([...managedPaths(payload, 'adopt')].sort());
   });
 
   for (const route of ['adopt', 'create'] as const) {
