@@ -6,8 +6,8 @@
  * A rule that states a fact writes the fact's one line itself, with the product's formatters, so the line is written
  * once: a page draws it and the page's context shares it. Each returns its fact when the rule holds and null when it
  * does not, and none has a weaker thing to say in its place. A line is a figure and what it counts, never a judgement
- * of it. What a rule needs of the product (the history a record asks for, the thresholds of a first, the band of a steady day) is an argument:
- * the readers pass `facts` from `src/app.config.ts`.
+ * of it. What a rule needs of the product (the history a record asks for, the thresholds of a first) is an argument: the
+ * readers pass `facts` from `src/app.config.ts`.
  */
 import { formatPercent, ordinal, plural } from '@/lib/format';
 import { formatDate } from '@/lib/format-date';
