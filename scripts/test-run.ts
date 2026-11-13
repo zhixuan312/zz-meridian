@@ -6,6 +6,9 @@
  *   pnpm test:t2        the same plus the Tier 2 checks those changes affect (the affected Tier 1 tests included)
  *   pnpm test:release   every Tier 1 and Tier 2 test, once, with lint and the type check
  *
+ * `node scripts/test-run.ts stage <static|sweep <name>|deep --since <ref> [--part i/n]|tier2>` runs one part of test:release,
+ * for a CI job; it shares test:release's step functions. It is not a fourth test command.
+ *
  * "Since the last green run" is the marker in out/last-green, which a command writes after a passing run; out/ is
  * gitignored. A missing marker falls back to the diff against master, and a checkout with neither marker nor a diff
  * (master itself, a fresh CI clone) runs the whole tier, because no green run is evidence for it.
@@ -33,6 +36,7 @@ import { pathToFileURL } from 'node:url';
 import { bin } from './lib/bin.ts';
 import { FIRST_LOAD_CAP_KB, budgetsOf, type BudgetsConfig } from './lib/budgets.ts';
 import { consumerSmokeKind } from './lib/consumer-smoke.ts';
+import { deepFiles, deepPart, deepPlan, deepReach } from './lib/deep-inputs.ts';
 import { lintTargets } from './lib/lint.ts';
 import { deepBrowserNotRun } from './lib/report-lines.ts';
 import { clearParts, reportOrWarn, type Seed, type Value } from './lib/tier2.ts';
@@ -234,12 +238,12 @@ const chromeAvailable = (): boolean => {
 };
 
 /** The large browser-fixture tests cannot run without Chrome; say so, never that they passed. */
-function deepTests(label: string): { status: number; ran: boolean } {
+function deepTests(label: string, files: string[] = ['tests/deep-']): { status: number; ran: boolean } {
   if (!chromeAvailable()) {
     console.log(`not run ${label}: no Chrome (CHROME is unset and no browser was found)`);
     return { status: 0, ran: false };
   }
-  return { status: run(label, bin('vitest'), ['run', 'tests/deep-', '--no-file-parallelism']), ran: true };
+  return { status: run(label, bin('vitest'), ['run', ...files, '--no-file-parallelism']), ran: true };
 }
 
 const hasDeep = (): boolean => fs.existsSync(path.join(ROOT, 'tests')) && fs.readdirSync(path.join(ROOT, 'tests')).some((f) => f.startsWith('deep-') && /\.test\.tsx?$/.test(f));
@@ -251,11 +255,11 @@ const affectsDeep = (files: string[]): boolean => files.some((f) => /^(scripts|j
  * The browser suites (scripts/browser.ts), at the depths asked for. Its own line per suite is passed through; the JSON
  * line says what ran and what did not, and its exit 2 is a run with something not run, not a failure.
  */
-function browser(depth: string, built = false): Promise<{ ok: boolean; notRun: string[]; declared: string[]; ran: string[]; reported: string[]; tier2: Value[] }> {
+function browser(depth: string, built = false, only?: string): Promise<{ ok: boolean; notRun: string[]; declared: string[]; ran: string[]; reported: string[]; tier2: Value[] }> {
   // Streamed as it arrives, not collected and printed when the child exits: a suite that stops making progress must be
   // visible in the log while it is stuck, never only after it finally returns or times out.
   return new Promise((resolve) => {
-    const child = spawn(process.execPath, ['scripts/browser.ts', '--depth', depth, ...(built ? ['--built'] : [])], { cwd: ROOT });
+    const child = spawn(process.execPath, ['scripts/browser.ts', '--depth', depth, ...(built ? ['--built'] : []), ...(only ? ['--only', only] : [])], { cwd: ROOT });
     let out = '';
     let rest = '';
     const drain = (text: string) => {
@@ -281,6 +285,29 @@ function browser(depth: string, built = false): Promise<{ ok: boolean; notRun: s
   });
 }
 
+/** The steps `test:release` and the stages share, so a stage cannot drift from the release it is a part of. */
+const typeSteps = (): [string, () => number][] => [
+  ['types: route types', () => run('types: route types', bin('next'), ['typegen'])],
+  ['types: tsc --noEmit', () => run('types: tsc --noEmit', bin('tsc'), ['--noEmit'])],
+  ['lint: eslint .', () => run('lint: eslint .', bin('eslint'), ['.', '--ignore-pattern', '.meridian/'])],
+];
+
+/** A production build; the size checks need the built app served, so they run inside the browser suites. */
+const productionBuild = (): number => run('build: next build', bin('next'), ['build'], { ...process.env, MERIDIAN_TYPES_CHECKED: '1' });
+
+/**
+ * The route policy after a build. A build without the two flags writes no renderingMode, and the policy presupposes them:
+ * the project's configuration, reported as declared (exit 2) and never a failure; any other non-zero is a red.
+ */
+function routePolicy(declared: string[], failed: string[]): void {
+  const policy = run('route policy', process.execPath, ['scripts/route-policy.ts']);
+  if (policy === 2) declared.push("route policy (the build writes no renderingMode: the project's next.config sets no cacheComponents and partialPrefetching)");
+  else if (policy !== 0) failed.push('the route policy');
+}
+
+/** Every test file but the browser fixtures, which run on their own. */
+const everyTestFile = (): ReturnType<typeof vitest> => vitest('run', [], true, 'every test file (the browser fixtures run on their own)');
+
 async function release(): Promise<number> {
   const notRun: string[] = [];
   /** What the project's own configuration left unrun: printed with its reason, and never holding the marker, because a rerun cannot change it. */
@@ -290,15 +317,10 @@ async function release(): Promise<number> {
   clearParts(ROOT);
   for (const gap of ciGaps(Number(process.versions.node.split('.')[0]))) console.log(`warn test:release: ${gap}`);
   if (staticChecks() !== 0) failed.push('static checks');
-  const steps: [string, () => number][] = [
-    ['types: route types', () => run('types: route types', bin('next'), ['typegen'])],
-    ['types: tsc --noEmit', () => run('types: tsc --noEmit', bin('tsc'), ['--noEmit'])],
-    ['lint: eslint .', () => run('lint: eslint .', bin('eslint'), ['.', '--ignore-pattern', '.meridian/'])],
-  ];
-  for (const [label, step] of steps) if (step() !== 0) failed.push(label);
+  for (const [label, step] of typeSteps()) if (step() !== 0) failed.push(label);
 
   // Every test file: Tier 1, the performance convention, and this repository's browser fixtures on their own below.
-  const t1 = vitest('run', [], true, 'every test file (the browser fixtures run on their own)');
+  const t1 = everyTestFile();
   if (t1.status !== 0) failed.push('the test suite');
   if (hasDeep()) {
     const deep = deepTests('Tier 1 browser-fixture tests (tests/deep-*)');
@@ -307,12 +329,8 @@ async function release(): Promise<number> {
   }
   // A production build, its routes declared as the policy says. The size checks need the built app served, so they run
   // inside the browser suites below, once, against the app they start.
-  if (run('build: next build', bin('next'), ['build'], { ...process.env, MERIDIAN_TYPES_CHECKED: '1' }) !== 0) failed.push('the production build');
-  // A build without the two flags writes no renderingMode, and the policy presupposes them: the project's configuration,
-  // reported not run with the reason (exit 2) and never a failure; any other non-zero is a red.
-  const policy = run('route policy', process.execPath, ['scripts/route-policy.ts']);
-  if (policy === 2) declared.push("route policy (the build writes no renderingMode: the project's next.config sets no cacheComponents and partialPrefetching)");
-  else if (policy !== 0) failed.push('the route policy');
+  if (productionBuild() !== 0) failed.push('the production build');
+  routePolicy(declared, failed);
   // The browser suites against that build: the sweeps first, then the timed runs alone on the quiet machine. The parts
   // dir is cleared first, so values the browser-fixture tests recorded into the same out/ are not this run's.
   clearParts(ROOT);
@@ -483,9 +501,107 @@ function touchesBrowserAll(changed: string[]): boolean {
   return changed.some((f) => touchesBrowser(f) || isDeep(f));
 }
 
+/** The stages of `test:release`, one CI job each. */
+const STAGES = ['static', 'sweep', 'deep', 'tier2'] as const;
+const SWEEPS = ['audit', 'interactions', 'keyboard', 'rest'] as const;
+
+/** A stage's last line and exit: 1 for a failed check, 2 for a check the environment could not run, else 0. */
+function stageExit(name: string, failed: string[], notRun: string[], declared: string[], overBudget: string[], counts?: { files: number; tests: number }): number {
+  for (const d of declared) console.log(`not run (declared by the project's configuration): ${d}`);
+  const { line, exit } = summaryLine({ command: `test:${name}`, failed, notRun, declared, overBudget, ...(counts ?? {}) });
+  console.log(line);
+  return exit === 0 && notRun.length ? 2 : exit;
+}
+
+/** The static checks, the type check, lint and every Vitest file but the deep tests. */
+function stageStatic(): number {
+  const failed: string[] = [];
+  if (staticChecks() !== 0) failed.push('static checks');
+  for (const [label, step] of typeSteps()) if (step() !== 0) failed.push(label);
+  const t1 = everyTestFile();
+  if (t1.status !== 0) failed.push('the test suite');
+  return stageExit('stage static', failed, [], [], [], { files: t1.files, tests: t1.tests });
+}
+
+/** A production build, then one function sweep against it; `rest` also runs the route policy after the build. */
+async function stageSweep(name: string): Promise<number> {
+  const failed: string[] = [];
+  const declared: string[] = [];
+  const notRun: string[] = [];
+  if (productionBuild() !== 0) failed.push('the production build');
+  if (name === 'rest') routePolicy(declared, failed);
+  clearParts(ROOT);
+  const r = await browser('fn', true, name);
+  if (!r.ok) failed.push('a browser suite');
+  notRun.push(...r.notRun.map((s) => `browser suites (${s})`));
+  declared.push(...r.declared.map((s) => `browser suites (${s})`));
+  return stageExit(`stage sweep ${name}`, failed, notRun, declared, []);
+}
+
+/** The deep tests the changes since `since` reach, optionally one part of them; none reached is a decision, not a skip. */
+function stageDeep(since: string, part: { i: number; n: number } | null): number {
+  const list = git(['diff', '--name-only', `${since}..HEAD`]);
+  if (!list.ok) { console.error(`test-run: --since ${since} does not resolve to a range ending at HEAD`); return 1; }
+  const plan = deepPlan(list.out.split('\n').filter(Boolean), deepReach);
+  let files = plan.all ? deepFiles() : plan.files;
+  if (part) files = deepPart(files, part.i, part.n);
+  if (!files.length) {
+    console.log(`not run: tests/deep-* (no change since ${since} reaches them)`);
+    return 0;
+  }
+  console.log(`deep tests${part ? ` (part ${part.i}/${part.n})` : ''}: ${files.join(', ')}`);
+  const deep = deepTests('Tier 1 browser-fixture tests (tests/deep-*)', files);
+  return stageExit('stage deep', deep.status !== 0 ? ['the browser-fixture tests'] : [], deep.ran ? [] : ['browser-fixture tests (tests/deep-*) (no Chrome)'], [], []);
+}
+
+/** A build, then the timed and perf suites against it and the size values, recorded. Reports; always exits 0. */
+async function stageTier2(): Promise<number> {
+  if (productionBuild() !== 0) console.log('warn test:stage tier2: the production build failed, so no value was measured');
+  clearParts(ROOT);
+  const r = await browser('timed,perf', true);
+  const overBudget = [...(await reportTier2(r.tier2)), ...r.reported.map((s) => `browser suites (${s})`)];
+  stageExit('stage tier2', [], r.notRun.map((s) => `browser suites (${s})`), [], overBudget);
+  return 0;
+}
+
+function stageMain(argv: string[]): Promise<number> | number {
+  const [name, ...rest] = argv;
+  if (!STAGES.includes(name as (typeof STAGES)[number])) {
+    console.error(`test-run: unknown stage "${name ?? ''}"; the stages are ${STAGES.join(', ')}`);
+    return 1;
+  }
+  if (name === 'static' || name === 'tier2') {
+    if (rest.length) { console.error(`test-run: stage ${name} takes no arguments`); return 1; }
+    return name === 'static' ? stageStatic() : stageTier2();
+  }
+  if (name === 'sweep') {
+    if (rest.length !== 1 || !SWEEPS.includes(rest[0] as (typeof SWEEPS)[number])) {
+      console.error(`test-run: stage sweep takes one of ${SWEEPS.join(', ')}`);
+      return 1;
+    }
+    return stageSweep(rest[0]!);
+  }
+  const sinceAt = rest.indexOf('--since');
+  const partAt = rest.indexOf('--part');
+  const since = sinceAt >= 0 ? rest[sinceAt + 1] : undefined;
+  const partText = partAt >= 0 ? rest[partAt + 1] : undefined;
+  const part = partText === undefined ? null : /^(\d+)\/(\d+)$/.exec(partText);
+  const known = rest.length === (sinceAt >= 0 ? 2 : 0) + (partAt >= 0 ? 2 : 0);
+  if (!since || since.startsWith('--') || !known || (partText !== undefined && (!part || Number(part[1]) < 1 || Number(part[1]) > Number(part[2])))) {
+    console.error('test-run: stage deep takes --since <ref> and optionally --part i/n (1 <= i <= n)');
+    return 1;
+  }
+  if (!git(['rev-parse', '--verify', '--quiet', `${since}^{commit}`]).ok) {
+    console.error(`test-run: --since ${since} does not name a commit`);
+    return 1;
+  }
+  return stageDeep(since, part ? { i: Number(part[1]), n: Number(part[2]) } : null);
+}
+
 if (import.meta.main) {
   const tier = process.argv[2];
   const extra = process.argv.slice(3);
+  if (tier === 'stage') process.exit(await stageMain(extra));
   if (extra.length || !['t1', 't2', 'release'].includes(tier ?? '')) {
     console.error('test-run: takes one of t1, t2 or release, and nothing else. Use pnpm test:t1, pnpm test:t2 or pnpm test:release.');
     process.exit(1);

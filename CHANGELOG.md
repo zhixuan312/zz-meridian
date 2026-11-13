@@ -14,6 +14,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 - **A timed browser suite never fails a run.** Navigation with its budgets judged, live data, Web Vitals and the 20-sample perf protocol are Tier 2: a FAIL from one of them is reported in the run's closing line as over budget, and the run stays green. The function sweeps (audit, every control pressed, keyboard, rail, personas, journeys, assistant) still fail it.
 - **`scripts/browser.ts --only <audit|interactions|keyboard|rest>` runs one function sweep,** against the same assistant-on server the whole run uses, and names the others as left to their own jobs.
 - **`control-dead` and a shell `never-ready` say what happened at the press** (#147): whether the click reached the page, the `readyState` at the press and the element at the press point. The perf-live deep case judges each combination on a three-run allowance instead of its first slow sample.
+- **`node scripts/test-run.ts stage <static|sweep <name>|deep --since <ref> [--part i/n]|tier2>` runs one part of `test:release`,** so CI can run each once in its own job. `stage deep` runs only the deep tests a change reaches: every one when `scripts/`, `journeys/` or a deep test changed, none when nothing reaches them.
 - **The Tier 2 history can travel with the releases.** `nextHistory` in `scripts/lib/tier2.ts` adds a release's record to the last five.
 
 ### Breaking
