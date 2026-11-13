@@ -44,13 +44,25 @@ function runSuite(args: string[], timeout: number) {
   });
 }
 
-/** One `it` per manifest entry of `suite` (run a few at a time); asserts the entry's outcome (exit code) and its line. */
-function casesFor(suite: string, command: (page: string, base: string) => string[], timeout: number) {
+/**
+ * One `it` per manifest entry of `suite` (run a few at a time); asserts the entry's outcome (exit code) and its line.
+ *
+ * `retriesReadiness` is for a suite whose subject is a measurement: a page that never readied inside `PATIENCE` is machine
+ * speed, not the verdict the case is about, so a run whose only problem is `never-ready` is retried once. A fixture that
+ * is wrong fails every run, which is why the planted `never-ready` cases (`/nav-retake`, `/nav-solo-unoffered`) still fail.
+ */
+function casesFor(suite: string, command: (page: string, base: string) => string[], timeout: number, retriesReadiness = false) {
   const entries = MANIFEST.filter((e) => e.suite === suite);
   it(`the manifest has cases for ${suite}`, () => { expect(entries.length).toBeGreaterThan(0); });
   for (const e of entries) {
     it.concurrent(`${e.page}${e.args ? ` ${e.args.join(' ')}` : ''}: ${e.outcome}${e.line ? ` (${e.line})` : ''}`, async () => {
-      const r = await runSuite([...command(e.page, url), ...(e.args ?? [])], timeout);
+      const args = [...command(e.page, url), ...(e.args ?? [])];
+      let r = await runSuite(args, timeout);
+      if (retriesReadiness && r.code === 1 && /never-ready/.test(r.out) && !/control-dead|did not answer|not-there/.test(r.out)) {
+        const again = await runSuite(args, timeout);
+        console.log(`retried once: a page that never readied is the machine's speed, not this case's verdict\n${r.out}`);
+        r = again;
+      }
       expect(r.timedOut, `timed out after ${timeout} ms\n${r.out}`).toBe(false);
       // `clear`: the suite ran and its line is not printed, whatever else the page did. A twin of a timed rule holds only
       // its own rule, since the cases run side by side and a floor they do not plant measures the machine.
@@ -164,8 +176,9 @@ describe('navigate-timing-off', () => {
 });
 
 describe('navigate-timing-on', () => {
-  // The same budgets with `--timing on`: the page that works is over its 1 ms budget.
-  casesFor('navigate-timing-on', navigate('scripts/fixtures/deep/config-tight.ts', ['--timing', 'on']), 180_000);
+  // The same budgets with `--timing on`: the page that works is over its 1 ms budget. A run whose only problem is a page
+  // that never readied in `PATIENCE` is retried once: this case is about the budget's verdict, and a loaded machine is not.
+  casesFor('navigate-timing-on', navigate('scripts/fixtures/deep/config-tight.ts', ['--timing', 'on']), 180_000, true);
 });
 
 describe('vitals', () => {
