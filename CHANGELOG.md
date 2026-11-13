@@ -21,6 +21,8 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 - **The package no longer carries Meridian's docs, decisions, contributor guide, card previews or Design Atlas;** no route read them. The changelog still ships whole: an update's MERGE.md shows every release since the project's.
 - **Every card's README ships next to its component,** managed, in created and adopted projects, so an agent reads the documentation of the version it has. A project's `check.ts` no longer judges the card contract, which is Meridian's own.
 
+- **`src/app.config.ts` is checked against `src/lib/app-contract.ts`,** a managed file holding the shapes Meridian's own code reads (`AppIdentity`, `Workspace`, `NavItem`, `NavGroup`). A configuration missing a field the managed code reads now fails the type check. A project's existing configuration is not rewritten by an update: add `void (app satisfies AppIdentity);` beside your `app` to opt in.
+
 ### Breaking
 
 - **`adopt` exits 1 when the type check fails after install.** The files stay adopted; fix the type errors, then run the project's gate (`npx tsc --noEmit` re-checks).

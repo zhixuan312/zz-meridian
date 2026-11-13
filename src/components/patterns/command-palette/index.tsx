@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useLeave } from '@/components/base/shell';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ArrowRight, CornerDownLeft, Monitor, Moon, Search, Sun } from 'lucide-react';
-import type { NavGroup } from '@/app.config';
+import type { NavGroup } from '@/lib/app-contract';
 import { cn } from '@/lib/cn';
 import { rank } from '@/lib/rank';
 import { usePreferences } from '@/components/base/providers';

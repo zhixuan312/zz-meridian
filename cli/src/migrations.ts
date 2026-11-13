@@ -765,7 +765,8 @@ function navItemWithoutFields(root: string): string[] | null {
   const rel = 'src/app.config.ts';
   const body = text(root, rel);
   const type = body === null ? undefined : navItemType(body);
-  return type && !(/\bunder\?:/.test(type) && /\bprefetch\?:/.test(type)) ? [rel] : null;
+  // The release's own `NavItem` is the contract's (`src/lib/app-contract.ts`), which declares both fields.
+  return type && !/=\s*ContractNavItem\b/.test(type) && !(/\bunder\?:/.test(type) && /\bprefetch\?:/.test(type)) ? [rel] : null;
 }
 
 /**

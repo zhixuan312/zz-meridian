@@ -1,4 +1,4 @@
-import type { NavGroup } from '@/app.config';
+import type { NavGroup } from '@/lib/app-contract';
 import type { Crumb } from '@/components/ui/breadcrumb';
 
 type Item = NavGroup['items'][number];

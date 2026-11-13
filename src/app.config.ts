@@ -1,9 +1,9 @@
 import {
-  Activity, BarChart3, Boxes, CircleDollarSign, FileText, FlaskConical, Gauge, KeyRound, LayoutGrid, Radio, Rocket, Settings, Ticket, UserRound, Users, type LucideIcon,
+  Activity, BarChart3, Boxes, CircleDollarSign, FileText, FlaskConical, Gauge, KeyRound, LayoutGrid, Radio, Rocket, Settings, Ticket, UserRound, Users,
 } from 'lucide-react';
-// Relative with its extension, and a type-only need below: `scripts/check.ts` imports this file under plain node.
+// Relative with its extension, and type-only below: `scripts/check.ts` imports this file under plain node.
 import { FEATURES } from './data/features.ts';
-import type { Need } from './lib/collection.ts';
+import type { AppIdentity, NavGroup as ContractNavGroup, NavItem as ContractNavItem, Workspace } from './lib/app-contract.ts';
 
 /**
  * Everything that makes this dashboard yours, in one file. Rename the product, rewrite the navigation, pick an accent.
@@ -28,6 +28,8 @@ export const app = {
   /** The signed-in person the rail shows until your auth supplies one. */
   user: { name: 'Maya Chen', role: 'Owner' },
 } as const;
+// The managed code reads `app` as `AppIdentity`: a field it lacks is a type error here.
+void (app satisfies AppIdentity);
 
 /**
  * The product's workspaces, in the order the rail's menu lists them. A workspace is where a person looks, not what they
@@ -43,20 +45,11 @@ export const workspaces = {
   engineering: { label: 'Engineering', audience: 'For the people who run the product: whether it is up, who holds its keys, what is being fixed, tested and released.', homeHref: '/engineering' },
 } as const;
 export type WorkspaceId = keyof typeof workspaces;
+void (workspaces satisfies Record<string, Workspace>);
 
-/**
- * `needs` is the feature's own need from `src/data/features.ts`, by reference: the rail asks it of the person. `feature`
- * names that feature by its id where its need is one others share, as every `public` one is: the assistant reads from
- * it what the page shows (the actions the features table puts on it), whatever the item is labelled.
- *
- * `prefetch` asks for the item's page to be prefetched in full, its URL data with it, where Next's default prefetches the
- * route's App Shell only. It is for a destination whose content is its URL data (a document page under a dynamic
- * segment), and every visible such link makes a request of its own, so it is for one or two items.
- *
- * `under` is the href of an item in the same group that this item is a sub page of.
- */
-export type NavItem = { href: string; label: string; icon: LucideIcon; badge?: string; workspace?: WorkspaceId; needs: Need; feature?: string; prefetch?: true; under?: string };
-export type NavGroup = { label?: string; items: NavItem[] };
+/** The contract's navigation types (`src/lib/app-contract.ts`), which the rail and the palette read. */
+export type NavItem = ContractNavItem<WorkspaceId>;
+export type NavGroup = ContractNavGroup<WorkspaceId>;
 
 export const nav: NavGroup[] = [
   {

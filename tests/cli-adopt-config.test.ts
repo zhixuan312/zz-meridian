@@ -6,12 +6,14 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import ts from 'typescript';
 import { afterAll, describe, expect, it } from 'vitest';
 import { eslintConfigOf, existingFile, projectConfig, stylesheetPath } from '../cli/src/adopt.ts';
 import { installSkill, payloadBytes, skillPaths } from '../cli/src/files.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const template = fs.readFileSync(path.join(ROOT, 'src/app.config.ts'), 'utf8');
+fs.mkdirSync(path.join(ROOT, 'out'), { recursive: true });
 const written = projectConfig(template, ['/', '/orders', '/orders/returns']);
 
 describe('the configuration adopt writes for a project', () => {
@@ -23,7 +25,24 @@ describe('the configuration adopt writes for a project', () => {
 
   it('leaves out the sample feature and workspace tables', () => {
     expect(written).not.toMatch(/\bFEATURES\b/);
-    expect(written).not.toMatch(/\bworkspaces\b|\bWorkspaceId\b/);
+    expect(written).not.toMatch(/\bworkspaces\b|\bWorkspaceId\b|\bWorkspace\b/);
+  });
+
+  it('imports exactly the contract types it uses and type-checks against the contract', () => {
+    const dir = fs.mkdtempSync(path.join(ROOT, 'out', 'adopt-config-'));
+    try {
+      // The configuration sits where a project keeps it, beside `lib/app-contract.ts`; the contract's own imports resolve in this repository.
+      fs.mkdirSync(path.join(dir, 'lib'));
+      fs.copyFileSync(path.join(ROOT, 'src/lib/app-contract.ts'), path.join(dir, 'lib/app-contract.ts'));
+      fs.copyFileSync(path.join(ROOT, 'src/lib/collection.ts'), path.join(dir, 'lib/collection.ts'));
+      fs.writeFileSync(path.join(dir, 'app.config.ts'), written);
+      const config = ts.getParsedCommandLineOfConfigFile(path.join(ROOT, 'tsconfig.json'), {}, { ...ts.sys, onUnRecoverableConfigFileDiagnostic: () => {} });
+      const program = ts.createProgram([path.join(dir, 'app.config.ts')], { ...config!.options, noEmit: true, noUnusedLocals: true });
+      const own = ts.getPreEmitDiagnostics(program).filter((d) => d.file && path.dirname(d.file.fileName).startsWith(dir) && path.basename(d.file.fileName) === 'app.config.ts');
+      expect(own.map((d) => ts.flattenDiagnosticMessageText(d.messageText, '\n'))).toEqual([]);
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
   });
 });
 

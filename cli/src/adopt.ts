@@ -117,12 +117,14 @@ export function projectConfig(template: string, pages: string[]): string {
   if (!/export const nav: NavGroup\[\] = \[[\s\S]*?\n\];/.test(template)) throw new Error('the template\'s src/app.config.ts has no `export const nav: NavGroup[] = [ … ];` block to replace');
   const items = pages.map((r) => `      { href: ${JSON.stringify(r)}, label: ${JSON.stringify(label(r))}, icon: LayoutGrid, needs: 'public' },`).join('\n');
   return template
-    .replace(/^import \{[\s\S]*?\} from 'lucide-react';/m, "import { LayoutGrid, type LucideIcon } from 'lucide-react';")
+    .replace(/^import \{[\s\S]*?\} from 'lucide-react';/m, "import { LayoutGrid } from 'lucide-react';")
     // The template's own `FEATURES` import would name a file this project's `src/data/` need not have, and a nav item
     // without a `needs` is a type error since 0.13.0.
     .replace(/^import \{ FEATURES \} from '\.\/data\/features\.ts';\n/m, '')
-    .replace(/\/\*\*(?:(?!\*\/)[\s\S])*\*\/\nexport const workspaces = \{[\s\S]*?\n\} as const;\nexport type WorkspaceId = [^\n]*\n\n/, '')
-    .replace(' workspace?: WorkspaceId;', '')
+    // The sample's workspaces go with the contract type that checks them and the id the navigation types are bound to.
+    .replace(/\/\*\*(?:(?!\*\/)[\s\S])*\*\/\nexport const workspaces = \{[\s\S]*?\n\} as const;\nexport type WorkspaceId = [^\n]*\nvoid \(workspaces satisfies [^\n]*\n\n/, '')
+    .replace(', Workspace }', ' }')
+    .replace(/(export type Nav(?:Item|Group) = Contract\w+)<WorkspaceId>;/g, '$1;')
     .replace(/export const nav: NavGroup\[\] = \[[\s\S]*?\n\];/, `/** Written by zz-meridian adopt from the project's pages: give each its own icon and group them. */\nexport const nav: NavGroup[] = [\n  {\n    items: [\n${items}\n    ],\n  },\n];`);
 }
 
