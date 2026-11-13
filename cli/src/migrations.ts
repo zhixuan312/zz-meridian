@@ -548,9 +548,12 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
   {
     id: 'managed-exports-removed',
     since: '0.16.0',
+    // Every upgrade rechecks it: a file that imports an export the module no longer has is still broken, whichever
+    // release removed it, and one that reads none reports nothing.
+    recurring: true,
     applies: removedExportReaders,
-    summary: 'A file of the team\'s imports an export the release removed from a managed module: `deviations`, `largest`, `runs` or `weekendRatio` from `src/lib/insight.ts`, or `queryInput` from `src/lib/collection.ts`.',
-    instructions: 'The update brought `src/lib/insight.ts` and `src/lib/collection.ts` without them, so each file listed here fails the type check. A file of the sample\'s comes over from the release: the Overview context is Home\'s, `src/views/home-context.ts` (see `sample-pages-renamed`); the assistant reads through `view_<name>` and `explore_<view>` and has no `query_<name>` tools, so bring `src/lib/assistant/tools.ts` and `src/lib/assistant/respond.ts` over and pass `readable`, every collection the person may read, from the assistant route to `respond` beside `collections` (read "Prepared queries" in references/agents.md); and a shipped test that imports one, such as `tests/shared-context.test.tsx` or `tests/collection.test.ts`, comes over as the release has it. A file of your own that still needs one of the functions writes it in that file, from its 0.15.0 source.',
+    summary: 'A file of the team\'s imports an export the release removed from a managed module: `deviations`, `largest`, `runs` or `weekendRatio` from `src/lib/insight.ts`, `queryInput` from `src/lib/collection.ts`, or `inBand`, `steady` or `DayService` from `src/lib/facts.ts`.',
+    instructions: 'The update brought `src/lib/insight.ts` and `src/lib/collection.ts` without them, so each file listed here fails the type check. A file of the sample\'s comes over from the release: the Overview context is Home\'s, `src/views/home-context.ts` (see `sample-pages-renamed`); the assistant reads through `view_<name>` and `explore_<view>` and has no `query_<name>` tools, so bring `src/lib/assistant/tools.ts` and `src/lib/assistant/respond.ts` over and pass `readable`, every collection the person may read, from the assistant route to `respond` beside `collections` (read "Prepared queries" in references/agents.md); and a shipped test that imports one, such as `tests/shared-context.test.tsx` or `tests/collection.test.ts`, comes over as the release has it. A file of your own that still needs one of the functions writes it in that file, from its 0.15.0 source. `src/lib/facts.ts` no longer exports `inBand`, `steady` or `DayService` either: they rule on a service day, which is the sample\'s business, and the release carries them in `src/logic/service-facts.ts`. A file of the sample\'s comes over from the release with that module; a file of your own imports them from `@/logic/service-facts`, or states the rule in that file itself.',
     checks: TEST_AND_BUILD,
   },
   {
@@ -811,9 +814,9 @@ function railObserverNeverAnswers(root: string): string[] | null {
   return matching(root, (rel, src) => /\.(?:test|spec)\.tsx?$/.test(rel) && /\bRail\b/.test(src) && /\bResizeObserver\b/.test(src) && /(?<![\w$.])observe\s*\(\s*\)\s*\{\s*\}/.test(src));
 }
 
-/** The team's files that import an export 0.16.0 removed from a managed module, by name or through a namespace. */
+/** The team's files that import an export a release removed from a managed module, by name or through a namespace. */
 function removedExportReaders(root: string): string[] | null {
-  const removed: Record<string, string[]> = { 'src/lib/insight': ['deviations', 'largest', 'runs', 'weekendRatio'], 'src/lib/collection': ['queryInput'] };
+  const removed: Record<string, string[]> = { 'src/lib/insight': ['deviations', 'largest', 'runs', 'weekendRatio'], 'src/lib/collection': ['queryInput'], 'src/lib/facts': ['inBand', 'steady', 'DayService'] };
   return matching(root, (rel, src) => importsOf(rel, src).some(({ from, names, namespace }) => {
     const gone = removed[from] ?? [];
     return names.some((n) => gone.includes(n)) || (namespace !== null && gone.some((g) => new RegExp(`(?<![\\w$.])${namespace.replace(/\$/g, '\\$')}\\.${g}\\b`).test(src)));

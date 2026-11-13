@@ -28,7 +28,7 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 - **`adopt` exits 1 when the type check fails after install.** The files stay adopted; fix the type errors, then run the project's gate (`npx tsc --noEmit` re-checks).
 - **A created project carries no Meridian tests.** Only `tests/setup.ts` is Meridian's; `tests/examples/` holds two tests that are the team's to rewrite. The next `update` deletes each Meridian test a project has not edited and stages each one it has.
 - **The recurring `sample-with-its-tests` migration is removed.** Nothing pins the sample now, so no update reports sample files that differ from the release.
-- **`inBand`, `steady` and `DayService` left `src/lib/facts.ts`.** They state a rule about service days, which is the sample's business, so they now live in the sample's `src/logic/service-facts.ts`; a product that used them takes that file or writes its own.
+- **`inBand`, `steady` and `DayService` left `src/lib/facts.ts`.** They state a rule about service days, which is the sample's business, so they now live in the sample's `src/logic/service-facts.ts`; a product that used them takes that file or writes its own. An update reports each file of the team's that still imports them (`managed-exports-removed`), and a created project that kept the sample brings the release's `src/logic/` over as that instruction says.
 - **`summarise` and the Status list name their rows `item` by default.** Pass your own noun (`{ one: 'service', other: 'services' }`, sites, branches) for the summary and the count.
 
 ## [0.39.2] · 2026-11-12

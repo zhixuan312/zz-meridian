@@ -13,8 +13,9 @@
  * gate then runs; where white on the accent fill fails in a theme, the preset gets a lower fill lightness for that
  * theme, a step at a time, until every pair in every theme passes. --no-atlas removes the Design Atlas: its routes, its
  * modules, its nav entries (the footer's link follows them) and its build tracing (the card previews stay: the gate checks them; the markdown packages stay for Prose).
- * --product goes further, for a dashboard that is not the design system: --no-atlas, and the card previews and page specs (each card's README stays),
- * page specs, docs, decisions, changelog and skill go too (the assistant, its collections and its fake model stay); the components, tokens, scripts and checks stay.
+ * --product goes further, for a dashboard that is not the design system: --no-atlas, the card previews and page specs
+ * (each card's README stays), docs, decisions, changelog and skill go too (the assistant, its collections and its fake
+ * model stay); the components, tokens, scripts and checks stay.
  * --existing is for an existing project that brought Meridian in (route A in the skill): it sets the name, accent and the
  * rest, never renames package.json unless --package is given, and has no Atlas or product branch to run. It never
  * touches AGENTS.md: the CLI writes the managed block there.

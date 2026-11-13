@@ -284,6 +284,17 @@ describe('the 0.16.0 migrations', () => {
     expect(byId('managed-exports-removed').applies(project({ 'package.json': '{}' }), '0.35.0')).toBeNull();
   });
 
+  it('finds the team files that import the band rule a release moved out of src/lib/facts.ts', () => {
+    // What 0.39.2's sample holds: the day rule and the steady fact, read from the module that no longer exports them.
+    const old = project({
+      'src/data/collections.ts': "import { inBand } from '@/lib/facts';\n",
+      'src/logic/now-parts.ts': "import { run, steady } from '@/lib/facts';\n",
+      'src/logic/day.ts': "import type { DayService } from '@/lib/facts';\n",
+      'src/logic/neutral.ts': "import { first, record } from '@/lib/facts';\n",
+    });
+    expect(byId('managed-exports-removed').applies(old, '0.39.2')).toEqual(['src/data/collections.ts', 'src/logic/day.ts', 'src/logic/now-parts.ts']);
+  });
+
   it('finds a view tool without the page it renders or its prepared query, and not a key inside its code', () => {
     // 0.15.0's shape: the keys of the object itself, where `page` also names a field of the input and of the data.
     const tool = (extra: string) => `export const requestsTool = defineViewTool({\n  name: 'requests',\n  description: 'The log, filtered {by status}.',\n  needs: FEATURES.requests.needs,\n${extra}  input: z.object({ page: z.number().optional() }),\n  async read(input) { const data = { page: 1, explore: null }; return { context: requestsContext(data), data }; },\n});\n`;

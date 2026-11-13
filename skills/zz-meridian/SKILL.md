@@ -244,11 +244,14 @@ Read `references/customize.md` and follow it. In short:
   says plainly why the sample is a single process and holds the Postgres and Redis adapters).
 - **Data first.** Write `src/data/<product>.ts` for the person's domain: real types from their schema or materials, and
   deterministic sample data until they wire their API. Pages import data from `optional:src/data/` and nowhere else. Delete the
-  sample pages you replace. `optional:src/data/collections.ts`, `optional:src/data/sample.ts` and `optional:src/data/sign-in.ts` import `optional:src/system/fixtures/` (and the bell's alerts, `readAlerts` in `optional:src/logic/alerts.ts`, are worked out
-  from the same collections), so the fixtures and `optional:src/system/sample-cells.tsx` stay until nothing imports them:
-  replace each collection's `rows` with the person's data first, then delete them. Prove the
-  numbers before building pages: a `example:tests/data.test.ts` asserting the counts your pages need (vitest resolves `@/`;
-  plain `node` does not).
+  sample pages you replace. A domain change rewrites the seam's own files together: `optional:src/data/collections.ts` (the
+  collections), `optional:src/data/access.ts` (the policy, which names about twenty of the sample's collections and its
+  `Member` type), `optional:src/data/roles.ts` and `optional:src/data/features.ts` (the sample's role and feature ids).
+  `collections.ts`, `optional:src/data/sample.ts` and `optional:src/data/sign-in.ts` import `optional:src/system/fixtures/`
+  (and the bell's alerts, `readAlerts` in `optional:src/logic/alerts.ts`, are worked out from the same collections), so the
+  fixtures and `optional:src/system/sample-cells.tsx` stay until nothing imports them: replace each collection's `rows` with
+  the person's data first, then delete them. Prove the numbers before building pages: a `example:tests/data.test.ts`
+  asserting the counts your pages need (vitest resolves `@/`; plain `node` does not).
 - **Navigation** in `src/app.config.ts`; one line per page. A created project starts with the sample's three workspaces:
   keep them (every new entry names a `workspace`) when the person asked for several places to look, and take them out
   when they did not say (`references/customize.md`, "Navigation" says how). An adopted project has none.
@@ -260,7 +263,8 @@ Read `references/customize.md` and follow it. In short:
   `example:src/system/content.ts` (if the Atlas stays), and the links that point at them. Settings is a sample page too:
   delete it unless asked (theme, accent and density stay in the rail's appearance menu and the command palette), but the
   assistant's on/off switch ("Show the assistant") lives in Settings: keep the page, or tell the person the switch goes
-  with it.
+  with it — the panel then has no off switch in the console, and is on wherever the layout's `assistantConfig(process.env)`
+  says a model is configured.
   `references/customize.md` has the checklist and the grep that finds what is left.
 - **The assistant** is built in and off until `ASSISTANT_PROVIDER`, `ASSISTANT_API_KEY` and `ASSISTANT_MODEL` are set
   (`ASSISTANT_BASE_URL` is required for `openai-compatible`). Point `optional:src/data/collections.ts` at the person's data, and

@@ -486,7 +486,7 @@ async function affected(tier: 't1' | 't2'): Promise<number> {
   else if (notRun.length) console.log(`test:${tier}: the marker is not advanced, because ${notRun.length} check${notRun.length === 1 ? '' : 's'} did not run`);
   else if (!failed.length) console.log(`test:${tier}: the marker is not advanced, because a Tier 2 check did not run; pnpm test:t2 covers it`);
   if (!first.files) console.log(`test:${tier}: no test is affected (${where})`);
-  const { line, exit } = summaryLine({ command: `test:${tier}`, failed, notRun, declared, overBudget, ...(first.files ? { files: first.files, tests: first.tests } : {}) });
+  const { line, exit } = summaryLine({ command: `test:${tier}`, failed, notRun, declared, overBudget, covers: tier === 't1' ? 'every Tier 1 check' : 'every Tier 1 check and the Tier 2 files this run covers', ...(first.files ? { files: first.files, tests: first.tests } : {}) });
   console.log(line);
   return exit;
 }
@@ -508,7 +508,7 @@ const SWEEPS = ['audit', 'interactions', 'keyboard', 'rest'] as const;
 /** A stage's last line and exit: 1 for a failed check, 2 for a check the environment could not run, else 0. */
 function stageExit(name: string, failed: string[], notRun: string[], declared: string[], overBudget: string[], counts?: { files: number; tests: number }): number {
   for (const d of declared) console.log(`not run (declared by the project's configuration): ${d}`);
-  const { line, exit } = summaryLine({ command: `test:${name}`, failed, notRun, declared, overBudget, ...(counts ?? {}) });
+  const { line, exit } = summaryLine({ command: `test:${name}`, failed, notRun, declared, overBudget, covers: 'every check the stage runs', ...(counts ?? {}) });
   console.log(line);
   return exit === 0 && notRun.length ? 2 : exit;
 }

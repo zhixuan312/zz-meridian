@@ -14,6 +14,11 @@ it before you replace a collection's `rows` with a real query.
 sample, ZZ Meridian's own dashboard, lives in `optional:src/system/fixtures/`; your pages never import it, but
 `optional:src/data/collections.ts` does, so it stays until each collection's `rows` come from your data (see "The assistant").
 
+A domain change rewrites four of the seam's files together, not one: `collections.ts` (the collections), `access.ts` (the
+policy, which names about twenty of the sample's collections and its `Member` type), `roles.ts` (the sample's role ids and
+their grants) and `features.ts` (the sample's feature ids, which every nav item and page's `needs` points at). Replacing
+`rows` alone leaves the policy bound to collections that no longer exist.
+
 - **Types from the person's world.** Turn their schema, CSV headers or API into TypeScript types (`Order`, `Shipment`,
   `Invoice`). Name fields the way their team says them.
 - **Deterministic sample data** until their API is wired: a seeded generator and a fixed clock (`DEMO_NOW`), never
@@ -53,7 +58,9 @@ sample, ZZ Meridian's own dashboard, lives in `optional:src/system/fixtures/`; y
     the tab says the same: a page keeps no static `metadata`. Replace the demo's `current` with your session and delete the demo's View as —
     `optional:src/data/view-as.ts` and its `zz_meridian_view_as` cookie — so nothing signs in as a sample person. Until your sign-in
     exists, keep the demo and point it at your own people: `DEFAULT_MEMBER` and `PERSONAS` in `optional:src/data/access.ts`, and
-    `personas` in `scripts/verify.config.ts`, name the sample's member ids.
+    `personas` in `scripts/verify.config.ts`, name the sample's member ids. The cookie the demo sets is
+    `optional:src/lib/demo-gate.ts`'s `VIEW_AS_COOKIE` (`zz_meridian_view_as`), and its value is a member id: that is what
+    `verify.config.ts`'s `personas` entries send, and what a person's own id has to be for the sweeps to see them.
   - `optional:src/data/member-mutations.ts` is the member boundary. `membersFor(scope)` binds the collection so every create,
     update and remove passes it, and `assignMemberRole({ id, role, addOns })` is the one role change; the Owner, self and
     last-active-Owner rules hold for a page, the assistant and an MCP server alike. The demo runs one write at a time per
@@ -134,6 +141,8 @@ to all of this.
   (its entry in `browserChecks` in `scripts/verify.config.ts` goes with it).
 - In `optional:src/views/no-access.tsx` the refusal page's way out reads `navOf` and `workspaces.main`: make it the first
   destination of `nav` the person may open, or `/`.
+- In `optional:app/(dashboard)/error.tsx` the second way out is a nav item of the sample's (`/services`): point it at one
+  of `nav` the person may open, or at `/`. A deleted page leaves it naming an address nothing owns.
 - Take `${workspaces.<id>.audience}` out of the descriptions of the Home, Revenue, Usage and Now pages, or delete
   the pages, and out of `LINE_ROOM` in `optional:src/logic/now-parts.ts`, which keeps room for Engineering's beside Now's line.
 - A clone that keeps the Atlas also changes `optional:src/system/atlas-shell.tsx` and `optional:src/system/strata.tsx`, which
@@ -567,7 +576,9 @@ then stays off without them). Then fix what still points at the sample:
 - `optional:src/logic/alerts.ts`: `readAlerts` works the bell's alerts out of the sample's incidents, customers, verification
   runs and tickets. Write your own exceptions the same way, each from a read the caller may make and linked to the page
   that handles it; the layout hands the read's promise to `ShellAlerts` (`optional:src/views/shell-alerts.tsx`) without
-  awaiting it.
+  awaiting it. Its fallback clock stays the sample's fixed one: `new Date()` in a component the build prerenders fails
+  `next build` ("encountered the unstable value `new Date()` while prerendering"), and a fallback is what an empty
+  project shows first.
 - `optional:src/app.config.ts`: each `audience` sentence in `workspaces` describes the sample and prints on a page's
   masthead; rewrite it, or take the workspaces out ("Navigation").
 - `optional:app/sign-in/page.tsx`: the headline and lead describe the sample product, and the root layout's
@@ -578,6 +589,11 @@ then stays off without them). Then fix what still points at the sample:
   reports exports read only by tests. `GRANTS` in `optional:src/data/roles.ts` is not page-only: `effective` and `whoCan`
   still use its table for authorization and refusal explanations. Keep that policy while those callers remain; remove
   only its `export` when no other module imports the table.
+  In a whole-product replacement this rule is most of the clean-up pass: every export of `optional:src/data/` and
+  `optional:src/lib/` must be traced, and a module nothing keeps is deleted. Meridian's own modules are exempt — the
+  paths in `optional:.meridian/manifest.json` and the toolkit `format`, `color`, `collection`, `explore`, `live` and
+  `contrast-pairs` — while the sample's are not: `optional:src/lib/totals.ts` and `optional:src/lib/ticket-steps.ts` are
+  Meridian's text but no path of the manifest, so deleting what called them means deleting them.
 - `example:src/system/content.ts`: `PAGES` names a sample request id route.
 - Each page `README.md`: its States rows must describe what your view renders; `check.ts` only checks that the section
   exists.

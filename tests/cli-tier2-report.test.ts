@@ -79,6 +79,13 @@ describe('the last line and the exit', () => {
     expect(r.line).toContain('Tier 2 over budget');
   });
 
+  it('claims only what the command covers: test:t1 never says it ran Tier 2', () => {
+    const r = summaryLine({ command: 'test:t1', failed: [], notRun: [], declared: [], overBudget: [], covers: 'every Tier 1 check', files: 3, tests: 9 });
+    expect(r.exit).toBe(0);
+    expect(r.line).toBe('test:t1: every Tier 1 check passed (3 test files, 9 tests)');
+    expect(summaryLine({ command: 'test:release', failed: [], notRun: [], declared: [], overBudget: [] }).line).toBe('test:release: every Tier 1 and Tier 2 check passed');
+  });
+
   it('keeps a declared not-run out of the failure count, and the run at 0', () => {
     const r = summaryLine({ command: 'test:t2', failed: [], notRun: [], declared: ['browser suites (navigation: no check)'], overBudget: [] });
     expect(r.exit).toBe(0);
