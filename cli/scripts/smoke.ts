@@ -2,7 +2,7 @@
  * The consumer's path, end to end, from the packed tarball: what CI runs before publishing.
  *
  *   node cli/scripts/smoke.ts [--tarball cli/zz-meridian-0.5.0.tgz] [--adopt] [--create] [--update [--origins N]] [--update-all] [--keep]
- *                             [--created-release | --created-t2 | --created-report]
+ *                             [--created-release | --created-t2 | --created-report | --created-rest]
  *
  * With no section flag the adopt section runs. --adopt names it explicitly, so it can run beside the others.
  * adopt: into a copy of cli/test/fixture-next-app (a create-next-app project with its own button, utils and data
@@ -10,7 +10,8 @@
  * the team's own eslint config, and next build must succeed.
  * --create: a new dashboard from the tarball, then its test:t1 and its next build: what a person who creates a dashboard
  * does first. --created-release runs its test:release instead (weekly passes it), --created-t2 its test:t2, and
- * --created-report only the shipped reporting.
+ * --created-report only the shipped reporting, and --created-rest (release passes it) its test:t1, its next build and then
+ * its rest sweep (`browser.ts --depth fn --built --only rest`).
  * `node cli/scripts/consumer.ts` packs this working tree and runs this file against that tarball.
  * --verify runs the adopted project's own pnpm test:t2 as well: the browser sweeps report the browser not run until the
  * project says where its presses go, and a scratch copy that sets noLiveApi: true runs them.
@@ -886,6 +887,8 @@ if (args.includes('--create')) {
     check(report.status === 0, 'the created project\'s shipped reporting writes its table and record', report.stdout + report.stderr);
     check(record !== null && typeof record.version === 'string' && Array.isArray(record.values) && record.values.length === 1, 'the created report names this project\'s Meridian version', JSON.stringify(record)?.slice(0, 400));
   }
+  const createdRest = args.includes('--created-rest');
+  let createdOk = true;
   const createdCommands = args.includes('--created-t2') ? ['test:t2'] : args.includes('--created-report') ? [] : args.includes('--created-release') ? ['test:release'] : ['test:t1', 'build'];
   for (const command of createdCommands) {
     const t0 = performance.now();
@@ -900,7 +903,20 @@ if (args.includes('--create')) {
       // test:t1 and test:t2 end with their own `test:tN:` verdict and mark each failing stage `FAIL <stage>`.
       const stage = [...t.stdout.split('\n'), ...t.stderr.split('\n')].filter((l) => /^test:t[12]: FAIL|^FAIL\s+\S/.test(l));
       console.log([...causeLines(t.stdout, t.stderr), ...stage].filter((l, i, all) => all.indexOf(l) === i).join('\n') || `no ${command} verdict or FAIL line in the output`);
+      createdOk = false;
       break;
+    }
+  }
+  // The rest sweep against the build the loop above just made: the sweep a person's first `next build` is judged by.
+  if (createdRest && createdOk) {
+    const t0 = performance.now();
+    const t = sh('node', ['scripts/browser.ts', '--depth', 'fn', '--built', '--only', 'rest'], dir);
+    console.log(`     browser.ts --depth fn --built --only rest (created, ${secs(performance.now() - t0)}s)`);
+    if (t.status === 0) check(true, 'the rest sweep passes in the new dashboard');
+    else {
+      const files = writeNestedRun(path.join(ROOT, 'out'), 'consumer-test-rest', t);
+      check(false, 'the rest sweep passes in the new dashboard', `the full output is in ${files.map((f) => `out/${f}`).join(' and ')}`);
+      console.log([...causeLines(t.stdout, t.stderr)].join('\n') || 'no verdict line in the output');
     }
   }
 }

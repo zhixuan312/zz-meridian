@@ -35,4 +35,14 @@ describe('the weekly consumer job', () => {
     expect(consumer).toMatch(/^          name: consumer$/m);
     expect(consumer).toMatch(/^          path: out\/$/m);
   });
+
+  it('has no t2 job, and its job list names only release and consumer', () => {
+    expect(YML).not.toMatch(/^  t2:/m);
+    expect(job('named')).toContain("inputs.jobs || 'release,consumer'");
+    expect(job('named')).toMatch(/^              release\|consumer\) ;;$/m);
+    for (const name of ['release', 'consumer']) {
+      expect(job(name), name).toContain(`contains(format(',{0},', inputs.jobs || 'release,consumer'), ',${name},')`);
+    }
+    expect(YML).not.toMatch(/(?<![:\w])t2(?!\w)/); // a bare job name; `test:t2` is a command
+  });
 });

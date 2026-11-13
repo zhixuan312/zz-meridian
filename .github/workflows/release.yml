@@ -1,24 +1,27 @@
-# Release the zz-meridian package (decisions 0009 and 0010, docs/distribution.md): gates, pack, the consumer path end
-# to end, then publish with provenance, then tag LAST.
+# Release the zz-meridian package (decisions 0009 and 0010, docs/distribution.md): the checks, pack, the consumer path
+# end to end, then publish with provenance, then tag LAST.
 #
-# WHAT GATES A RELEASE. The checks that decide whether this tarball works, each run once: `pnpm test:release` (every
-# Tier 1 and Tier 2 test, lint, the type check, a production build and its size and route checks), and the consumer
-# smoke from the tarball, which adopts, creates, and updates a project of the release before (adopted and created) to
-# finalize. The update from the last three releases runs weekly; the window moves with each release and never grows. The
-# recovery and failure matrices run weekly (weekly.yml) and never here: weekly is weekly, release is release.
+# WHAT GATES A RELEASE. The checks that decide whether this tarball works, each run once, each its own job on its own
+# clock: the static stage (lint, the type check, every Vitest file but the browser-fixture tests), the four browser
+# sweeps (audit, interactions, keyboard, rest), the browser-fixture tests the changes since the release before reach
+# (two parallel legs), and the consumer smoke from the tarball, which adopts, creates (test:t1, a production build and
+# the rest sweep in the new dashboard), and updates a project of the release before (adopted and created) to finalize.
+# Tier 2 (timing, size) runs beside them, is reported, and gates nothing. The update from the last three releases runs
+# weekly; the window moves with each release and never grows. The recovery and failure matrices and the created
+# dashboard's whole suite run weekly (weekly.yml) and never here: weekly is weekly, release is release.
 # After publishing, the registry's tarball is compared byte for byte with the tested one; identical bytes are not tested
 # twice. Two short steps run against the registry, since they behave differently once the version is published:
 # create from it, and update to it from the release before.
 #
-# WHY FOUR JOBS. `build` makes the tarball with nothing but Node, git and a pinned TypeScript installed without its
-# scripts, and records its hash. `gates` installs the template's dependencies and runs their code (`test:release`,
-# Chrome) against that tarball; it cannot change it and holds no credential. `publish` installs nothing,
+# WHY THESE JOBS. `build` makes the tarball with nothing but Node, git and a pinned TypeScript installed without its
+# scripts, and records its hash. The check jobs install the template's dependencies and run their code (Chrome)
+# against that commit and tarball; they cannot change the tarball and hold no credential. `publish` installs nothing,
 # checks the hash, and is the only job with id-token: write, inside the `npm` environment, which only master may use.
 # `release` checks the registry serves the tested tarball with provenance, then tags and writes the Release, without the
-# publishing token.
+# publishing token. `tier2-attach` then puts the Tier 2 record, history and table on the Release.
 #
 # WHY THE TAG IS LAST. The tag proves a finished release. Nothing is tagged until the package is on the registry and a
-# consumer has run it, so "tagged but not on npm" cannot happen.
+# consumer has run it, so "tagged but not on npm" cannot happen. It never waits for Tier 2.
 #
 # Every action is pinned to a commit, not a tag that can move. The version input is read through an environment
 # variable and checked against semver before any shell sees it.
@@ -38,7 +41,7 @@ on:
         required: true
         type: string
       dry_run:
-        description: 'Build, gates and the consumer smoke only: publish nothing'
+        description: 'Build, checks and the consumer smoke only: publish nothing'
         required: false
         default: false
         type: boolean
@@ -128,17 +131,13 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
-  gates:
+  # The static stage: lint, the type check and every Vitest file but the browser-fixture tests. The template snapshot
+  # the package carries is a build output, so a fresh checkout has none, and the package's own tests read it (`adopt`'s
+  # configuration and skill tests). Built from HEAD, which is the release commit here.
+  static:
     needs: build
     runs-on: ubuntu-24.04
-    # `test:release` builds once and then runs the browser-fixture tests, the browser sweeps and the timed suites on
-    # this 4-CPU runner: 76 minutes in run 42600180906. The consumer smoke is its own job, on its own clock; the cap
-    # here sits above this one step, so a run is stopped by a failing step and never by the clock.
-    timeout-minutes: 120
-    env:
-      VERSION: ${{ inputs.version }}
-      SHA256: ${{ needs.build.outputs.sha256 }}
-      CHROME: /usr/bin/google-chrome
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -150,45 +149,237 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
-
       - run: pnpm install --frozen-lockfile
-      # The template snapshot the package carries: `cli/payload/` is a build output, so a fresh checkout has none, and
-      # the package's own tests read it — `adopt`'s configuration and skill tests read files from it. Built from HEAD,
-      # which is the release commit here. `weekly.yml` builds it for the same tests.
       - name: The template snapshot the package carries
         run: node cli/scripts/build-payload.ts
-      # Every Tier 1 and Tier 2 test, once, with the timed browser suites, lint, the type check and a production build.
-      # The browser-fixture tests are Tier 1 and run one file after another inside it: on this 4-CPU runner a Chrome
-      # started beside them missed its start window. The Postgres suite reports `not run` here, because this job holds no
-      # services.
-      # The release before this one, for the Tier 2 table's stale-baseline line (it warns, never fails).
-      - name: The release before this one
+      - name: The static stage
         run: |
           set -euo pipefail
-          PREV="$(npm view zz-meridian versions --json | node -e 'const v=JSON.parse(require("fs").readFileSync(0,"utf8")).filter((x)=>/^\d+\.\d+\.\d+$/.test(x));const n=(x)=>x.split(".").map(Number);const lt=(a,b)=>{const p=n(a),q=n(b);for(let i=0;i<3;i++)if(p[i]!==q[i])return p[i]<q[i];return false};console.log(v.filter((x)=>lt(x,process.env.VERSION)).sort((a,b)=>lt(a,b)?-1:1).at(-1)??"")')"
-          echo "PREVIOUS_TAG=v$PREV" >> "$GITHUB_ENV"
-      - name: test:release
-        run: |
-          set -euo pipefail
-          mkdir -p out
-          pnpm test:release 2>&1 | tee out/release-test.txt
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        if: always()
+          node scripts/test-run.ts stage static
+
+  # The four browser sweeps, one job each so they run side by side and `publish` can name each one. Each builds the
+  # template once and drives one sweep against it; on a failure the whole `out/` is kept under the sweep's name.
+  sweep-audit:
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      CHROME: /usr/bin/google-chrome
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          name: release-test
+          persist-credentials: false
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          version: 11.9.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: The audit sweep
+        run: |
+          set -euo pipefail
+          node scripts/test-run.ts stage sweep audit
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: failure()
+        with:
+          name: sweep-audit
           path: out/
           if-no-files-found: ignore
           retention-days: 30
 
+  sweep-interactions:
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      CHROME: /usr/bin/google-chrome
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          version: 11.9.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: The interactions sweep
+        run: |
+          set -euo pipefail
+          node scripts/test-run.ts stage sweep interactions
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: failure()
+        with:
+          name: sweep-interactions
+          path: out/
+          if-no-files-found: ignore
+          retention-days: 30
+
+  sweep-keyboard:
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      CHROME: /usr/bin/google-chrome
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          version: 11.9.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: The keyboard sweep
+        run: |
+          set -euo pipefail
+          node scripts/test-run.ts stage sweep keyboard
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: failure()
+        with:
+          name: sweep-keyboard
+          path: out/
+          if-no-files-found: ignore
+          retention-days: 30
+
+  # The rest sweep also runs the route policy after the build.
+  sweep-rest:
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      CHROME: /usr/bin/google-chrome
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          version: 11.9.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: The rest sweep and the route policy
+        run: |
+          set -euo pipefail
+          node scripts/test-run.ts stage sweep rest
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: failure()
+        with:
+          name: sweep-rest
+          path: out/
+          if-no-files-found: ignore
+          retention-days: 30
+
+  # The browser-fixture tests (tests/deep-*) the changes since the release before reach, in two parallel legs. The
+  # checkout holds the whole history and the tags, so the previous release's tag resolves. When it does not (no release
+  # before this one, or its tag was never pushed), the base is the repository's first commit and every deep test runs.
+  deep:
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        part: [1, 2]
+    env:
+      VERSION: ${{ inputs.version }}
+      CHROME: /usr/bin/google-chrome
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+          fetch-tags: true
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          version: 11.9.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: The base the deep tests compare with
+        run: |
+          set -euo pipefail
+          PREV="$(npm view zz-meridian versions --json | node -e 'const v=JSON.parse(require("fs").readFileSync(0,"utf8")).filter((x)=>/^\d+\.\d+\.\d+$/.test(x));const n=(x)=>x.split(".").map(Number);const lt=(a,b)=>{const p=n(a),q=n(b);for(let i=0;i<3;i++)if(p[i]!==q[i])return p[i]<q[i];return false};console.log(v.filter((x)=>lt(x,process.env.VERSION)).sort((a,b)=>lt(a,b)?-1:1).at(-1)??"")')"
+          PREVIOUS_TAG="v$PREV"
+          if [ -n "$PREV" ] && git rev-parse -q --verify "refs/tags/$PREVIOUS_TAG" >/dev/null; then
+            BASE="$PREVIOUS_TAG"
+            echo "base: $BASE, the release before this one"
+          else
+            BASE="$(git rev-list --max-parents=0 HEAD | tail -1)"
+            echo "base: $BASE, the first commit (no release before this one has a tag here), so every deep test runs"
+          fi
+          echo "BASE=$BASE" >> "$GITHUB_ENV"
+      - name: The deep tests, part ${{ matrix.part }} of 2
+        run: |
+          set -euo pipefail
+          node scripts/test-run.ts stage deep --since "$BASE" --part ${{ matrix.part }}/2
+
+  # Tier 2: measured and reported, never a gate. The job cannot fail the run (`continue-on-error`), `publish` does not
+  # wait for it and neither does the tag. Its record travels to `tier2-attach`, which puts it on the Release.
+  tier2:
+    needs: build
+    continue-on-error: true
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    env:
+      VERSION: ${{ inputs.version }}
+      CHROME: /usr/bin/google-chrome
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          version: 11.9.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # The release before this one, and the history its Release carries: the values this run is compared with. A
+      # missing asset (the first release with a history) is tolerated: the run then compares with the seed.
+      - name: The release before this one, and its Tier 2 history
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          PREV="$(npm view zz-meridian versions --json | node -e 'const v=JSON.parse(require("fs").readFileSync(0,"utf8")).filter((x)=>/^\d+\.\d+\.\d+$/.test(x));const n=(x)=>x.split(".").map(Number);const lt=(a,b)=>{const p=n(a),q=n(b);for(let i=0;i<3;i++)if(p[i]!==q[i])return p[i]<q[i];return false};console.log(v.filter((x)=>lt(x,process.env.VERSION)).sort((a,b)=>lt(a,b)?-1:1).at(-1)??"")')"
+          echo "PREVIOUS_TAG=v$PREV" >> "$GITHUB_ENV"
+          if [ -n "$PREV" ]; then
+            gh release download "v$PREV" --pattern perf-history.json --dir scripts || echo "::notice::v$PREV carries no perf-history.json: the run compares with the seed"
+          fi
+      - name: The Tier 2 stage
+        run: |
+          set -euo pipefail
+          node scripts/test-run.ts stage tier2
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: ${{ !cancelled() }}
+        with:
+          name: tier2-record
+          path: out/perf-record.json
+          if-no-files-found: ignore
+          retention-days: 30
+
   # The consumer path, from the tarball `build` made: adopt and create from the release before, update both to this
-  # one, create a new dashboard from the tarball and run that dashboard's `test:t1` and `next build`. It runs beside `gates`,
-  # each on its own clock: the two together outlived this workflow's 120-minute job cap in run 42600180906, and one
-  # clock cannot hold both. The created dashboard's full `test:release` is weekly's, not this job's.
+  # one, create a new dashboard from the tarball and run that dashboard's `test:t1`, `next build` and rest sweep. It
+  # runs beside the stages above, each on its own clock. The created dashboard's whole suite is weekly's, not this job's.
   # This job holds no publishing permission and no credential.
   consumer:
     needs: build
     runs-on: ubuntu-24.04
-    timeout-minutes: 120
+    timeout-minutes: 60
     env:
       VERSION: ${{ inputs.version }}
       SHA256: ${{ needs.build.outputs.sha256 }}
@@ -215,7 +406,7 @@ jobs:
           set -euo pipefail
           T="/tmp/pack/zz-meridian-$VERSION.tgz"
           [ "$(sha256sum "$T" | cut -d' ' -f1)" = "$SHA256" ] || { echo "::error::the tarball is not the one build made"; exit 1; }
-          node cli/scripts/smoke.ts --tarball "$T" --adopt --create --update
+          node cli/scripts/smoke.ts --tarball "$T" --adopt --create --created-rest --update
       # A red here names its cause: when the created dashboard's test:t1 or build fails, the smoke writes its whole
       # stdout and stderr here (`out/consumer-test-release.*.txt`) and prints its verdict and FAIL lines to the log.
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -227,7 +418,7 @@ jobs:
           retention-days: 30
 
   publish:
-    needs: [build, gates, consumer]
+    needs: [build, static, sweep-audit, sweep-interactions, sweep-keyboard, sweep-rest, deep, consumer]
     if: ${{ inputs.dry_run == false }}
     runs-on: ubuntu-24.04
     timeout-minutes: 15
@@ -249,7 +440,7 @@ jobs:
           name: tarball
           path: /tmp/pack
 
-      - name: The tarball is the one build made and gates tested; npm can do trusted publishing
+      - name: The tarball is the one build made and the checks tested; npm can do trusted publishing
         run: |
           set -euo pipefail
           GOT="$(sha256sum "/tmp/pack/zz-meridian-$VERSION.tgz" | cut -d' ' -f1)"
@@ -303,10 +494,6 @@ jobs:
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 22
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          name: release-test
-          path: /tmp/release-out
 
       # A failure here is an unsuccessful release, not a rollback: the version stays published and untagged.
       - name: A consumer runs it from the registry, and it is the tested tarball with provenance
@@ -317,7 +504,7 @@ jobs:
           [ "$OUT" = "$VERSION" ] || { echo "::error::npx zz-meridian@$VERSION reported '$OUT'"; exit 1; }
           npm pack "zz-meridian@$VERSION" --ignore-scripts >/dev/null
           GOT="$(sha256sum "zz-meridian-$VERSION.tgz" | cut -d' ' -f1)"
-          # The tested bytes passed the consumer path in `gates`; the registry's copy must be those bytes, since nothing reruns it.
+          # The tested bytes passed the consumer path; the registry's copy must be those bytes, since nothing reruns it.
           [ "$GOT" = "$SHA256" ] || { echo "::error::the registry's tarball hash $GOT differs from the tested $SHA256"; exit 1; }
           echo "the registry serves the tested tarball"
           # npm view prints nothing and exits 0 for a field that is not there, so the check reads the output.
@@ -325,7 +512,7 @@ jobs:
           [ -n "$ATT" ] || { echo "::error::zz-meridian $VERSION carries no provenance attestation"; exit 1; }
           echo "provenance attached"
 
-      # What `gates` cannot reach: the version published. `update` compares the running package with the registry's only
+      # What the consumer job cannot reach: the version published. `update` compares the running package with the registry's only
       # then, and a project is created from the installed package, which npm has renamed files in. About 10 seconds.
       - name: A consumer creates from the registry, and updates to it from the release before
         run: |
@@ -351,23 +538,79 @@ jobs:
           gh api "repos/$GITHUB_REPOSITORY/git/refs" -f "ref=refs/tags/v$VERSION" -f "sha=$GITHUB_SHA" >/dev/null
           echo "tagged v$VERSION at $GITHUB_SHA"
 
-      - name: GitHub Release, with the changelog section and the Tier 2 table
+      # The Release carries the changelog section only. The Tier 2 table and history are added by `tier2-attach` once the
+      # timing run is done; the tag never waits for it.
+      - name: GitHub Release, with the changelog section
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           awk -v v="$VERSION" 'index($0, "## [" v "]")==1 {on=1; next} /^## \[/ {if (on) exit} on' CHANGELOG.md > /tmp/notes.md
-          # The gates' own record: its table against the committed history, and the baseline's age. Reported, never a gate.
+          printf '\n---\nnpm: https://www.npmjs.com/package/zz-meridian/v/%s\n' "$VERSION" >> /tmp/notes.md
+          gh release create "v$VERSION" --title "v$VERSION" --notes-file /tmp/notes.md --verify-tag
+
+  # Tier 2, attached after the release: the record and the next history go on the Release as assets, and the table is
+  # appended to its notes. A missing record (the timing run failed or was cancelled) leaves the Release as it is.
+  tier2-attach:
+    needs: [tier2, release]
+    if: ${{ !cancelled() && needs.release.result == 'success' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write   # the Release's assets and notes
+    env:
+      VERSION: ${{ inputs.version }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        continue-on-error: true
+        with:
+          name: tier2-record
+          path: /tmp/tier2
+      - name: The next history, from the release before this one's
+        run: |
+          set -euo pipefail
+          if [ ! -f /tmp/tier2/perf-record.json ]; then
+            echo "::notice::no Tier 2 record was produced: the Release is left as it is"
+            exit 0
+          fi
+          PREV="$(npm view zz-meridian versions --json | node -e 'const v=JSON.parse(require("fs").readFileSync(0,"utf8")).filter((x)=>/^\d+\.\d+\.\d+$/.test(x));const n=(x)=>x.split(".").map(Number);const lt=(a,b)=>{const p=n(a),q=n(b);for(let i=0;i<3;i++)if(p[i]!==q[i])return p[i]<q[i];return false};console.log(v.filter((x)=>lt(x,process.env.VERSION)).sort((a,b)=>lt(a,b)?-1:1).at(-1)??"")')"
+          mkdir -p /tmp/tier2/prev
+          if [ -n "$PREV" ]; then
+            gh release download "v$PREV" --pattern perf-history.json --dir /tmp/tier2/prev || echo "::notice::v$PREV carries no perf-history.json: this release starts the history"
+          fi
+          echo "PREVIOUS_TAG=v$PREV" >> "$GITHUB_ENV"
+          node --input-type=module -e "
+            import fs from 'node:fs';
+            import { nextHistory } from './scripts/lib/tier2.ts';
+            const [recordFile, previousFile, outFile] = process.argv.slice(1);
+            const record = JSON.parse(fs.readFileSync(recordFile, 'utf8'));
+            const previous = fs.existsSync(previousFile) ? JSON.parse(fs.readFileSync(previousFile, 'utf8')) : null;
+            fs.writeFileSync(outFile, JSON.stringify(nextHistory(previous, record), null, 1) + '\\n');
+          " /tmp/tier2/perf-record.json /tmp/tier2/prev/perf-history.json /tmp/tier2/perf-history.json
+      - name: The record and the history on the Release, and the table in its notes
+        run: |
+          set -euo pipefail
+          [ -f /tmp/tier2/perf-history.json ] || { echo "::notice::nothing to attach"; exit 0; }
+          gh release upload "v$VERSION" /tmp/tier2/perf-record.json /tmp/tier2/perf-history.json --clobber
+          gh release view "v$VERSION" --json body --jq .body > /tmp/notes.md
+          # The run's own table against the history, and the baseline's age. Reported, never a gate.
           node -e '
             const fs = require("fs");
-            const record = JSON.parse(fs.readFileSync("/tmp/release-out/perf-record.json", "utf8"));
-            const history = fs.existsSync("scripts/perf-history.json") ? JSON.parse(fs.readFileSync("scripts/perf-history.json", "utf8")) : { releases: [] };
+            const record = JSON.parse(fs.readFileSync("/tmp/tier2/perf-record.json", "utf8"));
+            const prevFile = "/tmp/tier2/prev/perf-history.json";
+            const history = fs.existsSync(prevFile) ? JSON.parse(fs.readFileSync(prevFile, "utf8")) : { releases: [] };
             const newest = history.releases[0]?.version;
             const prev = (process.env.PREVIOUS_TAG || "").replace(/^v/, "");
             const lines = ["", "### Performance (Tier 2, reported, never a gate)", ""];
             lines.push(...(record.table || []).map((l) => `- ${l}`));
             if (newest && prev && newest !== prev) lines.push("", `- warn: baseline is ${newest}, the previous release is ${prev}; the comparison is against an older release`);
             fs.appendFileSync("/tmp/notes.md", lines.join("\n") + "\n");
-          ' 
-          printf '\n---\nnpm: https://www.npmjs.com/package/zz-meridian/v/%s\n' "$VERSION" >> /tmp/notes.md
-          gh release create "v$VERSION" --title "v$VERSION" --notes-file /tmp/notes.md --verify-tag /tmp/release-out/perf-record.json
+          '
+          gh release edit "v$VERSION" --notes-file /tmp/notes.md

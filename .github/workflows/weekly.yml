@@ -6,8 +6,6 @@
 # A fresh clone has no `out/last-green` marker and no diff from master, so each command runs its whole tier. That is the
 # point of a scheduled run: nothing is skipped for lack of evidence.
 #
-# - `t2`: `pnpm test:t2`, the scheduled tier run. On this checkout it covers the whole Tier 2 set and the whole Tier 1
-#   set, the 20-sample protocol included because `CI` is true and no marker narrows the run.
 # - `release`: `pnpm test:release` (every Tier 1 and Tier 2 test, the timed browser suites, lint, the type check, a
 #   production build) with the Postgres services configured, so its Postgres suite runs rather than reporting `not run`.
 # - `consumer`: the consumer smoke from a tarball packed from this commit: the adopted project's own `test:t2`, a
@@ -24,9 +22,9 @@ on:
   workflow_dispatch:
     inputs:
       jobs:
-        description: 'The jobs to run, comma-separated without spaces: t2,release,consumer'
+        description: 'The jobs to run, comma-separated without spaces: release,consumer'
         type: string
-        default: t2,release,consumer
+        default: release,consumer
 
 permissions:
   contents: read
@@ -44,56 +42,21 @@ jobs:
     steps:
       - name: Every name is a job
         env:
-          JOBS: ${{ inputs.jobs || 't2,release,consumer' }}
+          JOBS: ${{ inputs.jobs || 'release,consumer' }}
         run: |
           set -euo pipefail
           IFS=',' read -ra names <<< "$JOBS"
-          [ "${#names[@]}" -gt 0 ] || { echo "jobs names no job: give some of t2,release,consumer"; exit 1; }
+          [ "${#names[@]}" -gt 0 ] || { echo "jobs names no job: give some of release,consumer"; exit 1; }
           for n in "${names[@]}"; do
             case "$n" in
-              t2|release|consumer) ;;
-              *) echo "jobs: '$n' is not a job; name some of t2,release,consumer, comma-separated without spaces"; exit 1 ;;
+              release|consumer) ;;
+              *) echo "jobs: '$n' is not a job; name some of release,consumer, comma-separated without spaces"; exit 1 ;;
             esac
           done
 
-  t2:
-    needs: named
-    if: contains(format(',{0},', inputs.jobs || 't2,release,consumer'), ',t2,')
-    runs-on: ubuntu-24.04
-    timeout-minutes: 120
-    env:
-      CHROME: /usr/bin/google-chrome
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
-        with:
-          version: 11.9.0
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version: 22
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - name: The template snapshot the package carries
-        run: node cli/scripts/build-payload.ts
-      - name: test:t2
-        run: |
-          set -euo pipefail
-          mkdir -p out
-          google-chrome --version | tee out/weekly-t2.txt
-          pnpm test:t2 2>&1 | tee -a out/weekly-t2.txt
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        if: always()
-        with:
-          name: t2
-          path: out/
-          if-no-files-found: ignore
-          retention-days: 30
-
   release:
     needs: named
-    if: contains(format(',{0},', inputs.jobs || 't2,release,consumer'), ',release,')
+    if: contains(format(',{0},', inputs.jobs || 'release,consumer'), ',release,')
     runs-on: ubuntu-24.04
     timeout-minutes: 90
     services:
@@ -155,7 +118,7 @@ jobs:
 
   consumer:
     needs: named
-    if: contains(format(',{0},', inputs.jobs || 't2,release,consumer'), ',consumer,')
+    if: contains(format(',{0},', inputs.jobs || 'release,consumer'), ',consumer,')
     runs-on: ubuntu-24.04
     timeout-minutes: 120
     env:

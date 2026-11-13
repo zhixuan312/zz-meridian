@@ -2,7 +2,7 @@
  * The consumer path, from the working tree, in one command.
  *
  *   node cli/scripts/consumer.ts [--adopt] [--create] [--update [--origins N]] [--update-all] [--verify]
- *                                [--created-release | --created-t2 | --created-report] [--keep]
+ *                                [--created-release | --created-t2 | --created-report | --created-rest] [--keep]
  *
  * It builds the payload from the working tree, compiles the CLI, packs it into out/smoke-pack/, and runs
  * cli/scripts/smoke.ts against that tarball with the flags given. `pnpm test:t2` packs through this same file, so the

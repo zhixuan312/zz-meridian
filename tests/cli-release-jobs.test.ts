@@ -1,8 +1,8 @@
 // @vitest-environment node
-// The release workflow's job graph: the consumer smoke ran inside `gates`, and the two together outlived the job's
-// 120-minute clock in run 42600180906 — `gates` alone takes 76 minutes on the 4-CPU runner, and the smoke runs a
-// dashboard's release suite of the same size. Each is its own job on its own clock, beside each other, and `publish`
-// waits for both. The consumer job holds no credential: only `publish` may request the npm OIDC token.
+// What the release workflow guarantees that its job graph does not: who holds a credential, that the consumer's
+// failure output is kept, and that every job has a clock. The graph itself (which jobs exist, what each needs) is
+// asserted by tests/cli-release-graph.test.ts. Only `publish` may request the npm OIDC token; only `publish`, `release`
+// and `tier2-attach` may write to the repository.
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -34,50 +34,22 @@ function jobs(): Map<string, string> {
 }
 
 describe('the release workflow', () => {
-  it('runs the consumer smoke as its own job, beside gates', () => {
-    const j = jobs();
-    expect([...j.keys()]).toEqual(['build', 'gates', 'consumer', 'publish', 'release']);
-    expect(j.get('gates')).toMatch(/^    needs: build$/m);
-    expect(j.get('consumer')).toMatch(/^    needs: build$/m);
-    // The smoke moved out of gates, not out of the workflow.
-    expect(j.get('gates')).not.toContain('smoke.ts');
-    expect(j.get('consumer')).toContain('node cli/scripts/smoke.ts --tarball "$T" --adopt --create --update');
-    expect(j.get('consumer')).toMatch(/^          name: tarball$/m);
+  it('gives the consumer no credential', () => {
+    const consumer = jobs().get('consumer')!;
+    expect(consumer).not.toMatch(/^\s*(environment|permissions):/m);
+    expect(consumer).not.toContain('id-token');
+    expect(consumer).not.toContain('secrets.');
   });
 
-  it('gives each job its own clock, above the suite it drives', () => {
-    const j = jobs();
-    for (const name of ['build', 'gates', 'consumer', 'publish', 'release']) {
-      expect(j.get(name), name).toMatch(/^    timeout-minutes: \d+$/m);
+  it('lets no job but publish, release and tier2-attach hold id-token or contents: write', () => {
+    for (const [name, text] of jobs()) {
+      if (['publish', 'release', 'tier2-attach'].includes(name)) continue;
+      expect(text, name).not.toContain('id-token');
+      expect(text, name).not.toMatch(/contents:\s*write/);
     }
-    // The runner's own release suite took 76 minutes (run 42600180906); neither job may be capped below that.
-    for (const name of ['gates', 'consumer']) {
-      const minutes = Number(/^    timeout-minutes: (\d+)$/m.exec(j.get(name)!)?.[1]);
-      expect(minutes, name).toBeGreaterThanOrEqual(90);
-    }
-  });
-
-  it('publishes only after the build, the gates and the consumer path, and tags last', () => {
-    const j = jobs();
-    expect(j.get('publish')).toMatch(/^    needs: \[build, gates, consumer\]$/m);
-    expect(j.get('release')).toMatch(/^    needs: \[build, publish\]$/m);
-  });
-
-  it('gives only publish a credential', () => {
-    const j = jobs();
-    expect(j.get('consumer')).not.toMatch(/^\s*(environment|permissions):/m);
-    expect(j.get('consumer')).not.toContain('id-token');
-    expect(j.get('consumer')).not.toContain('secrets.');
-    expect(j.get('gates')).not.toContain('id-token');
-    expect(j.get('publish')).toContain('id-token: write');
-    expect(j.get('publish')).toMatch(/^    environment: npm\b/m);
-  });
-
-  it('carries the gates\' Tier 2 record to the Release and names its baseline', () => {
-    const j = jobs();
-    expect(j.get('gates')).toContain('PREVIOUS_TAG');
-    expect(j.get('release')).toMatch(/^          name: release-test$/m);
-    expect(j.get('release')).toContain('/tmp/release-out/perf-record.json');
+    const publish = jobs().get('publish')!;
+    expect(publish).toContain('id-token: write');
+    expect(publish).toMatch(/^    environment: npm\b/m);
   });
 
   it("keeps a failed consumer run's own output, so a red names its cause", () => {
@@ -87,5 +59,9 @@ describe('the release workflow', () => {
     expect(consumer).toMatch(/^          name: consumer-test$/m);
     expect(consumer).toMatch(/^          path: out\/$/m);
     expect(consumer).toMatch(/^          if-no-files-found: ignore$/m);
+  });
+
+  it('gives every job its own clock', () => {
+    for (const [name, text] of jobs()) expect(text, name).toMatch(/^    timeout-minutes: \d+$/m);
   });
 });
