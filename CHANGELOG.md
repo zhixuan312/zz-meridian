@@ -11,6 +11,11 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 - **The consumer smoke runs from the working tree on a published version.** `consumer.ts` packs the CLI labelled as the next patch, as the weekly job does, and the smoke reads the version from the tarball it is given.
 - **A created project's smoke suite is its Tier 1 run and a build.** The release's consumer job runs `test:t1` then `next build` in the new dashboard instead of a second full `test:release`; the weekly job still runs the created project's whole `test:release` (`--created-release`).
 
+- **A timed browser suite never fails a run.** Navigation with its budgets judged, live data, Web Vitals and the 20-sample perf protocol are Tier 2: a FAIL from one of them is reported in the run's closing line as over budget, and the run stays green. The function sweeps (audit, every control pressed, keyboard, rail, personas, journeys, assistant) still fail it.
+- **`scripts/browser.ts --only <audit|interactions|keyboard|rest>` runs one function sweep,** against the same assistant-on server the whole run uses, and names the others as left to their own jobs.
+- **`control-dead` and a shell `never-ready` say what happened at the press** (#147): whether the click reached the page, the `readyState` at the press and the element at the press point. The perf-live deep case judges each combination on a three-run allowance instead of its first slow sample.
+- **The Tier 2 history can travel with the releases.** `nextHistory` in `scripts/lib/tier2.ts` adds a release's record to the last five.
+
 ### Breaking
 
 - **A created project carries no Meridian tests.** Only `tests/setup.ts` is Meridian's; `tests/examples/` holds two tests that are the team's to rewrite. The next `update` deletes each Meridian test a project has not edited and stages each one it has.

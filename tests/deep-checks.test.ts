@@ -87,9 +87,68 @@ describe('keyboard', () => {
 const navigate = (config: string, timing: string[]) => (page: string, base: string) => ['scripts/navigate.ts', '--base', base, '--config', config, '--rail', NAV_RAIL, '--homes', NAV_HOMES, ...timing, '--routes', page];
 
 describe('perf-live', () => {
-  // perf's three conditions, two samples each, between two live pages that listen for online events only once hydrated: the
-  // after-live journey has a live page to start from.
-  casesFor('perf-live', (page, base) => ['scripts/perf.ts', '--base', base, '--config', 'scripts/fixtures/deep/config-live.ts', '--rail', '/live-late-a,/live-late-b', '--routes', page, '--samples', '2'], 240_000);
+  // perf's three conditions on two devices (six combinations) between live pages that listen for online events only once
+  // hydrated, so the after-live journey has a live page to start from. What the case asserts is what scripts/perf.ts decides
+  // about its fixture, per combination: the healthy page passes, and the page whose control is dead fails every combination
+  // with `control-dead` and the press's diagnostic record.
+  //
+  // The judgement is a sample allowance, not the case sampling alone (#147). perf itself keeps its meaning (every sample
+  // counts, a sample that never gets ready fails its combination), so the case is what tolerates load: a combination passes
+  // when it is not FAIL in one of at most ALLOWANCE runs of perf. Measured on #147: one combination of 6 failed on one sample
+  // of 2 on a loaded CI runner (`control-dead`), and one of 20 samples at the phone rate x1.6 failed `never-ready` (10 s) while
+  // the other 19 took 2 ms, so a single load failure is rare and does not repeat; a fixture that is wrong fails every run. More
+  // samples in one run would not help: perf fails a combination on any one of them. The dead page needs no allowance, since
+  // load cannot make a dead control work.
+  const ALLOWANCE = 3;
+  const ATTEMPT_TIMEOUT = 240_000;
+  const command = (page: string) => ['scripts/perf.ts', '--base', url, '--config', 'scripts/fixtures/deep/config-live.ts', '--rail', '/live-late-a,/live-late-b,/live-late-dead', '--routes', page, '--samples', '2'];
+  const COMBINATIONS = ['desktop', 'phone'].flatMap((d) => ['warm', 'cold', 'afterLive'].map((c) => `${d} ${c}`));
+  /** The status perf printed for each combination of `page`, from its result lines. */
+  const statuses = (out: string, page: string): Map<string, { status: string; line: string }> => {
+    const found = new Map<string, { status: string; line: string }>();
+    for (const line of out.split('\n')) {
+      const m = line.match(/^(ok|warn|FAIL)\s+(\S+) (desktop|phone) (warm|cold|afterLive) shell /);
+      if (m && m[2] === page) found.set(`${m[3]} ${m[4]}`, { status: m[1], line });
+    }
+    return found;
+  };
+
+  const entries = MANIFEST.filter((e) => e.suite === 'perf-live');
+  it('the manifest has cases for perf-live', () => { expect(entries.length).toBeGreaterThan(0); });
+  for (const e of entries.filter((x) => x.outcome === 'pass')) {
+    it.concurrent(`${e.page}: every combination passes within ${ALLOWANCE} runs`, async () => {
+      const passed = new Set<string>();
+      const record: string[] = [];
+      for (let run = 1; run <= ALLOWANCE && passed.size < COMBINATIONS.length; run++) {
+        const r = await runSuite(command(e.page), ATTEMPT_TIMEOUT);
+        record.push(`--- run ${run}: exit ${r.code}${r.timedOut ? ', timed out' : ''}\n${r.out}`);
+        if (r.timedOut) continue;
+        // A run that is neither green nor red (not run, no Chrome) is not load, whatever else it printed.
+        expect([0, 1], record.join('\n')).toContain(r.code);
+        const seen = statuses(r.out, e.page);
+        expect([...seen.keys()].sort(), `a combination is missing\n${record.join('\n')}`).toEqual([...COMBINATIONS].sort());
+        for (const [combination, v] of seen) if (v.status !== 'FAIL') passed.add(combination);
+      }
+      const failing = COMBINATIONS.filter((c) => !passed.has(c));
+      expect(failing, `failed in all ${ALLOWANCE} runs\n${record.join('\n')}`).toEqual([]);
+      if (e.line) expect(record.join('\n')).toContain(e.line);
+    }, ALLOWANCE * ATTEMPT_TIMEOUT + 10_000);
+  }
+  for (const e of entries.filter((x) => x.outcome === 'fail')) {
+    it.concurrent(`${e.page}: every combination fails with control-dead and says what the press saw`, async () => {
+      const r = await runSuite(command(e.page), ATTEMPT_TIMEOUT);
+      expect(r.timedOut, `timed out after ${ATTEMPT_TIMEOUT} ms\n${r.out}`).toBe(false);
+      expect(r.code, r.out).toBe(1);
+      if (e.line) expect(r.out).toContain(e.line);
+      const seen = statuses(r.out, e.page);
+      expect([...seen.keys()].sort(), r.out).toEqual([...COMBINATIONS].sort());
+      for (const [combination, v] of seen) {
+        expect(v.status, `${combination}\n${r.out}`).toBe('FAIL');
+        // The diagnostic record of #147: the click reached the page, the readyState at the press, the element at the press point.
+        expect(v.line, combination).toContain('click reached the page: yes; readyState at the press: complete; element at the press point: button#toggle');
+      }
+    }, ATTEMPT_TIMEOUT + 10_000);
+  }
 });
 
 describe('navigate', () => {

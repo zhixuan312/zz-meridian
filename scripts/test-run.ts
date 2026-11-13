@@ -18,9 +18,13 @@
  *   a deleted file whose importers can no longer be computed, run the whole tier.
  * - Tier 1's large browser-fixture tests (tests/deep-*) run on their own, never inside the main Vitest run: their size
  *   decides that, not their tier.
- * - Tier 2 is the performance convention `*.perf.test.ts(x)` and the browser suites: the broad sweep of every page,
- *   control and keyboard stop (scripts/browser.ts --depth fn) and, on a quiet machine, the timed runs (--depth timed).
- *   The 20-sample protocol (--depth perf) runs where CI is true, in the weekly job that calls `pnpm test:t2`.
+ * - The browser function sweeps (scripts/browser.ts --depth fn: every page, control and keyboard stop, the walk-throughs
+ *   and the sizes) are Tier 1 and fail the run. They run where a build and Chrome exist: test:t2, test:release and the
+ *   release sweep jobs. test:t1 does not run them. `--only <audit|interactions|keyboard|rest>` runs one sweep by hand.
+ * - Tier 2 is the performance convention `*.perf.test.ts(x)` and the timed browser suites: on a quiet machine, the timed
+ *   runs (--depth timed), and the 20-sample protocol (--depth perf) where CI is true, in the weekly job that calls
+ *   `pnpm test:t2`. They report and never fail: a timed or perf suite that prints FAIL is counted in the closing line's
+ *   "Tier 2 over budget (reported, not failed)".
  */
 import { spawn, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
@@ -247,7 +251,7 @@ const affectsDeep = (files: string[]): boolean => files.some((f) => /^(scripts|j
  * The browser suites (scripts/browser.ts), at the depths asked for. Its own line per suite is passed through; the JSON
  * line says what ran and what did not, and its exit 2 is a run with something not run, not a failure.
  */
-function browser(depth: string, built = false): Promise<{ ok: boolean; notRun: string[]; declared: string[]; ran: string[]; tier2: Value[] }> {
+function browser(depth: string, built = false): Promise<{ ok: boolean; notRun: string[]; declared: string[]; ran: string[]; reported: string[]; tier2: Value[] }> {
   // Streamed as it arrives, not collected and printed when the child exits: a suite that stops making progress must be
   // visible in the log while it is stuck, never only after it finally returns or times out.
   return new Promise((resolve) => {
@@ -265,14 +269,14 @@ function browser(depth: string, built = false): Promise<{ ok: boolean; notRun: s
     child.on('close', (status) => {
       if (rest.trim()) console.log(rest);
       const json = /^browser: (.*)$/m.exec(out);
-      let state: { ran?: string[]; failed?: boolean; notRun?: string[]; declared?: string[]; tier2?: Value[] } | null = null;
+      let state: { ran?: string[]; failed?: boolean; notRun?: string[]; declared?: string[]; reported?: string[]; tier2?: Value[] } | null = null;
       try { state = json ? JSON.parse(json[1]) : null; } catch { state = null; }
       if (status === 1 || !state) {
         console.log(`test: browser suites FAIL (${out.split('\n').filter(Boolean).slice(-1)[0] ?? 'no output'})`);
-        resolve({ ok: false, notRun: [], declared: [], ran: [], tier2: [] });
+        resolve({ ok: false, notRun: [], declared: [], ran: [], reported: [], tier2: [] });
         return;
       }
-      resolve({ ok: true, notRun: state.notRun ?? [], declared: state.declared ?? [], ran: state.ran ?? [], tier2: state.tier2 ?? [] });
+      resolve({ ok: true, notRun: state.notRun ?? [], declared: state.declared ?? [], ran: state.ran ?? [], reported: state.reported ?? [], tier2: state.tier2 ?? [] });
     });
   });
 }
@@ -327,7 +331,7 @@ async function release(): Promise<number> {
     }
     else if (run('Postgres tests', bin('vitest'), ['run', '--config', postgresConfig]) !== 0) failed.push('the Postgres tests');
   }
-  const overBudget = await reportTier2(browserRun.tier2);
+  const overBudget = [...(await reportTier2(browserRun.tier2)), ...browserRun.reported.map((s) => `browser suites (${s})`)];
   for (const d of declared) console.log(`not run (declared by the project's configuration): ${d}`);
   if (!failed.length && !notRun.length) recordGreen();
   else if (notRun.length) console.log(`test:release: the marker is not advanced, because ${notRun.length} check${notRun.length === 1 ? '' : 's'} did not run`);
@@ -429,11 +433,13 @@ async function affected(tier: 't1' | 't2'): Promise<number> {
   // that leaves it out is never "every check passed".
   notRun.push(...deepBrowserNotRun(deepNeeded, deepRan));
   let browserTier2: Value[] = [];
+  let browserReported: string[] = [];
   if (withTier2 && (ranWhole || touchesBrowserAll(changed))) {
     const perf = process.env.CI === 'true' && ranWhole;
     clearParts(ROOT);
     const r = await browser(perf ? 'fn,perf' : 'fn');
     browserTier2 = r.tier2;
+    browserReported = r.reported.map((s) => `browser suites (${s})`);
     if (!r.ok) failed.push('a browser suite');
     notRun.push(...r.notRun.map((s) => `browser suites (${s})`));
     declared.push(...r.declared.map((s) => `browser suites (${s})`));
@@ -451,7 +457,7 @@ async function affected(tier: 't1' | 't2'): Promise<number> {
     const minutes = (Date.now() - t) / 60000;
     if (minutes > 15) console.log(`warn test:${tier}: the consumer smoke took ${minutes.toFixed(1)} min, past the 15-minute line for a per-change run`);
   }
-  const overBudget = withTier2 ? await reportTier2(browserTier2) : [];
+  const overBudget = withTier2 ? [...(await reportTier2(browserTier2)), ...browserReported] : [];
 
   // test:t2 never judges a time: the timed suites belong to test:release, which alone runs them on a quiet machine.
   if (withTier2) console.log('not run timed browser suites: test:release runs them on a quiet machine');

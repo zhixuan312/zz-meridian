@@ -23,7 +23,7 @@ Any route that is not a page below answers a clean page (light DOM, no control),
 | `navigate` | `node scripts/navigate.ts --base <url> --config scripts/fixtures/deep/config.ts --rail <NAV_RAIL> --homes <NAV_HOMES> --routes <page>`, with `NAV_RAIL` and `NAV_HOMES` as `pages.ts` exports them (tests/deep-checks.test.ts reads them there). Manifest `args` follow `--routes`, and the first occurrence of a flag wins, so `args` can add `--timing`, `--mode` and `--samples` to this suite and cannot replace `--config`, `--rail` or `--homes` |
 | `navigate-timing-off` | The `navigate` command with `--config scripts/fixtures/deep/config-tight.ts --timing off`. `config-tight.ts` is `config.ts`'s mappings with every navigation budget at 1 ms, so only function can fail a line, and with three pages mapped wrongly on purpose (`/nav-root-hydrated`'s title, `/nav-root-target`'s ready text, `/nav-multi`'s ready selector), which `config.ts` maps rightly and passes |
 | `navigate-timing-on` | The same with `--timing on`: a page that works is over its 1 ms budget |
-| `perf-live` | `node scripts/perf.ts --base <url> --config scripts/fixtures/deep/config-live.ts --rail /live-late-a,/live-late-b --routes <page> --samples 2`: perf's three conditions between the two live pages, so the after-live journey has a live page to start from |
+| `perf-live` | `node scripts/perf.ts --base <url> --config scripts/fixtures/deep/config-live.ts --rail /live-late-a,/live-late-b,/live-late-dead --routes <page> --samples 2`: perf's three conditions between the two live pages, so the after-live journey has a live page to start from |
 
 ## Pages
 
@@ -62,6 +62,7 @@ Every page has an `h1`, `lang="en"`, a `main`, an opaque ground and controls of 
 | `/nav-retake` | Navigation: its table is there on the first desktop visit and gone on every later one. Under `--timing on` and 1 ms budgets the first journey is over budget, is retaken, and the retake finds no data (`data never-ready on a retake`); under loose budgets it is never retaken and passes |
 | `/nav-d-nostart` | Navigation: drawn by no rail and no workspace's home, so the journey has nowhere to start from (`the rail has no other route to start from`) |
 | `/live-late-a`, `/live-late-b` | perf's after-live case, on a rail of their own: each listens for `online` only 1.5 s after it loads, as a console page does once hydrated, then resyncs as the provider does (a Server Action at `/live-act`, then the router's read). The journey from A to B starts on a live page (passes) |
+| `/live-late-dead` | The same live page with a control nothing is wired to: all six combinations end in `control-dead`, with the press's diagnostic record (fails, on every run) |
 | `/nav-s-unloaded`, `/nav-d-unloaded` | Navigation, a start that is the defect: every `nav-s-*` page is a start with a rail of its own that draws only the link to its `nav-d-*` destination, sits directly before it in the rail, and is never a destination itself. This one loses its heading after the first visit (`the starting page ... did not load`) |
 | `/nav-s-nobutton`, `/nav-d-nobutton` | The start hides its Open navigation button after the first visit: the phone cannot open the drawer |
 | `/nav-s-nolink`, `/nav-d-nolink` | The start hides its links after the first visit: the drawer on a phone and the rail on a desktop show none to press |
