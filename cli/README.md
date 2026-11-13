@@ -24,6 +24,8 @@ The skill picks the command from what you said and what is in the folder, and na
 new dashboard in a new folder ("build an ops dashboard", "a new one based on this folder, in another folder"), and
 `update` or `brand` for a project that already has Meridian.
 
+The journey from that command to the standard — the order of the steps and what "met" means — is the skill's `SKILL.md`.
+
 ## Commands
 
 ```sh

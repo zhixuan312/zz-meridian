@@ -17,7 +17,7 @@ An earlier sentence named `adopt`, the wrong command for every request for a new
 
 The sentence is written to be sent as a goal (`/goal` in Claude Code and Codex), which keeps the agent working until a
 separate model, reading the conversation after every turn, finds the condition met. That model sees the sentence, not
-the skill, so the sentence ends with a condition the transcript can show: the hand-over (SKILL.md, step 7) quotes
+the skill, so the sentence ends with a condition the transcript can show: the hand-over the skill describes quotes
 the release command's last line and the scoreboard's count, or names what only the person can decide or
 provide. The degree lives in the skill, never in the sentence: `skills/zz-meridian/references/standard.md` holds the
 register, the scoreboard of floors and craft kept for every view, the loop run until nothing is weak, and which
@@ -50,8 +50,8 @@ rebuilding each page on Meridian's components, the fake API, and reading what th
 Copies the template (without `.git`, the Atlas, card previews and page specifications, `docs/`, `decisions/`,
 `CONTRIBUTING.md`, the changelog, and Meridian's own tests: of `tests/`, only `setup.ts`, which is Meridian's, and `examples/`, the team's starting
 point, ship), installs the skill into the new project (see below), writes the manifest, and prints the next step. Brand
-arguments (`--name`, `--hex`, …) pass through to `scripts/brand.ts --product`. Replaces SKILL.md step 3's
-clone-then-delete.
+arguments (`--name`, `--hex`, …) pass through to `scripts/brand.ts --product`. Replaces the skill's step that gets the
+template and deletes what a product does not need.
 
 ### `adopt`
 
@@ -81,7 +81,7 @@ Then, in this order:
    when they have none.
 5. Installs the skill and writes the manifest.
 6. Runs their package manager's install (pnpm with `--no-frozen-lockfile`, since adopt has just changed `package.json`), `next typegen` and `tsc --noEmit`, and prints the result and the next step:
-   the skill's Route A from step 2, with the template to read from at the same version. A failed type check exits 1; the files stay adopted.
+   the skill's Route A from the step that reads the template, at the same version. A failed type check exits 1; the files stay adopted.
 
 Three things make the copy safe in someone else's project. Meridian's own files import each other by relative path,
 pinned to the exact module (`…/button/index`), so a team's `components/ui/button.tsx` can never be resolved in place

@@ -1,10 +1,10 @@
 # Start a dashboard
 
-A new dashboard starts from this repository running, not from a blank page. Seven steps take it from ZZ Meridian's own dashboard to yours; each is one file or one folder.
+A new dashboard starts from this repository running, not from a blank page. The journey from ZZ Meridian's own dashboard to yours — its order and the standard it ends at — is the `zz-meridian` skill's: `SKILL.md`, which a created project holds at `.agents/skills/zz-meridian/SKILL.md`.
 
-The fastest way is to let your coding agent do all seven: `npx zz-meridian@latest create my-dashboard --name "Acme Ops"` copies and brands the template and installs the `zz-meridian` skill into it; then describe the dashboard you need to Codex or Claude Code. The steps below are what they do, for doing it by hand.
+The fastest way is to let your coding agent follow that skill: `npx zz-meridian@latest create my-dashboard --name "Acme Ops"` copies and brands the template and installs the `zz-meridian` skill into it; then describe the dashboard you need to Codex or Claude Code. The sections below are what each part does, for doing it by hand.
 
-## 1. Copy it
+## Copy it
 
 ```sh
 npx zz-meridian@latest create my-dashboard   # the template, branded, with the Atlas left out
@@ -14,9 +14,9 @@ pnpm dev   # the template at http://localhost:3000
 
 To keep the Atlas while you build, clone this repository instead (`git clone https://github.com/zhixuan312/zz-meridian.git my-dashboard`, then `pnpm install`): it serves the Atlas at `/system`, the specification of every part you are about to use. A project made with `create` has no Atlas and nothing to remove. In a clone, to ship without it, run `node scripts/brand.ts --no-atlas`: it deletes `app/system/` and the Atlas-only modules in `src/system/`, removes the two rail entries that point at `/system`, the footer link, the `/system` entries in `scripts/verify.config.ts` and the `/system/**` build tracing in `next.config.ts`. It keeps the rest of `src/system/`: every card's preview imports its specimen helpers, and the gate regenerates its registry.
 
-## 2. Name it
+## Name it
 
-`node scripts/brand.ts --name "Acme Ops" --workspace "Production" --timezone "Europe/London"` does this step in one command, and step 3 too with `--hex '#RRGGBB'`. By hand, `src/app.config.ts` holds everything that makes the product yours:
+`node scripts/brand.ts --name "Acme Ops" --workspace "Production" --timezone "Europe/London"` does the naming in one command, and the branding too with `--hex '#RRGGBB'`. By hand, `src/app.config.ts` holds everything that makes the product yours:
 
 - `app.name`, `app.workspace`: the rail, the document title, the sign-in screen.
 - `app.description`: the line a search engine and a link preview show under the name.
@@ -27,7 +27,7 @@ To keep the Atlas while you build, clone this repository instead (`git clone htt
 
 Put your logo in `public/` as an SVG and set `logo: '/logo.svg'` in `app`: the mark shows it at 20, 24, 28 and 32 pixels, with an empty `alt` beside the product name. `theme: 'dark'` or `'light'` sets the default theme before anyone picks one.
 
-## 3. Brand it, if you need more than an accent
+## Brand it, if you need more than an accent
 
 An accent preset is two numbers. `node scripts/brand.ts --hex '#RRGGBB'` (or `--hue <0-360> --chroma <0-0.24, typically 0.12-0.18>`) adds your brand's hue as a preset, makes it the default, holds contrast in every theme by itself, and warns when the hue sits within 20° of a status colour. By hand, copy `tokens/accent.indigo.tokens.json` to `tokens/accent.<name>.tokens.json`, set `accent-h` (OKLCH hue) and `accent-c` (chroma), add it to `tokens/zz-meridian.resolver.json` and set `accent` to its name in `src/app.config.ts` (the appearance menu lists it from there), then:
 
@@ -40,9 +40,9 @@ If a pair fails, lower the chroma, or give the preset a lightness override for t
 
 The script names a new preset `brand` by default. `--accent-name Brand_2-blue` chooses another name using only ASCII letters, numbers, hyphens and underscores. The name becomes a filename, resolver key and configuration literal; empty names, paths and punctuation are refused before any files are changed. Product names and user names may still contain quoted text, and timezone values still use IANA names such as `Europe/London`.
 
-## 4. Connect your data
+## Connect your data
 
-The standard for this step is `docs/data-layers.md`: the four layers between your database and the screen, the contract your backend answers, the seven direct reads, and the ordered path a project with its own API or tables follows to reach them.
+The standard for connecting it is `docs/data-layers.md`: the four layers between your database and the screen, the contract your backend answers, the seven direct reads, and the ordered path a project with its own API or tables follows to reach them.
 
 Your pages, your server actions and the assistant read and change records through `src/data/`, and read nothing else: `collections.ts` holds the collections, `access.ts` says who the request is and what they may do, and `read.ts` is the pages' authorized, cached `read(name, query)`. Replace the collections with yours (rows from your API, or `arrayCollection` while you build; a collection you write by hand has an `aggregate` too, `aggregateRows` over the rows it holds or one grouped query for a database), replace the policy in `access.ts` with your session and permissions, add `src/data/<product>.ts` for any other types and queries, and point your pages at them. What the sample pages still draw as a constant (types and the regions list) comes from `src/data/sample.ts`, the daily series the sign-in page shows from `src/data/sign-in.ts`, and the bell's alerts are worked out by `readAlerts` in `src/logic/alerts.ts`. The template's own sample, ZZ Meridian's own dashboard, lives in `src/system/fixtures/` because the Atlas and every card preview read it; leave it there. Shape your records to the types the patterns define (`ActivityEvent`, `Incident`, `Service`) and they render without adapters. Two rules carry over:
 
@@ -51,7 +51,7 @@ Your pages, your server actions and the assistant read and change records throug
 
 The console keeps its collection-backed pages (Home, Revenue, Now, Members, API keys, Tickets, Tests, Releases) fresh without a reload: one stream per tab carries a hint that names only a collection, and the page refreshes through the same authorized `read()`. The sample stream is a single process; across processes, `skills/zz-meridian/references/live.md` holds the Postgres and Redis adapters a product writes for itself.
 
-## 5. Decide who may do what
+## Decide who may do what
 
 The access layer is one folder, `src/data/`, and four edits take the sample's demo policy to yours:
 
@@ -66,7 +66,7 @@ pnpm test:t1   # the checks, which fail a nav item whose needs is not a need, an
 
 The rail and the command palette draw only the destinations the signed-in person satisfies, but that is presentation, not the gate: every page refuses on its own — a person who may not open it gets the product's `refusal` as a normal 200 (the NoAccess view under the sample's `explain`), and a request with no session goes to `/sign-in`. `skills/zz-meridian/references/customize.md` has the reference for the whole access layer.
 
-## 6. Arrange your pages
+## Arrange your pages
 
 Every page is a `PageFrame` holding a `Stack` of `Row`s. Start from the closest preset and change what it shows, not how it is laid out. A page that leads with figures is headed by a sentence that states them, worked out by a function with a test, and passes its `name` beside it; a list or a form keeps a name (`docs/data-display.md`, "A title that states the figures"). A dashboard page leaves its width alone — `data` fills the canvas; a page that is mostly a form takes `width="form"`, whose band centres once the canvas is wider than a form needs; a page that is one long document takes `width="reading"`:
 
@@ -85,7 +85,7 @@ A list of records is the records template, `Records` in `src/components/template
 
 If a page seems to need a new style, it needs a pattern or a component instead: specify it in its layer (see `CONTRIBUTING.md`).
 
-## 7. Put it in front of an agent
+## Put it in front of an agent
 
 Each route under `app/embed/` is an MCP App view. Register each as a `ui://` resource and a tool on your MCP server (`docs/agents.md`), and the dashboard appears in any MCP Apps host, inline beside the answer, with Expand, Ask and Proposals working.
 

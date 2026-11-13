@@ -77,8 +77,8 @@ ${nextStep(pm)}`);
 
 /** What the person does next, with the release command written so their package manager runs it. */
 export function nextStep(pm: 'pnpm' | 'npm'): string {
-  return `Next: follow .agents/skills/zz-meridian/SKILL.md from step 3's brief (the template is fetched and branded): the brief,
-step 4's colour check, then data and the pages, then the loop in references/standard.md until ${command(pm, 'test:release', '')} passes
+  return `Next: follow the zz-meridian skill's .agents/skills/zz-meridian/SKILL.md (the template is fetched and branded): fill in the brief it
+describes, run its brand-colour check, then build the data and the pages, then run the loop in references/standard.md until ${command(pm, 'test:release', '')} passes
 and no view on the scoreboard is Weak.`;
 }
 

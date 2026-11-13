@@ -109,7 +109,7 @@ const label = (route: string) => (route === '/' ? 'Home' : route.split('/').pop(
 /**
  * The configuration `adopt` writes: the template's own file with the project's pages as its navigation. Everything that
  * belongs to the sample is left out, because the project does not have it: the feature table (so every item is `public`,
- * the honest default, until the fourth step of "Decide who may do what" in the Start guide points each at a feature of its own), every icon but the one the
+ * the honest default, until the fourth edit of "Decide who may do what" in the Start guide points each at a feature of its own), every icon but the one the
  * items use, and the sample's workspaces with the field that names one. It throws when the template has no navigation
  * block to replace, since a configuration that still listed the sample's pages would be wrong without saying so.
  */
@@ -460,11 +460,11 @@ Meridian ${VERSION} is in ${root}.
   agent context: AGENTS.md has the managed block; docs/brief.md ${briefWritten ? 'is the empty brief to fill in' : 'was kept as it is'}
   types: ${typed}${notes.length ? `\n  notes:\n${notes.map((n) => `    - ${n}`).join('\n')}` : ''}
 
-Next: follow .agents/skills/zz-meridian/references/existing-project.md, Route A, from step 2 (step 1 was this), to the
-standard in references/standard.md. The
+Next: follow the zz-meridian skill's .agents/skills/zz-meridian/references/existing-project.md, Route A, from the step
+that reads the template (the adopt command above was the first), to the standard in references/standard.md. The
 template to read from is https://github.com/zhixuan312/zz-meridian/tree/v${VERSION}. Import Meridian's components as
-'@meridian/components/…'. Before the first browser diagnostic, read step 5: it presses every control, Delete included —
-set fakeApi or noLiveApi in scripts/verify.config.ts first, and point a database URL at a local backend.`);
+'@meridian/components/…'. Before the first browser diagnostic, read the step that gives them a fake API: it presses
+every control, Delete included — set fakeApi or noLiveApi in scripts/verify.config.ts first, and point a database URL at a local backend.`);
   const exit = adoptExit(typed);
   if (exit) console.error('zz-meridian adopt: the files are adopted, but the type check failed (above). The type errors are the project\'s to fix before running its gate; re-check with npx tsc --noEmit.');
   return exit;

@@ -526,7 +526,7 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     since: '0.13.0',
     applies: navItemsWithoutNeeds,
     summary: 'Every item in the project\'s `nav` carries a `needs`, so the rail shows only the destinations a person may reach.',
-    instructions: 'Read "5. Decide who may do what" in the Start guide (docs/start-a-dashboard.md). For each item in `src/app.config.ts`\'s `nav`, add `needs: \'public\'` when everyone may open that page, or point it at its feature (`needs: FEATURES.<id>.needs`); the fourth of its four steps covers it, and `scripts/check.ts` fails the project\'s gate, naming the href, on an item without one. `adopt` writes `needs: \'public\'` for a project it sets up from now on. A `NavItem` type of your own declares `needs` too; if every item and the type already carry it, there is nothing to change.',
+    instructions: 'Read "Decide who may do what" in the Start guide (docs/start-a-dashboard.md). For each item in `src/app.config.ts`\'s `nav`, add `needs: \'public\'` when everyone may open that page, or point it at its feature (`needs: FEATURES.<id>.needs`); the fourth of its four edits covers it, and `scripts/check.ts` fails the project\'s gate, naming the href, on an item without one. `adopt` writes `needs: \'public\'` for a project it sets up from now on. A `NavItem` type of your own declares `needs` too; if every item and the type already carry it, there is nothing to change.',
     checks: ['test:t1'],
   },
   {

@@ -57,7 +57,7 @@ These hold in every project, however it started, and nothing below overrides the
   failed and nothing unrun the project can run, and every view is rendered, scored and none is Weak
   (`references/standard.md`). Never against a live backend: the browser sweeps press every control, Delete
   included, so a project whose pages call a live API or read a database names a `fakeApi` (or says `noLiveApi`) in
-  `scripts/verify.config.ts` first (`references/existing-project.md`, step 5).
+  `scripts/verify.config.ts` first (`references/existing-project.md`, the step that gives them a fake API).
 - **Commit locally, never publish.** Commit each verified change on its own with the paths named. Pushing, a release, a
   deploy, production data and the feedback issue wait for the person's yes.
 

@@ -108,6 +108,8 @@ names the route before it runs anything:
 | "Based on this folder, make a new dashboard in another folder" | `create` in that folder, reading this one and leaving it untouched |
 | "Update Meridian", "change our brand colour" | `update` or `brand`, in a project that already has Meridian |
 
+The journey from that command to the standard — the order of the steps and what "met" means — is the skill's `SKILL.md`.
+
 `adopt` copies the components, tokens and gates in, merges the dependencies, brands it, adds Meridian's managed block to
 your `AGENTS.md` (your own text there is kept byte for byte) and an empty `docs/brief.md` for your product's own
 context, and installs the skill into the project. `create` writes a new, branded project with the same skill. The agent
