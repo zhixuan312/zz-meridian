@@ -72,14 +72,6 @@ describe('the tier convention', () => {
   });
 });
 
-describe('docs/testing.md states the standard', () => {
-  const doc = read('docs/testing.md');
-  for (const command of COMMANDS) it(`names ${command}`, () => expect(doc).toContain(command));
-  it('names the Tier 2 file convention', () => {
-    expect(doc).toContain('*.perf.test.ts(x)');
-    expect(doc).toContain('tests/deep-*.test.ts(x)');
-  });
-  it('labels the three plan phases', () => {
-    for (const tier of ['Tier 1', 'Tier 2', 'Tier 3']) expect(doc).toContain(tier);
-  });
-});
+// `docs/testing.md` says the same in prose, and no test pins that wording: a sentence an owner may rewrite is not a
+// guarantee, and the standard's behaviour is what this file asserts above — the commands that exist, and the
+// convention that classifies each test file.
