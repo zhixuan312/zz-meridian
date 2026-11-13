@@ -8,12 +8,16 @@ The test commands are the only test entry points, and none takes an argument. Th
 | `pnpm test:t2` | The affected Tier 2 tests too, and the affected Tier 1 tests with them. |
 | `pnpm test:release` | Every Tier 1 and Tier 2 test, once, plus lint, the type check, a production build and its size and route checks. |
 
-Tier 2 is the file convention `*.perf.test.ts(x)` and the broad browser sweeps; every other test under `tests/` is
-Tier 1. `tests/deep-*`, the browser-fixture tests of the checks, are Tier 1 and run as their own stage, kept out of the
-main run by their size. `test:t1` never runs a Tier 2 check. A command writes `out/last-green` after a passing run and
-reads it before the next; a missing marker falls back to the diff against master, and a checkout with neither runs the
-whole tier. Follow "When a red is fixed, and when a limit may move" below for what a red and a limit mean, rather
-than deciding per change.
+Tier 2 is the file convention `*.perf.test.ts(x)` and the timed browser suites; every other test under `tests/` is
+Tier 1. The browser function sweeps are Tier 1 and fail the run; they need a build and Chrome, so they run in
+`test:t2` and `test:release`, never in `test:t1`. `tests/deep-*`, the browser-fixture tests of the checks, are Tier 1
+and run as their own stage, kept out of the main run by their size. `test:t1` never runs a Tier 2 check. A command
+writes `out/last-green` after a passing run and reads it before the next; a missing marker falls back to the diff
+against master, and a checkout with neither runs the whole tier. A run that ends red leaves `out/last-run.json` — the
+tree it proved and the test files that failed — and the next run starts from that tree: a fix runs its failures and the
+tests its change reaches, not everything since the last green run. The same bytes may be retried once, and that run
+never advances the marker, because a pass with no cause named is flaky. Follow "When a red is fixed, and when a limit
+may move" below for what a red and a limit mean, rather than deciding per change.
 
 `test:t2` runs the browser sweeps (`scripts/browser.ts --depth fn`); `test:release` adds the timed ones on a quiet
 machine (`--depth timed`). Each script also runs directly against a served build when a question needs it, with the

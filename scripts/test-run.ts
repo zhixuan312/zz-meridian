@@ -37,6 +37,7 @@ import { bin } from './lib/bin.ts';
 import { FIRST_LOAD_CAP_KB, budgetsOf, type BudgetsConfig } from './lib/budgets.ts';
 import { consumerSmokeKind } from './lib/consumer-smoke.ts';
 import { deepFiles, deepPart, deepPlan, deepReach } from './lib/deep-inputs.ts';
+import { clearLastRun, failedFilesOf, readLastRun, retryBaseline, retryNumber, writeLastRun } from './lib/last-run.ts';
 import { lintTargets } from './lib/lint.ts';
 import { deepBrowserNotRun } from './lib/report-lines.ts';
 import { clearParts, reportOrWarn, type Seed, type Value } from './lib/tier2.ts';
@@ -101,6 +102,22 @@ function changedSince(base: string): { all: string[]; present: string[]; deleted
 }
 
 /**
+ * The tree the working copy would commit, computed in a throwaway index so the real one is never touched: the identity of
+ * what a run proves, and — when the run is red — the base the next one diffs its fix against.
+ */
+function workingTree(): string | null {
+  const index = git(['rev-parse', '--git-path', 'index']);
+  if (!index.ok) return null;
+  const copy = path.join(ROOT, 'out', 'index-last-run');
+  try { fs.copyFileSync(path.resolve(ROOT, index.out), copy); } catch { return null; }
+  const env = { ...process.env, GIT_INDEX_FILE: copy };
+  const added = spawnSync('git', ['add', '-A'], { cwd: ROOT, encoding: 'utf8', env });
+  const written = spawnSync('git', ['write-tree'], { cwd: ROOT, encoding: 'utf8', env });
+  fs.rmSync(copy, { force: true });
+  return added.status === 0 && written.status === 0 ? written.stdout.trim() : null;
+}
+
+/**
  * The tests that name a changed path, for the paths no import graph can reach (a document a guard reads with fs). The
  * group is read from the tests themselves: a name no test holds selects none, and the document changes nothing.
  */
@@ -138,18 +155,18 @@ function run(label: string, cmd: string, args: string[], env: NodeJS.ProcessEnv 
 }
 
 /** What the last Vitest run proved, read from its JSON report; null when the report was not written. */
-function report(): { files: number; tests: number } | null {
+function report(): { files: number; tests: number; failed: string[] } | null {
   try {
     // `testResults` holds one entry per test file; the suite count includes every nested `describe`.
     const j = JSON.parse(fs.readFileSync(REPORT, 'utf8')) as { testResults?: unknown[]; numTotalTests?: number };
-    return { files: j.testResults?.length ?? 0, tests: j.numTotalTests ?? 0 };
+    return { files: j.testResults?.length ?? 0, tests: j.numTotalTests ?? 0, failed: failedFilesOf(ROOT, REPORT) };
   } catch { return null; }
 }
 
-function vitest(mode: 'related' | 'run', filters: string[], withTier2: boolean, label: string): { status: number; files: number; tests: number } {
+function vitest(mode: 'related' | 'run', filters: string[], withTier2: boolean, label: string): { status: number; files: number; tests: number; failed: string[] } {
   try { fs.rmSync(REPORT, { force: true }); } catch { /* no stale report */ }
   const status = run(label, bin('vitest'), vitestArgs(mode, filters, withTier2));
-  const r = report() ?? { files: 0, tests: 0 };
+  const r = report() ?? { files: 0, tests: 0, failed: [] };
   return { status, ...r };
 }
 
@@ -365,7 +382,11 @@ function consumerSmoke(kind: 'create' | 'update' | 'verify'): number {
 }
 
 async function affected(tier: 't1' | 't2'): Promise<number> {
-  const { ref, from } = baseline();
+  // A red run leaves the tree it proved and the test files it failed. The next run starts from that tree, so a fix runs
+  // the failures it answers and the tests its own change reaches — not everything since the last green run.
+  const last = readLastRun(ROOT);
+  const retry = retryBaseline(last);
+  const { ref, from } = retry ?? baseline();
   const { all: changed, present, deleted } = changedSince(ref);
   const withTier2 = tier === 't2';
   if (withTier2) clearParts(ROOT);
@@ -373,15 +394,30 @@ async function affected(tier: 't1' | 't2'): Promise<number> {
 
   // Nothing changed and a green run is recorded: there is nothing to prove again.
   const marker = fs.existsSync(MARKER);
-  if (!changed.length && marker) {
+  // A red run of this very tree is not "nothing changed": its failures run once more, and a pass then is reported as a
+  // retry and never advances the marker, because a pass with no cause found is flaky (`docs/testing.md`, "Flaky is red").
+  const sameTree = retry !== null && changed.length === 0;
+  if (!changed.length && marker && !sameTree) {
     console.log(`test:${tier}: nothing changed since the last green run`);
     return 0;
   }
+  if (sameTree && retryNumber(last) === null) {
+    console.log(`test:${tier}: the tree has not changed since the run that failed, and it was retried once already: name the cause from the output, fix it, then run again`);
+    return 1;
+  }
+  // The identity of what this run proves; a run that cannot name it records no baseline rather than a wrong one.
+  const tree = workingTree();
 
   /** Every Tier 1 failure this run met, printed together at the end: a red in one stage must not hide the next. */
   const failed: string[] = [];
-  if (staticChecks() !== 0) failed.push('static checks');
-  if (typecheck() !== 0) failed.push('the type check');
+  /** The test files that failed, so a red run can hand the next one its smallest starting set. */
+  const failedTests = new Set<string>();
+  // The checks that read the whole tree cannot say anything new about bytes they have already read: a retry of an
+  // unchanged tree runs its failures, and nothing else (docs/testing.md, "Once per commit").
+  if (!sameTree) {
+    if (staticChecks() !== 0) failed.push('static checks');
+    if (typecheck() !== 0) failed.push('the type check');
+  }
   // The same lint test:release runs, over the files this change touches: a lint error must not reach master through a
   // run that checked types but never linted (one did: the drawer's `react-hooks/refs`, b54c5d7b).
   const lintFiles = lintTargets(present);
@@ -395,6 +431,9 @@ async function affected(tier: 't1' | 't2'): Promise<number> {
     if (isTestFile(f) || isCode(f)) filters.add(f);
     for (const t of testsNaming(f)) filters.add(t);
   }
+  // Every file the run before this one failed, whether or not this change reaches it: the failures are the point, and a
+  // test the fix does not touch must still be proven.
+  for (const f of last?.failed ?? []) if (fs.existsSync(path.join(ROOT, f))) filters.add(f);
   // A deleted source file has no importers to compute: an import graph that cannot see a change is not evidence that
   // nothing needs checking, so the whole tier runs. A deleted test is gone, and has nothing to run.
   const deletedCode = deleted.some((f) => isCode(f) && !isTestFile(f));
@@ -420,6 +459,7 @@ async function affected(tier: 't1' | 't2'): Promise<number> {
     : vitest('run', [], withTier2, `tier ${withTier2 ? '2 and 1' : '1'} tests (nothing identifies a smaller set)`);
 
   if (first.status !== 0) failed.push(`the tests affected by the change`);
+  for (const f of first.failed) failedTests.add(f);
 
   // A deleted source file, or a code change no test reaches, runs the whole tier: the import graph is not evidence that
   // nothing needs checking. A related run that failed has already said what it could not prove; the whole tier still runs.
@@ -428,6 +468,7 @@ async function affected(tier: 't1' | 't2'): Promise<number> {
     console.log(`test:${tier}: ${deletedCode ? 'a deleted source file' : 'no test reaches the changed code'}, so the whole tier runs`);
     first = vitest('run', [], withTier2, `tier ${withTier2 ? '2 and 1' : '1'} tests (whole tier)`);
     if (first.status !== 0) failed.push('a test in the whole tier');
+    for (const f of first.failed) failedTests.add(f);
   }
 
   // The browser fixtures are outside the main run; they run whole when a script, a journey or their own files changed,
@@ -482,9 +523,21 @@ async function affected(tier: 't1' | 't2'): Promise<number> {
   // A Tier 1 run proves nothing about a Tier 2 change: the marker advances only when this run covered every change.
   const tier2Left = withTier2 ? false : ranWhole || pendingTier2(changed, present, deleted);
   const pending = tier2Left || !deepRan || notRun.length > 0;
-  if (!failed.length && !pending) recordGreen();
+  if (!failed.length && !pending && !sameTree) {
+    recordGreen();
+    // A green run leaves nothing for the next one to retry.
+    clearLastRun(ROOT);
+  }
   else if (notRun.length) console.log(`test:${tier}: the marker is not advanced, because ${notRun.length} check${notRun.length === 1 ? '' : 's'} did not run`);
   else if (!failed.length) console.log(`test:${tier}: the marker is not advanced, because a Tier 2 check did not run; pnpm test:t2 covers it`);
+  // The retry of an unchanged tree is reported whatever it found: a pass here answers no cause, so it is flaky, not green.
+  if (sameTree) console.log(`test:${tier}: this run is a retry of the tree that failed, not of a fix: ${failed.length ? 'it failed again, so the cause is in its output' : 'it passed, which reports a flaky check and does not advance the marker'}`);
+  // A red run hands the next one its failures and the tree they were proven on, so a fix runs the smallest set that proves it.
+  // A run that could not name its tree records nothing: a baseline that is not this run's would select the wrong set.
+  if (failed.length) {
+    if (tree) writeLastRun(ROOT, { tree, failed: [...failedTests].sort(), retries: sameTree ? retryNumber(last)! : 0 });
+    else clearLastRun(ROOT);
+  }
   if (!first.files) console.log(`test:${tier}: no test is affected (${where})`);
   const { line, exit } = summaryLine({ command: `test:${tier}`, failed, notRun, declared, overBudget, covers: tier === 't1' ? 'every Tier 1 check' : 'every Tier 1 check and the Tier 2 files this run covers', ...(first.files ? { files: first.files, tests: first.tests } : {}) });
   console.log(line);

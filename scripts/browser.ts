@@ -334,7 +334,8 @@ if (!want('fn') || sweeps.has('rest')) {
   }
   if (sized.status !== 0) failed = true;
 }
-if (failed) finish();
+// A failed size check is reported and the run carries on: the sweeps below judge different things, and a red in one must
+// not hide the others (docs/testing.md, "a red is fixed… every stage still runs so one red cannot hide another").
 
 // The navigation: every rail route when the config maps them all, else the smoke routes with their data and interaction
 // reported not configured. A product mid-adoption has no mappings yet; the smoke is what its own run can prove. The
@@ -358,7 +359,8 @@ if (sweep('rest') || want('timed')) {
     const nav = await run('scripts/navigate.ts', navPlan.args(navigationPlan('fn').judged ? 'on' : 'off'), app);
     report(`navigation: ${navPlan.label}, its budgets unjudged`, nav);
   }
-  if (failed) finish();
+
+  // The personas run whatever the navigation found: they read a different thing, and a red in one must not hide the other.
 
   // --as the personas, each against a fresh server: a persona's presses change the sample's state.
   if (sweep('rest') && config.personas && Object.keys(config.personas).length) {
@@ -412,7 +414,8 @@ if (sweep('rest') || want('timed')) {
     } finally {
       personaPage.close();
     }
-    if (failed) finish();
+    // Every persona is read, and every sweep after them: one persona's red is that persona's, and the run reports it with
+    // the rest rather than hiding what it has not looked at yet.
   }
 }
 
@@ -424,7 +427,6 @@ if (want('fn')) {
     if (sweep('rest')) {
       const off = await run('scripts/assistant.ts', ['--base', here, '--expect', 'off'], app);
       report('assistant absent without its variables', off);
-      if (failed) { stop(server.server); finish(); }
     }
 
     const fake = spawn(process.execPath, ['scripts/fake-llm.ts', '--port', '0', ...fakeModelArgs(fakeSteps)], { cwd: ROOT, stdio: ['ignore', 'pipe', 'inherit'], detached: true });
@@ -434,18 +436,25 @@ if (want('fn')) {
       fake.stdout!.on('data', (d) => { buf += String(d); const m = /fake-llm listening on (\S+)/.exec(buf); if (m) resolve(m[1]); });
       fake.on('close', () => resolve(''));
     });
-    if (!llmUrl) { phase('FAIL', 'the fake LLM did not start', null); failed = true; stop(server.server); finish(); }
-    // A distinctive key per run: the walk-through searches everything the browser can get for it.
-    const key = `browser-${randomBytes(16).toString('hex')}`;
-    stop(server.server);
-    server = await start({ ...app, ASSISTANT_PROVIDER: 'openai-compatible', ASSISTANT_BASE_URL: llmUrl, ASSISTANT_API_KEY: key, ASSISTANT_MODEL: 'fake' });
-    if (failed) finish();
-    here = `http://127.0.0.1:${server.port}`;
-    log(`server: assistant on (fake LLM at ${llmUrl}, ASSISTANT_* set) at ${here}`);
-    if (sweep('rest')) {
-      const on = await run('scripts/assistant.ts', ['--base', here, '--expect', 'on', '--llm', llmUrl, '--key', key], app);
-      report('assistant walk-through', on);
+    if (!llmUrl) {
+      // The fake LLM did not start, so the assistant checks cannot run; the sweeps that do not need it still do, and the
+      // walk-through is reported not run rather than allowed to hide everything after it.
+      phase('FAIL', 'the fake LLM did not start', null);
+      failed = true;
+      if (sweep('rest')) notRun.push('the assistant walk-through (the fake LLM did not start)');
+    } else {
+      // A distinctive key per run: the walk-through searches everything the browser can get for it.
+      const key = `browser-${randomBytes(16).toString('hex')}`;
+      stop(server.server);
+      server = await start({ ...app, ASSISTANT_PROVIDER: 'openai-compatible', ASSISTANT_BASE_URL: llmUrl, ASSISTANT_API_KEY: key, ASSISTANT_MODEL: 'fake' });
+      // The server the remaining sweeps run against did not come back: that is the one thing nothing below can work around.
       if (failed) finish();
+      here = `http://127.0.0.1:${server.port}`;
+      log(`server: assistant on (fake LLM at ${llmUrl}, ASSISTANT_* set) at ${here}`);
+      if (sweep('rest')) {
+        const on = await run('scripts/assistant.ts', ['--base', here, '--expect', 'on', '--llm', llmUrl, '--key', key], app);
+        report('assistant walk-through', on);
+      }
     }
   } else {
     log(`server: assistant off (this product has no assistant) at ${here}`);
@@ -466,7 +475,7 @@ if (want('fn')) {
   ];
   const results = await Promise.all(jobs.map((j) => j.start()));
   jobs.forEach((j, i) => report(j.name, results[i]));
-  if (failed) finish();
+  // The timed set runs whatever these found: a red in one judge must not hide the values of the others.
 }
 
 // The timed set, last and alone: what judges a time must not share the machine with anything else.
@@ -474,7 +483,6 @@ if (want('timed')) {
   const here = `http://127.0.0.1:${server.port}`;
   if (navPlan) {
     reportTimed(`navigation: ${navPlan.label}, its budgets judged`, await run('scripts/navigate.ts', navPlan.args(navigationPlan('timed').judged ? 'on' : 'off'), app));
-    if (failed) finish();
   }
   if (hasLiveSample) {
     // A drop server that does not start leaves the live checks unrun: Tier 2, so not run, never a failure of the run.

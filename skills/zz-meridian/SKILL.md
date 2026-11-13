@@ -282,8 +282,8 @@ the floors, render and score the craft, fix every Weak and every failure, commit
 
 ```sh
 pnpm test:t1                   # the tests affected by the change since the last green run, static checks and types first
-pnpm test:t2                   # the affected Tier 2 checks too, the browser sweeps included
-pnpm test:release              # every Tier 1 and Tier 2 test, once, with the timed suites, lint and the type check
+pnpm test:t2                   # the affected Tier 2 checks too, and the browser function sweeps (Tier 1, needing a build)
+pnpm test:release              # every Tier 1 and Tier 2 test, once, with the browser sweeps and the timed suites, lint and the type check
 pnpm build                     # the renders read a built app: under `next dev` they are pictures of the loading state
 node_modules/.bin/next start --port 3100 & # then, for the renders (stop it with kill $!; with a fake API, set its address first: API_URL=<fake> node_modules/.bin/next start …):
 node scripts/shot.ts / <every other view> --width 1440,390 --theme dark,light --whole-page
