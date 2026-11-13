@@ -87,8 +87,8 @@ Write the status on the line under the title: `Status: beta`.
 | Command | What it does | When |
 |---|---|---|
 | `pnpm test:t1` | The static checks, then the Tier 1 tests the import graph reaches from the changes since the last green run | After each change |
-| `pnpm test:t2` | The same for the affected Tier 2 tests (`*.perf.test.ts(x)` and this repository's broad browser sweeps), with the affected Tier 1 tests | After a change to shared components, the shell or data; after a Tier 2 or Tier 3 phase |
-| `pnpm test:release` | Every Tier 1 and Tier 2 test, once, with the timed browser suites, lint, the type check and a production build | Before a release |
+| `pnpm test:t2` | The same for the affected Tier 2 tests (`*.perf.test.ts(x)`), with the affected Tier 1 tests and the browser function sweeps, which are Tier 1 and need a build and Chrome | After a change to shared components, the shell or data; after a Tier 2 or Tier 3 phase |
+| `pnpm test:release` | Every Tier 1 and Tier 2 test, once, with the browser sweeps, the timed browser suites, lint, the type check and a production build | Weekly in CI, and by hand when a question calls for it; a release does not run it locally |
 | `pnpm tokens` | Generates the token CSS and the Tailwind bridge from `tokens/` (`--check` only compares) | After any token change |
 | `node scripts/contrast.ts [--all]` | Every specified foreground on its background, in every theme and accent, and the chart palette's colour-vision checks | Every test command |
 | `node scripts/registry.ts` | Regenerates the Atlas registry from the card folders (`--check` only compares) | After adding or renaming a card |
@@ -113,8 +113,8 @@ A check is code, and it is wrong in the ways code is. Before a new check, or a c
 ## Releasing
 
 1. Add an entry to `CHANGELOG.md` under a new version. Semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Say in one line what breaks and what to do instead.
-2. `node cli/scripts/set-version.ts <v>`, then `pnpm test:release` until it passes. A release that changes the checks themselves (a check script, a tier, a budget) first meets the `Releases` rule in `docs/testing.md`.
-3. Commit and push to `master`, then dispatch once: `gh workflow run release.yml -f version=<v>`. The workflow runs `pnpm test:release` and the consumer smoke from the tarball, publishes with provenance, checks the registry's tarball is the tested one, and tags last. `pnpm test:t2` and the Postgres references run weekly (`.github/workflows/weekly.yml`).
+2. `node cli/scripts/set-version.ts <v>`, then `node scripts/check.ts`. A release that changes the checks themselves (a check script, a tier, a budget) first meets the `Releases` rule in `docs/testing.md`.
+3. Commit and push to `master`, then dispatch once: `gh workflow run release.yml -f version=<v>`. The workflow's jobs are the proof: the static stage, four browser sweeps, the deep tests a change reaches and the consumer smoke from the tarball. Tier 2 runs beside them and never blocks. It then publishes with provenance, checks the registry's tarball is the tested one, and tags last. `pnpm test:release` with the Postgres references runs weekly (`.github/workflows/weekly.yml`).
 
 The `/release` command (`.claude/commands/release.md`) is this procedure as a runbook.
 

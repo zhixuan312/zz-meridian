@@ -25,8 +25,8 @@
  *   and the sizes) are Tier 1 and fail the run. They run where a build and Chrome exist: test:t2, test:release and the
  *   release sweep jobs. test:t1 does not run them. `--only <audit|interactions|keyboard|rest>` runs one sweep by hand.
  * - Tier 2 is the performance convention `*.perf.test.ts(x)` and the timed browser suites: on a quiet machine, the timed
- *   runs (--depth timed), and the 20-sample protocol (--depth perf) where CI is true, in the weekly job that calls
- *   `pnpm test:t2`. They report and never fail: a timed or perf suite that prints FAIL is counted in the closing line's
+ *   runs (--depth timed), and the 20-sample protocol (--depth perf) where CI is true: the release workflow's `tier2`
+ *   job and the weekly `release` job. They report and never fail: a timed or perf suite that prints FAIL is counted in the closing line's
  *   "Tier 2 over budget (reported, not failed)".
  */
 import { spawn, spawnSync } from 'node:child_process';

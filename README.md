@@ -79,8 +79,8 @@ Dark is the default, written on `:root`; the light theme follows the operating s
 | `scripts/` | Generators, checks, `brand.ts` and `test-run.ts` (see `CONTRIBUTING.md`) |
 | `skills/zz-meridian/` | The agent skill (Claude Code, Codex) that builds dashboards on this template or brings it into yours, to the standard in `references/standard.md`; how it is evaluated is `docs/skill-evals.md` |
 | `cli/` | The `zz-meridian` npm package: `create`, `adopt`, `update`, `brand` and `skill`, its build, its smoke test and the fixture apps (`docs/distribution.md`) |
-| `.github/workflows/release.yml` | The release, each check once: `pnpm test:release` and the consumer path from the tarball (the release before updated; the last three weekly), then npm with provenance, the registry's bytes and provenance checked, then the tag (`.claude/commands/release.md`) |
-| `.github/workflows/weekly.yml` | Weekly: `pnpm test:t2` on master's commit, the consumer smoke's recovery and failure cases, and the Postgres references where their services are configured; nothing waits on it |
+| `.github/workflows/release.yml` | The release, each check once in its own job: the static stage, four browser sweeps, the deep tests a change reaches and the consumer path from the tarball (the release before updated; the last three weekly), with Tier 2 beside them and never blocking, then npm with provenance, the registry's bytes and provenance checked, then the tag (`.claude/commands/release.md`) |
+| `.github/workflows/weekly.yml` | Weekly: `pnpm test:release` on master's commit with the Postgres references, the consumer smoke's recovery and failure cases, and a created dashboard's whole `test:release`; nothing waits on it |
 | `Dockerfile`, `captain-definition` | The demo deployment: the template and the Atlas behind `DEMO_PASSWORD` (`proxy.ts`, `app/sign-in/README.md`), deployed to CapRover from this repository; never in the package |
 
 ## Get a dashboard on Meridian, in one sentence
@@ -174,7 +174,7 @@ pnpm install
 pnpm dev                 # the template at /, the Design Atlas at /system
 pnpm test:t1             # the Tier 1 tests affected by the changes since the last green run
 pnpm test:t2             # the affected Tier 2 tests too, and the affected Tier 1 tests with them
-pnpm test:release        # every Tier 1 and Tier 2 test, once, with lint and the type check
+pnpm test:release        # every Tier 1 and Tier 2 test, once, with the browser sweeps, lint and the type check
 pnpm brand --name "Acme" --hue 25 --chroma 0.16   # rename and rebrand in place
 ```
 

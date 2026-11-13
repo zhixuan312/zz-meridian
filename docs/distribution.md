@@ -238,19 +238,23 @@ Modelled on the release pipeline of the owner's earlier packages, one package in
 
 1. **Dispatch**: `gh workflow run release.yml -f version=<v> [-f dry_run=true]`, from `master`. The version must equal
    `cli/package.json`'s and the tag must be unused.
-2. **Gates** (ubuntu-24.04, 4 CPUs, the reference profile), each run once: `pnpm test:release` (every Tier 1 and Tier 2
-   test, lint, the type check and a production build with its size and route checks; the package's own tests
-   `tests/cli-*` and the browser-fixture tests `tests/deep-*` are inside it), then the consumer smoke from the built
-   tarball (step 4). The Postgres suite is reported not run here, because the job holds no service. Recovery and failure
-   cases run weekly (below). When each command runs, in a project and in this repository, is `docs/testing.md`'s
-   `## When each runs`.
+2. **Checks** (ubuntu-24.04, 4 CPUs, the reference profile): one job per check, each run once and none of them
+   `test:release`. `static` runs lint, the type check and every Vitest file but the browser-fixture tests, which
+   includes the package's own `tests/cli-*`. `sweep-audit`, `sweep-interactions`, `sweep-keyboard` and `sweep-rest` each
+   build once and run one Tier 1 browser sweep (`node scripts/test-run.ts stage sweep <name>`). `deep` runs the
+   browser-fixture tests `tests/deep-*` that the changes since the previous tag reach, all of them when `scripts/`,
+   `journeys/` or a deep test changed, in two parts. `consumer` runs the consumer smoke from the built tarball (step
+   4). `tier2` runs the timed suites and the 20-sample protocol beside them with `continue-on-error`: it is reported
+   and never blocks the publish or the tag. The Postgres suite is not run here, because no job holds a service.
+   Recovery and failure cases, and the created dashboard's whole `test:release`, run weekly (below). When each command
+   runs, in a project and in this repository, is `docs/testing.md`'s `## When each runs`.
 3. **Pack and assert, before anything is irreversible**: `npm pack` in `cli/`, then on the tarball: the bin has its
    `#!/usr/bin/env node` line; `payload/skills/zz-meridian/SKILL.md` and its references are there; at least 60 component
    folders are there; no `node_modules/`, `tests/` of the CLI, `out/` or `.next/`.
 4. **Consumer smoke, from the tarball** (`smoke.ts --adopt --create --update`):
    - `adopt` into `cli/test/fixture-next-app` (a minimal App Router app with two pages, its own stylesheet, a button and a data module), then
      install, `tsc --noEmit` and `next build`, all green. This is the test that keeps the Route A list complete.
-   - `create` into a clean folder, then its `test:t1` and `next build`; the weekly run adds the created project's own `pnpm test:release` (`--created-release`).
+   - `create` into a clean folder, then its `test:t1`, `next build` and the rest sweep (`--created-rest`); the weekly run runs the created project's whole `pnpm test:release` instead (`--created-release`).
    - `update` from the release before (adopted and created, read from the registry): a dry-run that writes nothing, the
      update, what it reports resolved, finalize with the Tier 1 checks, the build and its route and size checks, and the team's bytes unchanged. One origin
      at release and the last three weekly, so the time stays the same however many releases there are; the updater's
@@ -265,11 +269,10 @@ Modelled on the release pipeline of the owner's earlier packages, one package in
    until a fix is released.
 7. **Tag `v<version>` last**, then the GitHub Release with the version's `CHANGELOG.md` section as its body.
 
-`dry_run` stops after step 4.
+`dry_run` stops after step 4. After the tag, `tier2-attach` puts `perf-record.json`, `perf-history.json` and the Tier 2 table on the Release.
 
-**Weekly** (`.github/workflows/weekly.yml`, Mondays and on demand, master's current commit): `pnpm test:t2` on the
-whole tree (a fresh clone has no green marker), the Postgres references against a Postgres and a PgBouncer (`postgres`),
-and the consumer smoke's `--adopt --update --origins 3 --update-all` from a tarball packed from that commit, labelled as
+**Weekly** (`.github/workflows/weekly.yml`, Mondays and on demand, master's current commit): `pnpm test:release` on the
+whole tree (a fresh clone has no green marker) with the Postgres references against a Postgres and a PgBouncer, and the consumer smoke's `--adopt --update --origins 3 --update-all` from a tarball packed from that commit, labelled as
 the next patch so `update` treats it as unpublished:
 the update from each of the last three releases, the updater's stages on the 0.3.0 fixture, and every recovery and
 failure case of the update. Both run the

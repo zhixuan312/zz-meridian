@@ -1,5 +1,5 @@
 ---
-description: Release the zz-meridian npm package — version, changelog, local proof, then dispatch the GitHub Actions release, which gates, packs, runs the consumer path from the tarball, publishes with provenance through trusted publishing, and tags last.
+description: Release the zz-meridian npm package — version, changelog, cheap local checks, then dispatch the GitHub Actions release, whose jobs are the proof: it checks, packs, runs the consumer path from the tarball, publishes with provenance through trusted publishing, and tags last.
 argument-hint: [version, e.g. 0.3.0]
 ---
 
@@ -7,7 +7,7 @@ argument-hint: [version, e.g. 0.3.0]
 
 Repository: `~/Documents/code/zz-meridian` (GitHub `zhixuan312/zz-meridian`), released from `master`. The package is
 `cli/`; what it ships is the template at the release commit (decision 0009, `docs/distribution.md`). Your part is the
-judgement: the version, the changelog, the docs, the local proof. `.github/workflows/release.yml` does the rest on
+judgement: the version, the changelog, the docs, the cheap local checks. `.github/workflows/release.yml` does the rest on
 GitHub's runners: nothing is published from a laptop, and the tag is created last.
 
 **$ARGUMENTS** is the version. Without it, read `npm view zz-meridian version` and choose by the rules at the top of
@@ -22,7 +22,7 @@ node -p "require('./cli/package.json').version + ' / ' + require('./package.json
 npm view zz-meridian version          # what consumers get today
 git tag -l 'v*' | tail -3
 gh run list --workflow=release.yml -L 3
-gh run list --workflow=weekly.yml -L 1   # the full, perf and recovery suites, weekly
+gh run list --workflow=weekly.yml -L 1   # the whole test:release with Postgres, and the consumer's recovery cases, weekly
 ```
 
 - Versions equal npm's, no tag for the next one: a new release (steps 2 to 5).
@@ -45,10 +45,12 @@ gh run list --workflow=weekly.yml -L 1   # the full, perf and recovery suites, w
 - `node cli/scripts/set-version.ts <v>`: writes `cli/package.json` and `package.json`, and refuses without the
   changelog section.
 
-## 3. Prove it locally
+## 3. Check it locally, cheaply
 
-Nothing is run twice: the release workflow's `gates` job is the proof, so there is no local copy of it to run first.
-Locally, `pnpm test:release` after the version and changelog edits; the workflow gates on the same command. Commit
+Nothing is run twice, and no local `pnpm test:release` is asked for: the release workflow's jobs are the proof, each check
+once on its own runner. What stays local is cheap and catches a failure before a dispatch spends a run:
+`node scripts/check.ts`, and, when the release changes `cli/` or the update flow, the consumer smoke
+(`node cli/scripts/consumer.ts`), which proves the adopter path from your tree before a dispatch spends a run. Commit
 (`release: <v>`, after the change commits), push to `master`.
 
 ## 4. Dispatch
@@ -58,17 +60,21 @@ gh workflow run release.yml -f version=<v>
 gh run watch "$(gh run list --workflow=release.yml -L1 --json databaseId -q '.[0].databaseId')"
 ```
 
-One run: `gates` fails before anything is published, so a dry run first would only repeat it. `-f dry_run=true` stays
-for changing the workflow itself.
+One run: a failed check job stops `publish`, so a dry run first would only repeat it. `-f dry_run=true` stays for changing
+the workflow itself.
 
-`gates` installs and runs the template's code and never holds a credential: the package's own tests (`tests/cli-*`), then
-the browser-fixture tests of the checks (`tests/deep-*`, one file after another), then the default verify once from a
-clean build, within 180 s on the 4-CPU runner (its CPU varies between runs), then the consumer smoke from the tarball. `publish` installs nothing, checks
-that tarball's hash, publishes it with `npm` (pnpm does not do the OIDC exchange) and `--provenance`, and waits for
-the registry. `release` runs `npx zz-meridian@<v> --version`, checks the registry serves the tested tarball (equal
-sha256) with provenance, creates a project from the registry (it must have a `.gitignore`) and updates a project created
-with the release before to `<v>` (exit 0 or 2, no refusal): the two paths that behave differently once the version is
-published. Then it creates the tag and the Release.
+The check jobs install and run the template's code and never hold a credential. `static` runs lint, the type check and
+every Vitest file but the browser-fixture tests. `sweep-audit`, `sweep-interactions`, `sweep-keyboard` and `sweep-rest`
+each build once and run one Tier 1 browser sweep. `deep` runs the browser-fixture tests (`tests/deep-*`) that the
+changes since the previous tag reach, in two parts. `consumer` runs the consumer smoke from the tarball: adopt, create
+(the new dashboard runs `test:t1`, a production build and the rest sweep) and update a project of the release before.
+`tier2` measures timing and size beside them with `continue-on-error`: it never blocks the publish or the tag.
+`publish` installs nothing, checks that tarball's hash, publishes it with `npm` (pnpm does not do the OIDC exchange) and
+`--provenance`, and waits for the registry. `release` runs `npx zz-meridian@<v> --version`, checks the registry serves
+the tested tarball (equal sha256) with provenance, creates a project from the registry (it must have a `.gitignore`) and
+updates a project created with the release before to `<v>` (exit 0 or 2, no refusal): the two paths that behave
+differently once the version is published. Then it creates the tag and the Release, and `tier2-attach` adds the Tier 2
+record and table to it.
 
 ## 5. Report
 
@@ -77,7 +83,7 @@ npm view zz-meridian@<v> version dist.attestations.provenance
 gh release view v<v>
 ```
 
-Say: the version, the run URL, the verify time from the `gates` log, and whether provenance is attached
+Say: the version, the run URL, the Tier 2 table on the Release, and whether provenance is attached
 (https://www.npmjs.com/package/zz-meridian/v/<v>).
 
 ## Rules
