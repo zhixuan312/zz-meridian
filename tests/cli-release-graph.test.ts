@@ -1,64 +1,77 @@
+// @vitest-environment node
+// The release workflow's job graph, read as data: both workflows go through tests/lib/yaml.ts, so a job's `needs`, its
+// `continue-on-error` and its steps' commands are values rather than lines to match.
 import fs from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { parseYaml } from './lib/yaml';
 
-/** A workflow's jobs and what each needs, read from its indentation: a job is a two-space key under `jobs:`; comment lines are skipped. */
-function jobs(file: string): Map<string, { needs: string[]; body: string }> {
-  const out = new Map<string, { needs: string[]; body: string }>();
-  let inJobs = false;
-  let current: string | null = null;
-  let body: string[] = [];
-  const close = () => {
-    if (!current) return;
-    const text = body.join('\n');
-    const m = /^ {4}needs:\s*(.+)$/m.exec(text);
-    const needs = m ? m[1].replace(/[[\]]/g, '').split(',').map((s) => s.trim()).filter(Boolean) : [];
-    out.set(current, { needs, body: text });
-  };
-  for (const line of fs.readFileSync(file, 'utf8').split('\n')) {
-    if (/^\s*#/.test(line)) continue;
-    if (/^jobs:\s*$/.test(line)) { inJobs = true; continue; }
-    if (!inJobs) continue;
-    if (/^\S/.test(line)) { close(); current = null; inJobs = false; continue; }
-    const job = /^ {2}([a-z0-9-]+):\s*$/.exec(line);
-    if (job) { close(); current = job[1]; body = []; continue; }
-    if (current) body.push(line);
-  }
-  close();
-  return out;
-}
+type Step = { uses?: string; name?: string; run?: string; if?: string; with?: Record<string, unknown> };
+type Job = {
+  needs?: string | string[];
+  'continue-on-error'?: boolean;
+  'timeout-minutes'?: number;
+  strategy?: Record<string, unknown>;
+  steps?: Step[];
+  [key: string]: unknown;
+};
+type Workflow = { jobs: Record<string, Job> };
 
-const release = jobs('.github/workflows/release.yml');
+const read = (file: string): Workflow => parseYaml(fs.readFileSync(file, 'utf8')) as Workflow;
+
+const release = read('.github/workflows/release.yml').jobs;
+const weekly = read('.github/workflows/weekly.yml').jobs;
 const SWEEPS = ['sweep-audit', 'sweep-interactions', 'sweep-keyboard', 'sweep-rest'];
+
+/** A job's `needs` as a list, whether the workflow wrote it as a flow sequence or as one name. */
+const needs = (job: Job): string[] => (Array.isArray(job.needs) ? job.needs : job.needs ? [job.needs] : []);
+/** Every command a job's steps run. */
+const runs = (job: Job): string => (job.steps ?? []).map((step) => step.run ?? '').join('\n');
 
 describe('a release runs each check once', () => {
   it('runs the static stage, each sweep, deep and the consumer as their own jobs, each blocking publish', () => {
-    const publish = release.get('publish');
+    const publish = release.publish;
     expect(publish).toBeDefined();
-    for (const j of ['build', 'static', ...SWEEPS, 'deep', 'consumer']) {
-      expect(release.has(j), j).toBe(true);
-      expect(publish!.needs, j).toContain(j);
+    for (const name of ['build', 'static', ...SWEEPS, 'deep', 'consumer']) {
+      expect(release[name], name).toBeDefined();
+      expect(needs(publish!), name).toContain(name);
     }
   });
 
   it('runs no whole release suite anywhere, and no second full suite in the created project', () => {
-    for (const [name, job] of release) expect(job.body, name).not.toMatch(/test:release|test-run\.ts release/);
-    expect(release.get('consumer')!.body).not.toMatch(/--created-release/);
-    expect(release.get('consumer')!.body).toMatch(/--created-rest/);
+    for (const [name, job] of Object.entries(release)) expect(runs(job), name).not.toMatch(/test:release|test-run\.ts release/);
+    expect(runs(release.consumer!)).not.toMatch(/--created-release/);
+    expect(runs(release.consumer!)).toMatch(/--created-rest/);
   });
 
   it('lets no timing value fail the release or hold its tag', () => {
-    expect(release.get('tier2')!.body).toMatch(/^ {4}continue-on-error:\s*true/m);
-    expect(release.get('publish')!.needs).not.toContain('tier2');
-    expect(release.get('release')!.needs).not.toContain('tier2');
-    expect(release.get('tier2-attach')!.needs).toEqual(expect.arrayContaining(['tier2', 'release']));
+    expect(release.tier2!['continue-on-error']).toBe(true);
+    expect(needs(release.publish!)).not.toContain('tier2');
+    expect(needs(release.release!)).not.toContain('tier2');
+    expect(needs(release['tier2-attach']!)).toEqual(expect.arrayContaining(['tier2', 'release']));
   });
 
   it('lets the deep job see the previous tag', () => {
-    expect(release.get('deep')!.body).toMatch(/fetch-depth:\s*0/);
-    expect(release.get('deep')!.body).toMatch(/fail-fast:\s*false/);
+    const checkout = (release.deep!.steps ?? []).find((step) => step.uses?.startsWith('actions/checkout@'));
+    expect(checkout?.with?.['fetch-depth']).toBe(0);
+    expect(release.deep!.strategy?.['fail-fast']).toBe(false);
   });
 
   it('has no weekly t2 job', () => {
-    expect(jobs('.github/workflows/weekly.yml').has('t2')).toBe(false);
+    expect(weekly).not.toHaveProperty('t2');
+  });
+});
+
+// The three workflow tests are the reader's cases, except two branches the workflows never take: an unreadable line,
+// which the contract requires the reader to refuse by line number rather than return a partial tree, and a quote
+// escaped inside a quoted scalar.
+describe('the reader the workflows are read through', () => {
+  it('refuses a line it cannot read, naming the line and its text', () => {
+    expect(() => parseYaml('jobs:\n  build:\n    runs-on: ubuntu\n    this is not yaml\n')).toThrow(/^line 4: not a "key: value" line: "    this is not yaml"$/);
+    expect(() => parseYaml('jobs:\n  build: 1\n   other: 2\n')).toThrow(/^line 3: unexpected indentation/);
+  });
+
+  it("reads a quote escaped with '' and keeps a block scalar's own lines", () => {
+    const text = parseYaml("note: 'it''s here'\nrun: |\n  set -e\n  echo \"a: b\"\n");
+    expect(text).toEqual({ note: "it's here", run: 'set -e\necho "a: b"\n' });
   });
 });

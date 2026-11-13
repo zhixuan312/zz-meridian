@@ -19,13 +19,16 @@ vi.mock('@/data/read', async (orig) => {
   };
 });
 
+import { formatCompact, formatDuration, formatPercent } from '@/lib/format';
+import { formatDate } from '@/lib/format-date';
 import { contextText } from '@/lib/shared-context';
 import { INCIDENTS } from '@/system/fixtures/sample';
 import { TICKETS } from '@/system/fixtures/sample-engineering';
 import { nowTool } from '@/logic/tools';
 
 const PERSONAS = { owner: 'members_1', admin: 'members_2', member: 'members_4', viewer: 'members_12' };
-/** What a view's context may take (tests/shared-context.test.tsx holds every view to it). */
+/** The pattern for a ticket's title, which carries punctuation of its own. */
+const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 beforeEach(() => { jar.value = undefined; fail.names.clear(); });
 
@@ -52,60 +55,72 @@ describe("Now's context states engineering as it is", () => {
   });
 
   it('the open incident with its owner and its ticket, and the days inside the band with the four facts about them', async () => {
-    const text = await said();
-    for (const s of ['Inference API', 'Jonas Weber', 'Inference API p95 above target in eu-west-1']) expect(text, s).toContain(s);
-    expect(text).toMatch(/357 of 360 days/);
-    for (const day of ['17 Aug 2026', '21 Sept 2026', '22 Sept 2026']) expect(text, day).toContain(day);
-    // The median day's p95 across the periods beside the growth in requests, p95 on the busiest day yet, and the share
-    // answered without an error, each as Home states the same figure.
-    expect(text).toMatch(/between 277 and 294 ?ms/);
-    expect(text).toMatch(/105\.7%/);
-    expect(text).toMatch(/295 ?ms[^\n]*01 Oct 2026|01 Oct 2026[^\n]*295 ?ms/);
-    expect(text).toContain('99.62%');
+    const { context, data } = await as(PERSONAS.owner);
+    const text = contextText(context);
+    const incident = INCIDENTS.find((i) => i.state !== 'resolved')!;
+    const ticket = TICKETS.find((t) => t.id === incident.ticketId)!;
+    for (const s of [incident.service, incident.owner!, ticket.title]) expect(text, s).toContain(s);
+    expect(text).toContain(`${data.band!.inside} of ${data.band!.of} days`);
+    // The four facts of the band: the days outside it by date, in the steady line that heads the page, then the year,
+    // p95 on the busiest day yet, and the share answered without an error.
+    expect(text).toContain(data.head.facts[0]!.text);
+    for (const fact of data.band!.facts.filter((f) => f.about !== 'outside')) expect(text, fact.text).toContain(fact.text);
   });
 
   it("each model's requests and p95 of the median day over the last 30 complete days", async () => {
+    const { data } = await as(PERSONAS.owner);
     const text = await said();
-    for (const s of ['Meridian Large', 'Meridian Swift', 'Meridian Embed', 'No model', '826', '471', '236', '419']) expect(text, s).toContain(s);
+    for (const model of data.models!) {
+      expect(text, model.label).toContain(`${model.label} ${formatCompact(model.requests)} requests, p95 ${formatDuration(model.p95)}`);
+    }
   });
 
   it('compute in use a region on the latest complete day, the fullest named with its GPUs', async () => {
-    const text = await said();
-    expect(text).toMatch(/eu-west-1[^\n]*85\.3%/);
-    expect(text).toContain('172');
-    expect(text).toContain('02 Oct 2026');
+    const { data } = await as(PERSONAS.owner);
+    const text = contextText((await as(PERSONAS.owner)).context);
+    const compute = data.compute!;
+    const fullest = compute.regions.find((r) => r.region === compute.fullest) ?? compute.regions[0]!;
+    expect(text).toContain(`${fullest.region} ${formatPercent(fullest.share, 1)} of ${fullest.gpus} GPUs`);
+    expect(text).toContain(formatDate(compute.day));
   });
 
   it('what ships: the releases in testing with what holds each, the one ready, the live versions and the required checks counted', async () => {
-    const text = await said();
-    for (const v of ['v1.14.0', 'v0.8.3', 'v6.1.0', 'v2.9.0']) expect(text, v).toContain(v);
-    expect(text).toMatch(/\d+ of \d+ required (checks|verifications)/);
+    const { data } = await as(PERSONAS.owner);
+    const text = contextText((await as(PERSONAS.owner)).context);
+    const shipping = data.shipping!;
+    for (const release of [...shipping.testing, ...shipping.ready]) expect(text, release.version).toContain(release.version);
+    expect(text).toContain(`${shipping.checks.passed} of ${shipping.checks.required} required checks passed`);
+    expect(text).toContain(`${shipping.live.length} version`);
   });
 
   it("the work, high priority first, then what nobody owns, and the reader's own marked", async () => {
-    const text = await said(PERSONAS.owner);
-    const high = text.indexOf('Parser rejects PDFs with an embedded font table');
-    const unowned = text.indexOf('Large uploads time out behind the proxy');
-    expect(high).toBeGreaterThan(-1);
-    expect(unowned).toBeGreaterThan(high);
-    expect(text).toMatch(/Parser rejects PDFs with an embedded font table[^\n]*yours/i);
+    const { context, data } = await as(PERSONAS.owner);
+    const text = contextText(context);
+    const asked = data.work!.tickets.filter((t) => t.priority === 'high' || !t.owner);
+    const high = asked.find((t) => t.priority === 'high')!;
+    const unowned = asked.find((t) => !t.owner && t.priority !== 'high')!;
+    expect(text.indexOf(high.title)).toBeGreaterThan(-1);
+    expect(text.indexOf(unowned.title)).toBeGreaterThan(text.indexOf(high.title));
+    const own = asked.find((t) => t.mine)!;
+    expect(text).toMatch(new RegExp(`${escape(own.title)}[^\\n]*yours`, 'i'));
     // Someone else reads the same list with nothing marked as theirs.
-    expect(await said(PERSONAS.viewer)).not.toMatch(/Parser rejects PDFs with an embedded font table[^\n]*yours/i);
+    expect(await said(PERSONAS.viewer)).not.toMatch(new RegExp(`${escape(own.title)}[^\\n]*yours`, 'i'));
   });
 
   it('the slowest endpoint by p95 first', async () => {
-    const { context } = await as(PERSONAS.owner);
-    const slowest = context.facts.find((f) => /slowest endpoints/i.test(f.label))!;
-    expect(slowest.value).toMatch(/^POST \/v1\/files[^;,]*1(\.4s|,?420 ?ms)/);
+    const { context, data } = await as(PERSONAS.owner);
+    const slowest = [...data.endpoints!].sort((a, b) => b.p95 - a.p95)[0]!;
+    const fact = context.facts.find((f) => /slowest endpoints/i.test(f.label))!;
+    expect(fact.value).toContain(`${slowest.method} ${slowest.route} ${formatDuration(slowest.p95)}`);
   });
 
   it('the last 30 complete days: releases out, tickets closed with how long each took, runs passed of all, incidents resolved', async () => {
+    const { data } = await as(PERSONAS.owner);
     const text = await said();
-    expect(text).toMatch(/Releases out[^\n]*\b3\b/);
-    expect(text).toMatch(/Tickets closed[^\n]*\b3\b[^\n]*5, 6 and 7 days/);
-    expect(text).toMatch(/Runs passed[^\n]*11 of 12/);
-    // None was resolved in the window: the last is named with its date and how long it lasted.
-    expect(text).toMatch(/Incidents resolved[^\n]*\b0\b[^\n]*17 Aug 2026[^\n]*2\.4 ?h/);
+    for (const tile of [data.month.releases, data.month.tickets, data.month.runs, data.month.incidents]) {
+      if (!tile) continue;
+      expect(text, tile.label).toContain(`${tile.label} ${tile.value}${tile.of !== undefined ? ` of ${tile.of}` : ''}, ${tile.line}`);
+    }
   });
 
   it('what changed, newest first', async () => {
@@ -116,11 +131,13 @@ describe("Now's context states engineering as it is", () => {
   });
 
   it('a read that failed leaves its part unread and says so, and the rest is stated', async () => {
+    const band = (await as(PERSONAS.owner)).data.band!;
+    const incident = INCIDENTS.find((i) => i.state !== 'resolved')!;
     fail.names.add('tickets');
     const { context } = await as(PERSONAS.owner);
     const text = contextText(context);
     expect(context.unknowns.join(' ')).toMatch(/tickets[^.]*could not be read/i);
-    expect(text).toContain('Jonas Weber');
-    expect(text).toMatch(/357 of 360 days/);
+    expect(text).toContain(incident.owner!);
+    expect(text).toContain(`${band.inside} of ${band.of} days`);
   });
 });

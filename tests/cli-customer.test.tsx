@@ -35,6 +35,8 @@ import RequestPage from '../app/(dashboard)/requests/[id]/page';
 import RevenuePage from '../app/(dashboard)/business/page';
 import HomePage from '../app/(dashboard)/(home)/page';
 import { readAll } from '@/data/read';
+import { formatCompact, formatCost, formatPercent } from '@/lib/format';
+import { customerFigures } from '@/logic/customers-context';
 import { NOT_FOUND } from '@/views/not-found';
 import type { CustomerRecord } from '@/data/sample';
 import { servedDocument } from './served';
@@ -72,14 +74,16 @@ function opensEvery(scope: Element, byName: Map<string, CustomerRecord>, where: 
 
 describe("one customer's page", () => {
   it('for an active customer: the head, why it is worth opening, three tiles, what it asks for and its latest requests', async () => {
-    const c = (await customers()).get('Northwind Labs')!;
+    const byName = await customers();
+    const c = byName.get('Northwind Labs')!;
     jar.value = OWNER;
     const doc = await customerPage(c.id);
     const masthead = doc.getElementById('content')!;
     // The head: the trail Business, Customers; the title; plan, revenue and its share, requests.
     expect(masthead.querySelector('a[href="/business"]')).toBeTruthy();
     expect(masthead.querySelector('a[href="/customers"]')).toBeTruthy();
-    for (const said of ['Enterprise', '$409,206.80', '12.4%', '68.9M']) expect(masthead.textContent, said).toContain(said);
+    const paid = customerFigures([...byName.values()]).revenue;
+    for (const said of [c.plan, formatCost(c.revenue), formatPercent(c.revenue / paid, 1), formatCompact(c.requests)]) expect(masthead.textContent, said).toContain(said);
     // Why it is worth opening: its status, since when, its owner.
     const body = doc.querySelector('[data-page-width]')!;
     expect(body.textContent).toContain(c.owner);
@@ -152,7 +156,7 @@ describe('every customer named in the product opens its page', () => {
     jar.value = OWNER;
     const home = await served(HomePage({ searchParams: Promise.resolve({}) }));
     // Home's one line naming a customer is one link, the whole sentence, to the customer it names.
-    expect(home.querySelector('[data-page-width] a[href="/customers/northwind-labs"]')).toBeTruthy();
+    expect(home.querySelector(`[data-page-width] a[href="/customers/${byName.get('Northwind Labs')!.id}"]`)).toBeTruthy();
     opensEvery(home.querySelector('[data-page-width]')!, byName, '/');
   });
 });

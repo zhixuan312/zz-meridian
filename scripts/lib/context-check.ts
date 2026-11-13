@@ -119,3 +119,40 @@ export function scanReferences(
   }
   return problems;
 }
+
+/**
+ * A line that names an entry point the three test commands replaced, and what the rule reports for it. The commands
+ * are the product's whole test surface (`pnpm test:t1`, `test:t2`, `test:release`), so a document that tells a reader to
+ * run `pnpm verify` or passes `--full` sends them to a command a project no longer has; that is a guarantee a project
+ * depends on, not a preference about wording.
+ */
+const STALE: readonly (readonly [RegExp, string])[] = [
+  [/\bpnpm (?:verify|gate)\b/, 'names pnpm verify or pnpm gate'],
+  [/\b(?:npm|yarn|bun) run (?:verify|gate)\b/, 'names a removed package script'],
+  [/\b(?:scripts|node scripts)\/(?:verify|gate|perf)\.ts\b/, 'names a removed script'],
+  [/`(?:verify|gate) --/, 'names a removed command with a flag'],
+  [/--(?:full|timed|perf|shard)\b/, 'names a removed flag'],
+  [/\btest:all\b/, 'names test:all'],
+];
+
+/**
+ * The files the retired-entry-point rule reads in a project: its instruction documents, the scripts and workflows a
+ * reader follows, and the CLI's own text. A path a project lacks is skipped by the caller. History is not here — the
+ * decision records under `decisions/`, the dated evidence under `docs/evidence/`, the changelog and the migrations a
+ * past release shipped say what was true then and are not rewritten.
+ */
+export const STALE_SURFACES: readonly string[] = [
+  'README.md', 'AGENTS.md', 'CONTRIBUTING.md', 'cli/README.md', 'docs/testing.md', 'docs/distribution.md', 'docs/benchmark.md', 'docs/agents.md', 'docs/start-a-dashboard.md', 'docs/atlas-scenario-coverage.md', 'docs/skill-evals.md', 'docs/data-display.md', 'docs/data-layers.md', 'docs/product-workspaces.md', 'docs/surfaces.md', 'docs/voice.md',
+  'scripts/test-run.ts', 'scripts/brand.ts', 'scripts/verify.config.ts', 'scripts/audit.ts', 'scripts/interactions.ts', 'scripts/keyboard.ts', 'scripts/assistant.ts', 'scripts/live.ts', 'scripts/navigate.ts', 'scripts/vitals.ts', 'scripts/sizes.ts', 'scripts/shot.ts', 'scripts/route-policy.ts', 'cli/src/context.ts', 'cli/src/create.ts', 'cli/src/cli.ts', 'cli/src/session.ts', 'cli/src/merge-report.ts', 'cli/src/reconcile.ts', 'cli/scripts/smoke.ts',
+  '.github/workflows/release.yml', '.github/workflows/weekly.yml',
+];
+
+/** The trees the skill is installed into: the repository's own, and the two an adopted project carries. */
+export const SKILL_TREES: readonly string[] = ['skills/zz-meridian', '.agents/skills/zz-meridian', '.claude/skills/zz-meridian'];
+
+/** The stale claims in the files given, each as `<file>:<line>: <what>`. */
+export function staleClaims(files: readonly { file: string; text: string }[]): string[] {
+  return files.flatMap(({ file, text }) =>
+    text.split('\n').flatMap((line, i) => STALE.filter(([rule]) => rule.test(line)).map(([, what]) => `${file}:${i + 1}: ${what}`)),
+  );
+}

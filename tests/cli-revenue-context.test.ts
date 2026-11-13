@@ -1,7 +1,7 @@
 // @vitest-environment node
 // Named cli-* so the payload leaves it out: it is about the sample's own page, which a product replaces.
 import { describe, expect, it } from 'vitest';
-import { formatCost } from '@/lib/format';
+import { formatCost, formatPercent } from '@/lib/format';
 import { PERIODS, type Period } from '@/lib/period';
 import { contextText } from '@/lib/shared-context';
 import { CUSTOMERS, DAYS, REGIONS, USAGE, demoSeries, demoTotals } from '@/system/fixtures/company';
@@ -41,11 +41,13 @@ describe("Revenue's context", () => {
     expect(c.insights[1].text).toMatch(/^Record: The highest 30 days of revenue yet, the \d+(st|nd|rd|th) record in a row\.$/);
     // The figure the record is about is not repeated in the insight: the card's own figure and caption state it, and the
     // context states it as a fact ("Revenue: $3,300,438.74") a reader or an agent reads either way.
-    expect(c.facts.map((f) => f.value).join(' ')).toContain(formatCost(3_300_438.74));
+    expect(c.facts.map((f) => f.value).join(' ')).toContain(formatCost(demoTotals('30d').current.revenue));
     expect(c.insights[2]).toEqual({ text: expect.stringMatching(/^10 customers are past due, the largest Juniperth Travel, /), evidence: '/customers/juniperth-travel' });
     // One Enterprise customer short and the next plan is tried; with none, the title says who paid what against the 30 days before.
     const flat = CUSTOMERS.map((customer) => ({ ...customer, trend: customer.trend.map(() => 1) }));
-    expect(context('30d', { customers: flat }).insights[0].text).toBe(`320 customers paid ${formatCost(customerFigures(CUSTOMERS).revenue)} in 30 days, 5.3% more than the 30 days before`);
+    const { current, previous } = demoTotals('30d');
+    const grew = formatPercent(current.revenue / previous!.revenue - 1, 1);
+    expect(context('30d', { customers: flat }).insights[0].text).toBe(`${customerFigures(CUSTOMERS).customers} customers paid ${formatCost(current.revenue)} in 30 days, ${grew} ${current.revenue >= previous!.revenue ? 'more' : 'less'} than the 30 days before`);
   });
 
   it('carries the wall in the order chosen, and none of the others', () => {

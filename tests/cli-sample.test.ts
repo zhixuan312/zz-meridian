@@ -2,7 +2,7 @@
 // scripts/verify.config.ts opens; a product replaces all three.
 import { describe, expect, it } from 'vitest';
 import { DEMO_NOW, INCIDENTS, MODELS, REQUESTS, SERVICES, uptimeOf } from '@/system/fixtures/sample';
-import { CUSTOMERS, DAYS, ENDPOINTS, IN_PROGRESS, WEEKDAY_HOURS, demoSeries, demoTotals } from '@/system/fixtures/company';
+import { COMPUTE, COSTS, CUSTOMERS, DAYS, ENDPOINTS, IN_PROGRESS, WEEKDAY_HOURS, demoSeries, demoTotals } from '@/system/fixtures/company';
 import { TICKETS } from '@/system/fixtures/sample-engineering';
 import { MEMBERS } from '@/system/fixtures/sample-members';
 import { PAST_INCIDENTS } from '@/system/fixtures/sample-ops';
@@ -36,22 +36,29 @@ describe('the sample agrees with itself', () => {
   });
   it('the day in progress is made as every day is, from the nine hours it has had, and is none of the complete days', () => {
     const { day, usage, compute, cost } = IN_PROGRESS;
+    // The clock's own day, and the sample keeps a year of complete days: 360 is the window the sample declares.
+    const KEPT = 360;
+    const hours = DEMO_NOW.getUTCHours();
     expect(day.date).toBe(TODAY);
-    expect([DAYS.length, DAYS.at(-1)!.date]).toEqual([360, YESTERDAY]);
+    expect([DAYS.length, DAYS.at(-1)!.date]).toEqual([KEPT, YESTERDAY]);
     expect(sum(usage.map((u) => u.requests))).toBe(day.requests);
     expect(sum(usage.map((u) => cents(u.revenue)))).toBe(cents(day.revenue));
     expect(sum(Object.values(day.revenueByPlan).map(cents))).toBe(cents(day.revenue));
-    // Yesterday's GPUs, for nine hours of the day.
-    expect(sum(compute.map((c) => c.gpus))).toBe(690);
-    expect(cost.compute).toBe(690 * 9 * 2.5);
-    for (const c of compute) expect(c.used, c.id).toBeLessThanOrEqual(c.gpus * 9);
+    // Yesterday's GPUs, for the hours of the day the clock has reached: thirty more every thirty days, from 360.
+    const gpus = 360 + 30 * Math.floor((DAYS.length - 1) / 30);
+    // What a GPU-hour costs, from a complete day the record already holds.
+    const yesterday = COSTS.at(-2)!;
+    const rate = yesterday.compute / (sum(COMPUTE.filter((c) => c.date === yesterday.date).map((c) => c.gpus)) * 24);
+    expect(sum(compute.map((c) => c.gpus))).toBe(gpus);
+    expect(cost.compute).toBeCloseTo(gpus * hours * rate, 6);
+    for (const c of compute) expect(c.used, c.id).toBeLessThanOrEqual(c.gpus * hours);
     // A Saturday's night and morning are quieter than its afternoon: under nine twenty-fourths of the Saturday before.
     const share = day.requests / DAYS.at(-7)!.requests;
     expect(share > 0.2 && share < 9 / 24, `${share} of the Saturday before`).toBe(true);
   });
   it('all time is every complete day, with none before it and no totals to compare with', () => {
     const { current, previous, running } = demoSeries('all');
-    expect([current.length, previous.length, running.date]).toEqual([360, 0, TODAY]);
+    expect([current.length, previous.length, running.date]).toEqual([DAYS.length, 0, TODAY]);
     expect(demoTotals('all').previous).toBeNull();
     expect(demoSeries('90d').previous).toHaveLength(90);
   });
@@ -124,31 +131,37 @@ describe('the records that name each other', () => {
       expect(r.ttft !== null, `${r.id}: ${r.model} answered ${r.status}`).toBe(r.model !== null && writes.has(r.model) && r.status < 400);
       if (r.ttft !== null) expect(r.ttft >= 1 && r.ttft <= r.latency, `${r.id}: ${r.ttft} ms of ${r.latency}`).toBe(true);
     }
-    expect(REQUESTS.some((r) => r.model === 'meridian-embed' && r.status < 400), 'the log holds an embedding request that was answered').toBe(true);
+    expect(REQUESTS.some((r) => r.model === MODELS.find((m) => m.outputPrice === null)!.id && r.status < 400), 'the log holds an embedding request that was answered').toBe(true);
   });
   it('a request costs its tokens at its model\'s prices, a call the price of a call, and a refused one nothing', () => {
-    const [large, swift, embed, none] = MODELS;
+    const [large, swift, embed, none] = MODELS as [typeof MODELS[number], typeof MODELS[number], typeof MODELS[number], typeof MODELS[number]];
     const one = (model: string | null, refused = false) => REQUESTS.find((r) => r.model === model && r.status >= 400 === refused)!;
     const tokens = (model: string) => usageOf(one(model)).tokens!;
-    expect(usageOf(one('meridian-large')).cost).toBeCloseTo((tokens('meridian-large').input * 2 + tokens('meridian-large').output * 10) / 1e6, 12);
-    expect(usageOf(one('meridian-swift')).cost).toBeCloseTo((tokens('meridian-swift').input * 0.5 + tokens('meridian-swift').output * 2.5) / 1e6, 12);
-    expect(usageOf(one('meridian-embed'))).toEqual({ tokens: { input: 18, output: 0 }, cost: (18 * 0.1) / 1e6 });
-    expect(usageOf(one(null))).toEqual({ tokens: null, cost: 0.0001 });
-    for (const model of ['meridian-large', null]) expect(usageOf(one(model, true)), `${model}, refused`).toEqual({ tokens: null, cost: 0 });
-    // The prices are the models', not a list of the function's own.
-    expect([large.inputPrice, large.outputPrice, swift.inputPrice, swift.outputPrice, embed.inputPrice, none.callPrice]).toEqual([2, 10, 0.5, 2.5, 0.1, 0.0001]);
+    const costOf = (model: typeof large, t: { input: number; output: number }) => (t.input * model.inputPrice! + t.output * model.outputPrice!) / 1e6;
+    expect(usageOf(one(large.id)).cost).toBeCloseTo(costOf(large, tokens(large.id)), 12);
+    expect(usageOf(one(swift.id)).cost).toBeCloseTo(costOf(swift, tokens(swift.id)), 12);
+    expect(usageOf(one(embed.id))).toEqual({ tokens: { input: 18, output: 0 }, cost: (18 * embed.inputPrice!) / 1e6 });
+    expect(usageOf(one(null))).toEqual({ tokens: null, cost: none.callPrice });
+    for (const model of [large.id, null]) expect(usageOf(one(model, true)), `${model}, refused`).toEqual({ tokens: null, cost: 0 });
   });
   it('a service\'s uptime is what its marked days cost: half an hour a degraded day, two hours a day of outage', () => {
+    // The costs the case's title names, over the days each service keeps.
+    const lost = (s: typeof SERVICES[number]) => s.days.reduce((n, d) => n + (d === 'outage' ? 120 : d === 'degraded' ? 30 : 0), 0);
     for (const s of SERVICES) expect(s.uptime, s.name).toBe(uptimeOf(s.days));
-    expect(Object.fromEntries(SERVICES.map((s) => [s.name, s.uptime]))).toEqual({ 'Edge gateway': 0.99954, 'Inference API': 0.99931, Embeddings: 0.99954, Files: 0.99884, Webhooks: 0.99954, Dashboard: 0.99977 });
+    for (const s of SERVICES) expect(s.uptime, s.name).toBe(Math.round((1 - lost(s) / (s.days.length * 1_440)) * 100_000) / 100_000);
     const strip = (state: 'operational' | 'degraded' | 'outage') => Array.from({ length: 90 }, () => state);
     expect([uptimeOf(strip('operational')), uptimeOf([...strip('operational').slice(1), 'degraded']), uptimeOf(strip('degraded')), uptimeOf(strip('outage'))]).toEqual([1, 0.99977, 0.97917, 0.91667]);
   });
   it('a service\'s last day is its state now, and the three days outside the band are marked where they fell', () => {
     for (const s of SERVICES) expect(s.days.at(-1), s.name).toBe(s.status);
+    const day = (n: number) => new Date(DEMO_NOW.getTime() - n * 86_400_000).toISOString().slice(0, 10);
     const marked = (name: string) => SERVICES.find((s) => s.name === name)!.days.flatMap((d, i) => (d === 'operational' ? [] : [`${new Date(DEMO_NOW.getTime() - (89 - i) * 86_400_000).toISOString().slice(0, 10)} ${d}`]));
-    expect(marked('Inference API')).toEqual(['2026-09-21 degraded', '2026-09-22 degraded', '2026-10-03 degraded']);
-    expect(marked('Files')).toContain('2026-08-17 outage');
+    // The degraded service: the incident's two days and today, counted back from the clock.
+    const degraded = SERVICES.find((s) => s.status === 'degraded')!;
+    expect(marked(degraded.name)).toEqual([`${day(12)} degraded`, `${day(11)} degraded`, `${day(0)} degraded`]);
+    // Files' outage, 47 days before the clock.
+    const outage = SERVICES.find((s) => s.days.includes('outage'))!;
+    expect(marked(outage.name)).toContain(`${day(47)} outage`);
   });
 });
 

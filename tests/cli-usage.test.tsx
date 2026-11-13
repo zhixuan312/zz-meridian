@@ -50,6 +50,9 @@ vi.mock('@/components/patterns/featured-metric', async (orig) => mark(await orig
 
 import UsagePage from '../app/(dashboard)/usage/page';
 import UsageLoading from '../app/(dashboard)/usage/loading';
+import { formatCompact } from '@/lib/format';
+import { formatDay } from '@/lib/format-date';
+import { DAYS, demoTotals } from '@/system/fixtures/company';
 import { servedDocument } from './served';
 
 const OWNER = 'members_1';
@@ -79,13 +82,15 @@ function part(root: ParentNode, title: string, inner = 'ul, ol'): Element {
 describe("Usage's figures from the sample", () => {
   it('announces the period and shows its requests and dated findings', async () => {
     const doc = await served();
+    const requests = formatCompact(demoTotals('30d').current.requests);
+    const busiest = DAYS.reduce((m, d) => (d.requests > m.requests ? d : m));
     expect(doc.querySelectorAll('h1')).toHaveLength(1);
-    expect(doc.querySelector('h1')!.textContent).toMatch(/^Usage: 1\.1B requests in 30 days/);
+    expect(doc.querySelector('h1')!.textContent).toContain(`Usage: ${requests} requests in 30 days`);
     expect(doc.querySelector('[role="radiogroup"][aria-label="Reporting period"]')).toBeTruthy();
     const featured = doc.querySelector('[data-card="featured-metric"]')!;
-    expect(featured.textContent).toContain('1.1B');
+    expect(featured.textContent).toContain(requests);
     // The calendar names the busiest day as its badge.
-    expect(part(doc, 'A year of requests, a day a cell', '[data-card="heatmap"]').textContent).toMatch(/Busiest[^]*01 Oct/);
+    expect(part(doc, 'A year of requests, a day a cell', '[data-card="heatmap"]').textContent).toContain(formatDay(busiest.date));
     // At most three facts about the period, each with its date.
     const facts = [...part(doc, 'The period, counted').querySelector('ul, ol')!.children];
     expect(facts.length).toBeGreaterThanOrEqual(1);

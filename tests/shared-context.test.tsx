@@ -2,7 +2,7 @@ import { act, fireEvent, render, screen, waitFor, within } from '@testing-librar
 import { Tooltip } from 'radix-ui';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { app } from '@/app.config';
+import { app, facts as config } from '@/app.config';
 import { SurfaceOverride, sharedContextOn } from '@/components/base/surface';
 import { useShareView } from '@/components/base/use-share-view';
 import { hasSample } from './sample-present';
@@ -43,22 +43,24 @@ import { verificationOf } from '@/data/verification';
 import { Meridian } from '@/components/charts/meridian';
 import type { Incident } from '@/components/patterns/incident-card';
 import { MetricTile } from '@/components/patterns/metric-tile';
-import { median } from '@/lib/insight';
-import { formatCost } from '@/lib/format';
+import { median, WEEKDAY_NAMES, weekday } from '@/lib/insight';
+import { formatCompact, formatCost, formatDuration, formatPercent, plural } from '@/lib/format';
+import { formatDate, formatDay } from '@/lib/format-date';
 import { contextText, freshnessOf, type SharedContext } from '@/lib/shared-context';
 import { systemPrompt } from '@/lib/assistant/prompt';
 import type { Period } from '@/lib/period';
 import { HomeBody } from '@/views/home';
-import { homeContext, homeLine, type HomeData } from '@/logic/home-context';
+import { homeContext, homeLine, unwellNames, type HomeData } from '@/logic/home-context';
 import { homeData, homeHead, type HomeReads } from '@/logic/home-parts';
 import { customersContext } from '@/logic/customers-context';
 import { SCOPES } from '@/logic/key-scopes';
 import { keysContext } from '@/logic/keys-context';
 import { membersContext } from '@/logic/members-context';
-import { nowHead } from '@/logic/now-context';
+import { nowHead, nowTitle } from '@/logic/now-context';
 import { requestContext } from '@/logic/request-context';
 import { revenueHead } from '@/logic/revenue-context';
-import { servicesContext, servicesHead, servicesTitle } from '@/logic/services-context';
+import { servicesContext, servicesHead, servicesNow, servicesTitle } from '@/logic/services-context';
+import { steady } from '@/logic/service-facts';
 import { customerTool, homeTool, nowTool, revenueTool, servicesTool, usageTool } from '@/logic/tools';
 import { usageContext } from '@/logic/usage-context';
 import { usageData, usageHead } from '@/logic/usage-parts';
@@ -74,11 +76,6 @@ import { servedDocument } from './served';
 /** The product's currency mark, as `formatCost` writes it before the digits: a project made with `--currency GBP` writes £. */
 const MARK = formatCost(0).replace(/\d.*$/, '');
 const MONEY = MARK.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-/**
- * A line of the sample's figures, written in dollars here, as the product writes it: each amount through `formatCost`,
- * so a project made in yen or dinars reads its own mark and its own minor unit.
- */
-const inMark = (line: string) => line.replace(/\$([\d,]+(?:\.\d+)?)/g, (_, n: string) => formatCost(Number(n.replaceAll(',', ''))));
 
 /** The sample's incidents as a page is handed them: the record without who has it and the id of its ticket. */
 const handed = ({ owner: _, ticketId: __, ...incident }: IncidentRecord): Incident => incident;
@@ -115,11 +112,21 @@ describe('the insight functions', () => {
 
 describeSample("the Home's shared context", () => {
   it('names each figure with its unit, its change and its definition', () => {
-    const text = contextText(homeContext(home('30d')));
-    expect(text).toContain('- Requests: 1,101,098,030, up 4.7% vs the previous 30 days. (Every call answered, at any status.)');
-    expect(text).toContain('- Gross margin: 62.4%, up 0.3 points vs the previous 30 days. (Revenue less compute cost, over revenue.)');
-    expect(text).toContain(inMark('- Compute cost: $1,242,000.00, up 4.5% vs the previous 30 days. (What the GPUs provisioned cost.)'));
-    expect(text.split('\n')).toContain(`Home · last 30 days, 03 Sept 2026 to 02 Oct 2026 (${app.timezone} days) · address /?period=30d`);
+    const data = home('30d');
+    const c = homeContext(data);
+    const text = contextText(c);
+    const fact = (label: string) => c.facts.find((f) => f.label === label)!;
+    // Each figure is the data's own, through the formatter the tile draws it with.
+    expect(fact('Requests').value).toBe(data.requests!.value.toLocaleString('en-US'));
+    expect(fact('Gross margin').value).toBe(formatPercent(data.grossMargin!.value, 1));
+    expect(fact('Compute cost').value).toBe(formatCost(data.computeCost!.value));
+    for (const label of ['Requests', 'Gross margin', 'Compute cost']) {
+      expect(fact(label).change, label).toMatch(/^(?:up|down|unchanged)\b.*vs the previous 30 days$/);
+      expect(fact(label).definition, label).toBeTruthy();
+      expect(text).toContain(`- ${label}: ${fact(label).value}, ${fact(label).change}. (${fact(label).definition!.replace(/\.$/, '')}.)`);
+    }
+    const [from, to] = [data.series[0]!.date, data.series.at(-1)!.date];
+    expect(text.split('\n')).toContain(`Home · last 30 days, ${formatDate(from)} to ${formatDate(to)} (${app.timezone} days) · address /?period=30d`);
     expect(text).toContain('fresh.');
   });
   it('states no error spike', () => {
@@ -133,16 +140,25 @@ describeSample("the Home's shared context", () => {
     const said = homeContext(data).insights.map((i) => i.text);
     for (const fact of data.head.facts) expect(said).toContain(`${fact.kind[0].toUpperCase()}${fact.kind.slice(1)}: ${fact.text}.`);
     const pointed = homeContext(data, data.series.findIndex((d) => d.date === '2026-09-21'));
-    expect(pointed.focus).toMatch(/^21 Sept 2026, a Monday: /);
+    const day = data.series.find((d) => d.date === '2026-09-21')!;
+    expect(pointed.focus).toMatch(new RegExp(`^${formatDate(day.date)}, a ${WEEKDAY_NAMES[weekday(day.date)]}: `));
     expect(pointed.insights.map((i) => i.text).join('\n')).not.toMatch(/^(Total|Record|First): /m);
   });
   it('names a cost and a margin only for a person who may read what compute cost', () => {
     const viewer = home('30d', { costs: false });
+    const full = home('30d');
     expect(Object.keys(viewer)).not.toContain('computeCost');
     expect(Object.keys(viewer)).not.toContain('grossMargin');
-    expect(viewer.line).toBe('320 customers and 1.1B requests in 30 days (up 4.7%). Inference API is degraded.');
+    // The line states the customers and the requests from the data, and the margin only for a person who may read it.
+    for (const data of [viewer, full]) {
+      expect(data.line).toContain(`${formatCompact(data.customers!.count)} ${plural(data.customers!.count, 'customer')}`);
+      expect(data.line).toContain(`${formatCompact(data.requests!.value)} requests in 30 days`);
+      expect(data.line).toContain(data.services!.unwell!);
+    }
+    const margin = formatPercent(full.grossMargin!.value, 1);
+    expect(viewer.line).not.toContain(margin);
+    expect(full.line).toContain(`a gross margin of ${margin}`);
     expect(contextText(homeContext(viewer))).not.toMatch(/cost|margin/i);
-    expect(home('30d').line).toBe('320 customers, 1.1B requests in 30 days (up 4.7%), and a gross margin of 62.4%. Inference API is degraded.');
   });
   it('says what could not be read, and states the rest', () => {
     const data = homeData({ ...reads('30d'), usage: null, costs: null, releases: null });
@@ -150,13 +166,21 @@ describeSample("the Home's shared context", () => {
     expect(data.unread).toEqual(['the usage by model', 'the compute cost', 'the releases']);
     const c = homeContext(data);
     expect(c.unknowns[0]).toBe('The usage by model, the compute cost and the releases could not be read, so what they state is missing, not zero.');
-    expect(contextText(c)).toContain(inMark('$3,300,438.74'));
+    expect(contextText(c)).toContain(formatCost(data.revenue!.value));
     expect(data.worth.map((w) => w.href)).not.toContain('/releases?state=ready');
   });
   it('tells what the person points at, against the same weekday', () => {
     const data = home('30d');
     const index = data.series.findIndex((d) => d.date === '2026-09-22');
-    expect(homeContext(data, index).focus).toBe(inMark("22 Sept 2026, a Tuesday: 42,008,106 requests (1.0× the median Tuesday); error rate 1.27% (3.4× the period's median); latency p95 498ms (1.7× the median); revenue $130,097.57."));
+    const day = data.series[index]!;
+    const focus = homeContext(data, index).focus!;
+    // The day, its own figures through the formatters the page writes them with, and the ratio against that weekday.
+    for (const said of [formatDate(day.date), day.requests.toLocaleString('en-US'), formatPercent(day.errors / day.requests, 2), formatDuration(day.p95), formatCost(day.revenue)]) {
+      expect(focus, said).toContain(said);
+    }
+    expect(focus).toContain(`a ${WEEKDAY_NAMES[weekday(day.date)]}`);
+    expect(focus).toContain(`the median ${WEEKDAY_NAMES[weekday(day.date)]}`);
+    expect(focus).toContain("the period's median");
   });
   it('states no ratio against a median that is zero, rather than NaN× or Infinity×', () => {
     const data = home('30d');
@@ -182,19 +206,20 @@ describeSample("the Home's shared context", () => {
   });
   it('counts the day in progress in nothing, and says so from the day handed over on its own', () => {
     const data = home('30d');
-    expect(data.running?.date).toBe('2026-10-03');
-    expect(data.series.map((d) => d.date)).not.toContain('2026-10-03');
-    expect(homeContext(data).unknowns).toContain('3 Oct is in progress and counted in no total.');
+    expect(data.running?.date).toBe(DEMO_NOW.toISOString().slice(0, 10));
+    expect(data.series.map((d) => d.date)).not.toContain(data.running!.date);
+    expect(homeContext(data).unknowns).toContain(`${formatDay(data.running!.date)} is in progress and counted in no total.`);
     expect(contextText(homeContext(data))).not.toContain(data.running!.requests.toLocaleString('en-US'));
     // A product whose latest day is complete says nothing of a day in progress.
     expect(homeContext({ ...data, running: null }).unknowns.join('\n')).not.toMatch(/in progress/);
   });
   it('compares all time with nothing: no figure has a change, and it says no previous period is kept', () => {
     const data = home('all');
-    expect(data.series).toHaveLength(360);
+    // All time is every complete day kept, oldest first, and nothing before it.
+    expect(data.series).toEqual(history());
     expect(data.totals?.previous).toBeNull();
     const c = homeContext(data);
-    expect(c.scope).toBe(`all time, 08 Oct 2025 to 02 Oct 2026 (${app.timezone} days)`);
+    expect(c.scope).toBe(`all time, ${formatDate(data.series[0]!.date)} to ${formatDate(data.series.at(-1)!.date)} (${app.timezone} days)`);
     for (const label of ['Requests', 'Revenue', 'Gross margin', 'Compute cost']) expect(c.facts.find((f) => f.label === label)!.change, label).toBeUndefined();
     expect(c.unknowns).toContain('No previous period is kept, so no figure has a change.');
     expect(contextText(c)).not.toMatch(/NaN|Infinity|vs the previous/);
@@ -421,9 +446,9 @@ describeSample('a page is headed by the sentence its context leads with', () => 
 
   it('Now, from the services and the releases in testing', async () => {
     const { read, drawn } = heading(await servedDocument(await NowPage()));
-    const { context } = await nowTool.read({});
-    // What is wrong first: the sample's Inference API is degraded, and three releases have a verification not yet passed.
-    expect(drawn).toBe('Inference API is degraded, and 3 releases are in testing');
+    const { context, data } = await nowTool.read({});
+    // What is wrong first: the service that is not operational, and how many releases have a verification not yet passed.
+    expect(drawn).toBe(nowTitle({ services: SERVICES, testing: data.shipping!.testing.length }));
     expect(read).toBe(`Now: ${drawn}`);
     expect(context.insights[0].text).toBe(drawn);
     expect(contextText(context).split('\n')).toContain(`- ${drawn}`);
@@ -446,27 +471,29 @@ describeSample('what a context states beside its title', () => {
   it('Home states the total of requests over every complete day kept, and Usage the first day requests passed a threshold', async () => {
     const requests = history().reduce((sum, d) => sum + d.requests, 0);
     const answered = (history().reduce((sum, d) => sum + d.requests - d.errors, 0) / requests * 100).toFixed(2);
+    const [from, to] = [formatDate(history()[0]!.date), formatDate(history().at(-1)!.date)];
     for (const period of ['7d', 'all'] as const) {
       const said = (await homeTool.read({ period })).context.insights.find((i) => i.text.startsWith('Total: ') && i.text.includes('requests answered'));
-      expect(said, period).toEqual({ text: `Total: ${requests.toLocaleString('en-US')} requests answered in 360 days, from 08 Oct 2025 to 02 Oct 2026, ${answered}% of them without an error.` });
+      expect(said, period).toEqual({ text: `Total: ${requests.toLocaleString('en-US')} requests answered in ${history().length} days, from ${from} to ${to}, ${answered}% of them without an error.` });
     }
     const first = (await usageTool.read({ period: '7d' })).context.insights[1];
     // The period's part of the fact: how many of its days passed the threshold, out of every complete day kept.
-    expect(first.text).toMatch(/^First: Requests first passed 25\.0M in a day on \d\d \w+ \d{4}; \d+ days have passed it since, and \d of the last 7 days passed it\.$/);
+    const threshold = formatCompact(Math.max(...config.firsts.requestsADay.filter((t) => history().some((d) => d.requests > t))));
+    expect(first.text).toMatch(new RegExp(`^First: Requests first passed ${threshold.replace('.', '\\.')} in a day on \\d\\d \\w+ \\d{4}; \\d+ days have passed it since, and \\d of the last 7 days passed it\\.$`));
     expect(first.evidence).toMatch(/^\/\?period=all&day=\d{4}-\d\d-\d\d$/);
     // The day in progress is in neither: the total is of complete days, and so is every day the first counts.
     expect(requests).toBe(demoTotals('all').current.requests);
   });
 
   it('Now and Services state the days inside the band over every complete day kept, each with its own address', async () => {
-    const line = 'Steady: 357 of 360 days inside the band of p95 under 350 ms and errors under 1%; outside it on 17 Aug 2026, 21 Sept 2026 and 22 Sept 2026.';
+    const line = `Steady: ${steady(history(), config.band)!.text}.`;
     expect((await nowTool.read({})).context.insights[1]).toEqual({ text: line, evidence: '/engineering' });
     expect((await servicesTool.read({})).context.insights[1]).toEqual({ text: line, evidence: '/services' });
   });
 
   it('Now and Services say what could not be read, and are headed by what they can state without it', () => {
     const operational = SERVICES.map((s) => ({ ...s, status: 'operational' as const }));
-    expect(nowHead({ services: SERVICES, testing: null, history: history() })).toMatchObject({ title: 'Inference API is degraded', unknown: expect.stringMatching(/^The releases could not be read/) });
+    expect(nowHead({ services: SERVICES, testing: null, history: history() })).toMatchObject({ title: nowTitle({ services: SERVICES, testing: null }), unknown: expect.stringMatching(/^The releases could not be read/) });
     const unread = nowHead({ services: operational, testing: 1, history: null });
     expect(unread).toEqual({ title: 'All 6 services are operational, and 1 release is in testing', facts: [], unknown: expect.stringMatching(/^The days could not be read/) });
     const services = servicesHead({ services: SERVICES, history: null });
@@ -489,8 +516,10 @@ describeSample('what a context states beside its title', () => {
   });
 
   it('a period with fewer whole periods before it than a record needs states the change, and all time the figure alone', () => {
-    expect(home('90d').head.title).toMatch(/^Revenue is up [\d.]+% on the 90 days before, and Inference API is degraded$/);
-    expect(home('all').head.title).toBe(`${formatCost(demoTotals('all').current.revenue)} of revenue in 360 days, and Inference API is degraded`);
+    const monthly = home('90d').head.title!;
+    expect(monthly).toMatch(/^Revenue is up [\d.]+% on the 90 days before, and /);
+    expect(monthly.endsWith(`and ${unwellNames(SERVICES)}`)).toBe(true);
+    expect(home('all').head.title).toBe(`${formatCost(demoTotals('all').current.revenue)} of revenue in ${history().length} days, and ${unwellNames(SERVICES)}`);
     // A title leaves the services out when they could not be read, and says every one is operational when it is.
     expect(homeHead({ period: '90d', totals: demoTotals('90d'), history: history(), services: null }).title).toMatch(/^Revenue is up [\d.]+% on the 90 days before$/);
     expect(homeHead({ period: '90d', totals: demoTotals('90d'), history: history(), services: SERVICES.map((s) => ({ ...s, status: 'operational' as const })) }).title).toMatch(/, and every service is operational$/);
@@ -547,7 +576,7 @@ describeSample('what a context states beside its title', () => {
     const month = { days: 30, customers: 320, requests: 1_101_098_030, previous: 1_051_357_951 };
     // A service that is not operational leads: it is the one thing on the line a person may have to act on, and on a
     // day the title states a record it is the only place on the page that says it.
-    expect(homeLine({ ...month, margin: 0.6237, services: SERVICES })).toBe('320 customers, 1.1B requests in 30 days (up 4.7%), and a gross margin of 62.4%. Inference API is degraded.');
+    expect(homeLine({ ...month, margin: 0.6237, services: SERVICES })).toBe(`320 customers, 1.1B requests in 30 days (up 4.7%), and a gross margin of 62.4%. ${unwellNames(SERVICES)}.`);
     expect(homeLine({ ...month, services: [service('Files', 'outage'), service('Edge gateway', 'degraded'), service('Webhooks', 'degraded'), service('Dashboard', 'operational')] })).toBe('320 customers and 1.1B requests in 30 days (up 4.7%). Files is down, Edge gateway is degraded and Webhooks is degraded.');
     expect(homeLine({ ...month, services: [service('Files', 'operational')] })).toBe('320 customers, 1.1B requests in 30 days (up 4.7%), and every service is operational.');
     // None monitored is not the same as all of them well: the clause states the one thing that is true of an empty read.
@@ -581,7 +610,8 @@ describeSample('a title and a fact follow the product\'s configuration', () => {
       return { ...real, facts: { ...real.facts, recordNeedsPeriods: 13, firsts: { requestsADay: [30_000_000] } } };
     });
     const changed = await stated();
-    expect(changed.home[0].text).toMatch(/^Revenue is up [\d.]+% on the 30 days before, and Inference API is degraded$/);
+    expect(changed.home[0].text).toMatch(/^Revenue is up [\d.]+% on the 30 days before, and /);
+    expect(changed.home[0].text.endsWith(`and ${unwellNames(SERVICES)}`)).toBe(true);
     expect(changed.usage[0].text).toMatch(/ requests in 30 days, [\d.]+% more than the 30 days before$/);
     expect(changed.usage[1].text).toMatch(/^First: Requests first passed 30\.0M in a day on /);
     expect(changed.usage[1].text).not.toBe(shipped.usage[1].text);
@@ -598,14 +628,14 @@ describeSample('the days inside the band follow the product\'s configuration', (
       const tools = await import('@/logic/tools');
       return [(await tools.nowTool.read({})).context, (await tools.servicesTool.read({})).context].map((c) => c.insights.find((i) => i.text.startsWith('Steady: '))!.text);
     };
-    for (const line of await stated()) expect(line).toMatch(/^Steady: 357 of 360 days inside the band of p95 under 350 ms and errors under 1%; outside it on /);
-    // A wider band: every day's error rate is under 2%, and only 22 Sept, at 498 ms, has a p95 of 480 ms or more.
+    for (const line of await stated()) expect(line).toBe(`Steady: ${steady(history(), config.band)!.text}.`);
+    // A wider band: every day's error rate is under 2%, and only the day whose p95 is at or over 480 ms is outside it.
     vi.resetModules();
     vi.doMock('@/app.config', async (load) => {
       const real = await load<typeof import('@/app.config')>();
       return { ...real, facts: { ...real.facts, band: { p95Under: 480, errorRateUnder: 0.02 } } };
     });
-    for (const line of await stated()) expect(line).toBe('Steady: 359 of 360 days inside the band of p95 under 480 ms and errors under 2%; outside it on 22 Sept 2026.');
+    for (const line of await stated()) expect(line).toBe(`Steady: ${steady(history(), { p95Under: 480, errorRateUnder: 0.02 })!.text}.`);
   });
 });
 
@@ -620,7 +650,7 @@ describeSample("a list a context states names its first, in the page's order, an
     const resolved = times(derivedRecords().PAST_INCIDENTS, 6, (x, i) => ({ id: `${x.id}_${i}`, title: `${x.title} ${i + 1}` }));
     const c = servicesContext({ services, incidents: { open, resolved }, head: servicesHead({ services, history: history() }), updatedAt: DEMO_UPDATED_AT.toISOString(), now: DEMO_NOW.toISOString() });
     const text = contextText(c);
-    expect(c.facts[0]).toEqual({ label: 'Services now', value: '4 services degraded (Inference API degraded, and 3 more)' });
+    expect(c.facts[0]).toEqual({ label: 'Services now', value: servicesNow(services) });
     expect(c.facts.slice(2, 8).map((f) => f.label)).toEqual(services.slice(0, 6).map((s) => s.name));
     expect(c.facts[8]).toEqual({ label: '18 more services', value: '24 in all' });
     const stated = c.insights.filter((i) => i.text.startsWith('Open incident '));

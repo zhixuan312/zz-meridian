@@ -56,6 +56,7 @@ import HomePage from '../app/(dashboard)/(home)/page';
 import HomeLoading from '../app/(dashboard)/(home)/loading';
 import DashboardError from '../app/(dashboard)/error';
 import { contextText } from '@/lib/shared-context';
+import { formatCompact, formatPercent } from '@/lib/format';
 import { homeTool } from '@/logic/tools';
 import { PERIODS } from '@/lib/period';
 import { servedDocument } from './served';
@@ -96,7 +97,12 @@ describe("Home's nine parts, in order, from the sample", () => {
     const h1 = doc.querySelectorAll('h1');
     expect(h1).toHaveLength(1);
     const masthead = doc.getElementById('content')!;
-    for (const said of ['320', '1.1B', '62.4%', 'Inference API']) expect(masthead.textContent, said).toContain(said);
+    jar.value = PERSONAS.owner;
+    const { data } = await homeTool.read({ period: '30d' });
+    // The line under it states the data's own figures: the customers, the requests, the margin and the service.
+    for (const said of [String(data.customers!.count), formatCompact(data.requests!.value), formatPercent(data.grossMargin!.value, 1), data.services!.unwell!]) {
+      expect(masthead.textContent, said).toContain(said);
+    }
     // 5. The card that states the year.
     const year = titled(doc, /^Requests grew [\d.]+% in a year, and p95 stayed between \d+ and \d+ ?ms$/);
     // 6. A year, counted: at most five facts, each with its kind and a date, and the same line as the context's.

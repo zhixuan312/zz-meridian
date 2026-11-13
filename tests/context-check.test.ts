@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest';
-import { checkBrief, scanReferences } from '../scripts/lib/context-check.ts';
+import { checkBrief, scanReferences, staleClaims } from '../scripts/lib/context-check.ts';
 
 const TEMPLATE = [
   '# Product name', '', '## Product', 'What this dashboard is for, in two or three sentences: who opens it, what decision it helps them make.', '',
@@ -55,5 +55,30 @@ describe('scanReferences', () => {
   it('reports lines in the containing file when given a starting line', () => {
     const out = scanReferences([{ file: 'AGENTS.md', text: 'a\n`src/missing.ts`', firstLine: 40 }], exists, scripts);
     expect(out[0]).toMatch(/^AGENTS\.md:41: /);
+  });
+});
+
+describe('staleClaims', () => {
+  const claims = (text: string, file = 'docs/testing.md') => staleClaims([{ file, text }]);
+
+  it('fails, naming the file and the line, on each planted claim', () => {
+    expect(claims('pnpm verify runs the default path')).toEqual(['docs/testing.md:1: names pnpm verify or pnpm gate']);
+    expect(claims('a\nrun pnpm gate before you commit')).toEqual(['docs/testing.md:2: names pnpm verify or pnpm gate']);
+    expect(claims('node scripts/verify.ts --full')).toEqual(['docs/testing.md:1: names a removed script', 'docs/testing.md:1: names a removed flag']);
+    expect(claims('use --timed on a quiet machine')).toEqual(['docs/testing.md:1: names a removed flag']);
+    expect(claims('`npm run verify` and `test:all`')).toEqual(['docs/testing.md:1: names a removed package script', 'docs/testing.md:1: names test:all']);
+    expect(claims('run `verify --full`')).toEqual(['docs/testing.md:1: names a removed command with a flag', 'docs/testing.md:1: names a removed flag']);
+  });
+
+  it('accepts the three test commands a project runs', () => {
+    expect(claims('`pnpm test:release` runs every test')).toEqual([]);
+    expect(claims('`pnpm test:t1` and `pnpm test:t2` take no arguments')).toEqual([]);
+  });
+
+  it('reports each file by its own name, and a skill reference among them', () => {
+    expect(staleClaims([
+      { file: 'README.md', text: 'ok' },
+      { file: 'skills/zz-meridian/SKILL.md', text: 'x\n`pnpm gate`' },
+    ])).toEqual(['skills/zz-meridian/SKILL.md:2: names pnpm verify or pnpm gate']);
   });
 });

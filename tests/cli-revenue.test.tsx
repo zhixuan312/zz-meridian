@@ -52,6 +52,8 @@ vi.mock('@/components/charts/bar-list', async (orig) => mark(await orig(), 'BarL
 
 import RevenuePage from '../app/(dashboard)/business/page';
 import RevenueLoading from '../app/(dashboard)/business/loading';
+import { formatCost } from '@/lib/format';
+import { demoTotals } from '@/system/fixtures/company';
 import { servedDocument } from './served';
 
 const OWNER = 'members_1';
@@ -95,7 +97,7 @@ describe("Revenue's figures and customer links from the sample", () => {
     expect(doc.querySelector('h1')!.textContent).toMatch(/^Revenue: All 24 Enterprise customers sent more this week than last/);
     expect(doc.querySelector('[role="radiogroup"][aria-label="Reporting period"]')).toBeTruthy();
     const featured = doc.querySelector('[data-card="featured-metric"]')!;
-    expect(featured.textContent).toContain('$3,300,438.74');
+    expect(featured.textContent).toContain(formatCost(demoTotals('30d').current.revenue));
   });
 
   it('opens every customer the wall names, counts who sent more and links to every customer', async () => {

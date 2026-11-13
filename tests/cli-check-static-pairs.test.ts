@@ -33,6 +33,7 @@ const RULE_TESTS = 'tests/cli-check-rules.test.ts';
 const AGENT_TESTS = 'tests/cli-check-agent-section.test.ts';
 const RULES: Rule[] = [
   // Cards.
+  { id: 'no surface names a removed entry point', source: 'staleClaims(', pairedIn: { file: 'tests/context-check.test.ts', needle: 'names pnpm verify or pnpm gate' } },
   { id: 'card README opens with a name and a sentence', source: '/README.md: must open with', batch: 'T', fails: ['src/components/ui/card/README.md: must open with "# Name"'] },
   { id: 'card README has a status', source: 'no "Status: draft|beta|stable" line', batch: 'T', fails: ['src/components/ui/kbd/README.md: no "Status: draft|beta|stable" line'] },
   { id: 'card README has its sections', source: '/README.md: missing ${s}', batch: 'T', fails: ['src/components/ui/switch/README.md: missing ## Accessibility'] },

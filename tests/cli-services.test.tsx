@@ -49,7 +49,10 @@ vi.mock('@/components/patterns/featured-metric', async (orig) => mark(await orig
 import ServicesPage from '../app/(dashboard)/services/page';
 import ServicesLoading from '../app/(dashboard)/services/loading';
 import { contextText } from '@/lib/shared-context';
+import { formatDuration } from '@/lib/format';
 import { servicesTool } from '@/logic/tools';
+import { INCIDENTS } from '@/system/fixtures/sample';
+import { PAST_INCIDENTS } from '@/system/fixtures/sample-ops';
 import { servedDocument } from './served';
 
 beforeEach(() => { jar.value = 'members_1'; store.fail.clear(); store.empty.clear(); store.map.clear(); });
@@ -80,10 +83,11 @@ describe("Services' parts, in order, from the sample", () => {
   it('says how long each incident lasted, the open one so far, and opens the open one\'s ticket', async () => {
     const doc = await served();
     const resolved = [...doc.querySelectorAll('[data-card="incident-card"][data-label="resolved"]')].map((e) => e.textContent ?? '');
-    expect(resolved[0]).toMatch(/2\.4 ?h/);
+    const last = [...INCIDENTS, ...PAST_INCIDENTS].filter((i) => i.state === 'resolved' && i.resolved).sort((a, b) => (a.resolved! < b.resolved! ? 1 : -1))[0]!;
+    expect(resolved[0] ?? '').toContain(formatDuration(Date.parse(last.resolved!) - Date.parse(last.started)));
     for (const text of resolved) expect(text).toMatch(/lasted|\d+(\.\d)? ?(h|m|min)\b/);
     const open = doc.querySelector('[data-card="incident-card"][data-label="monitoring"]')!;
-    expect(open.textContent).toContain('Jonas Weber');
+    expect(open.textContent).toContain(INCIDENTS.find((i) => i.state !== 'resolved')!.owner);
     expect(open.querySelector('a[href^="/operations-tickets?q="]')).toBeTruthy();
   });
 

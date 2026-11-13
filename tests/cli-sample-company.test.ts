@@ -2,6 +2,7 @@
 // Named cli-* so the payload leaves it out: it holds the sample company's own records and figures.
 import { describe, expect, it } from 'vitest';
 
+import { facts } from '@/app.config';
 import { clock, collections } from '@/data/collections';
 import { customerFigures } from '@/logic/customers-context';
 
@@ -159,14 +160,17 @@ describe('the sample holds what the pages state', () => {
 
   it('exactly three complete days outside the band of p95 under 350 ms and errors under 1%', async () => {
     const complete = (await rows('days')).filter((d) => d.date !== today);
-    expect(complete.filter((d) => !(d.p95 < 350 && d.errors / d.requests < 0.01)).map((d) => d.date)).toHaveLength(3);
+    expect(complete.filter((d) => !(d.p95 < facts.band.p95Under && d.errors / d.requests < facts.band.errorRateUnder)).map((d) => d.date)).toHaveLength(3);
   });
 
   it('a first day above 25 million requests inside the year, and none above 50 million', async () => {
     const complete = (await rows('days')).filter((d) => d.date !== today).sort((a, b) => a.date.localeCompare(b.date));
-    expect(complete[0].requests).toBeLessThan(25_000_000);
-    expect(complete.some((d) => d.requests > 25_000_000)).toBe(true);
-    expect(Math.max(...complete.map((d) => d.requests))).toBeLessThan(50_000_000);
+    // The threshold the year crosses, and the one above it that it does not: the rule `first` states a page from.
+    const low = Math.max(...facts.firsts.requestsADay.filter((t) => complete.some((d) => d.requests > t)));
+    const high = Math.min(...facts.firsts.requestsADay.filter((t) => t > low));
+    expect(complete[0].requests).toBeLessThan(low);
+    expect(complete.some((d) => d.requests > low)).toBe(true);
+    expect(Math.max(...complete.map((d) => d.requests))).toBeLessThan(high);
   });
 
   it('every Enterprise customer sent more in its last 7 days than in the 7 before, and not every customer did', async () => {
@@ -186,6 +190,6 @@ describe('the sample holds what the pages state', () => {
   it('a largest customer that pays a tenth of the revenue or more', async () => {
     const [days, customers] = await Promise.all([rows('days'), rows('customers')]);
     const month = sum(days.filter((d) => LAST_30.has(d.date)).map((d) => d.revenue));
-    expect(Math.max(...customers.map((c) => c.revenue)) / month).toBeGreaterThanOrEqual(0.1);
+    expect(Math.max(...customers.map((c) => c.revenue)) / month).toBeGreaterThanOrEqual(facts.concentrationAt);
   });
 });

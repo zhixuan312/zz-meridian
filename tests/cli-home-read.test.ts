@@ -19,13 +19,14 @@ vi.mock('@/data/read', async (orig) => {
   };
 });
 
-import { formatCompact } from '@/lib/format';
+import { formatCompact, formatCost, formatPercent } from '@/lib/format';
+import { readAll } from '@/data/read';
 import { contextText } from '@/lib/shared-context';
 import { homeTool } from '@/logic/tools';
 import { PERIODS } from '@/lib/period';
+import type { CustomerRecord } from '@/data/sample';
 
 const PERSONAS = { owner: 'members_1', admin: 'members_2', member: 'members_4', viewer: 'members_12' };
-/** What a view's context may take (tests/shared-context.test.tsx holds every view to it). */
 
 beforeEach(() => { jar.value = undefined; fail.names.clear(); });
 
@@ -33,8 +34,18 @@ beforeEach(() => { jar.value = undefined; fail.names.clear(); });
 const as = async (id: string, input: Parameters<typeof homeTool.read>[0] = { period: '30d' }) => { jar.value = id; return homeTool.read(input); };
 /** Every key of a value, at any depth. */
 const keys = (v: unknown): string[] => (v && typeof v === 'object' ? Object.entries(v).flatMap(([k, x]) => [k, ...keys(x)]) : []);
-/** The line of the context that says Northwind Labs pays a concentrated share. */
-const concentrated = /Northwind Labs[^\n]*12\.4%/;
+/**
+ * The customers that have not left and what they paid, from the rows Home's read reads: the largest, and the share of
+ * the revenue it pays. The concentration line is worked out from these, so the figure is the data's and not a pin.
+ */
+async function company(): Promise<{ largest: string; share: string }> {
+  jar.value = PERSONAS.owner;
+  const { rows } = await readAll('customers');
+  const kept = (rows as CustomerRecord[]).filter((c) => c.status !== 'left');
+  const revenue = kept.reduce((n, c) => n + Math.round(c.revenue * 100), 0) / 100;
+  const largest = [...kept].sort((a, b) => b.revenue - a.revenue)[0]!;
+  return { largest: largest.name, share: formatPercent(largest.revenue / revenue, 1) };
+}
 
 describe('what Home is handed from the product', () => {
   it('writes a count in trillions with its own step', () => {
@@ -46,22 +57,29 @@ describe('what Home is handed from the product', () => {
 
 describe("Home's context states the company", () => {
   it("for an Owner, with the figures of Home's parts", async () => {
-    const text = contextText((await as(PERSONAS.owner)).context);
+    const { largest, share } = await company();
+    const { context, data } = await as(PERSONAS.owner);
+    const text = contextText(context);
     // Revenue, customers that have not left and the active ones, the services, and gross margin and compute cost.
-    for (const said of ['$3,300,438.74', '320', '296', 'Inference API', '62.4%', '$1,242,000.00']) expect(text, said).toContain(said);
+    for (const said of [formatCost(data.revenue!.value), String(data.customers!.count), String(data.customers!.active), formatPercent(data.grossMargin!.value, 1), formatCost(data.computeCost!.value)]) {
+      expect(text, said).toContain(said);
+    }
+    expect(text).toContain(`${data.services!.operational} of ${data.services!.of} operational`);
     expect(text).toMatch(/gross margin/i);
     expect(text).toMatch(/compute cost/i);
     // Worth knowing: the customer at or over the configured share, with its share.
-    expect(text).toMatch(concentrated);
+    expect(text).toContain(`${largest} pays ${share}`);
   });
 
   // Its budget, at every period and with a day pointed at, is held in tests/cli-context-budget.test.ts.
   it('names the day pointed at', async () => {
+    // 2026-09-21 is the test's own input, written as the product writes a day.
     const pointed = contextText((await as(PERSONAS.owner, { period: '30d', day: '2026-09-21' })).context);
     expect(pointed).toContain('21 Sept');
   });
 
   it('names a customer as concentrated only at the configured share', async () => {
+    const { largest, share } = await company();
     vi.resetModules();
     vi.doMock('@/app.config', async (load) => {
       const real = await load<typeof import('@/app.config')>();
@@ -69,12 +87,12 @@ describe("Home's context states the company", () => {
     });
     const { homeTool: tool } = await import('@/logic/tools');
     jar.value = PERSONAS.owner;
-    const text = contextText((await tool.read({ period: '30d' })).context);
+    const { context, data } = await tool.read({ period: '30d' });
     vi.doUnmock('@/app.config');
     vi.resetModules();
-    // Northwind Labs pays 12.4%: under a share of 13% it is not concentrated, and every other figure stands.
-    expect(text).not.toMatch(concentrated);
-    expect(text).toContain('$3,300,438.74');
+    // A share under 13% is not concentrated, and every other figure stands.
+    expect(contextText(context)).not.toContain(`${largest} pays ${share}`);
+    expect(contextText(context)).toContain(formatCost(data.revenue!.value));
   });
 });
 
@@ -88,12 +106,13 @@ describe('compute cost and gross margin', () => {
   });
 
   it('reach nobody else, with nothing in their place', async () => {
+    const cost = formatCost((await as(PERSONAS.owner)).data.computeCost!.value);
     for (const id of [PERSONAS.member, PERSONAS.viewer]) {
       for (const period of PERIODS) {
         const { context, data } = await as(id, { period });
         const text = contextText(context);
         expect(text, `${id} ${period}`).not.toMatch(/compute cost|gross margin|\bmargin\b/i);
-        expect(text, `${id} ${period}`).not.toContain('$1,242,000.00');
+        expect(text, `${id} ${period}`).not.toContain(cost);
         // Not a null or a dash under the name: no key of the data names a cost or a margin.
         expect(keys(data).filter((k) => /cost|margin/i.test(k)), `${id} ${period}`).toEqual([]);
       }
@@ -106,8 +125,9 @@ describe('compute cost and gross margin', () => {
 describe('a read that fails', () => {
   it('leaves the rest of Home standing and the context saying what could not be read', async () => {
     fail.names.add('usage');
-    const text = contextText((await as(PERSONAS.owner)).context);
-    expect(text).toContain('$3,300,438.74');
+    const { context, data } = await as(PERSONAS.owner);
+    const text = contextText(context);
+    expect(text).toContain(formatCost(data.revenue!.value));
     expect(text).toMatch(/could not be read/i);
   });
 

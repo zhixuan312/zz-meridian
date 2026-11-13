@@ -32,7 +32,7 @@ import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { importTarget, projectAliases } from './lib/aliases.ts';
-import { checkBrief, scanReferences } from './lib/context-check.ts';
+import { checkBrief, scanReferences, SKILL_TREES, STALE_SURFACES, staleClaims } from './lib/context-check.ts';
 import { navTrailProblems, navUnderProblems } from './lib/nav-under.ts';
 import { blankedText, dayCutFiles, dayCutProblems, noDirectQuery, presentationDoesNotRead, resolveSpec as resolveProjectSpec, valueImports, walk as walkIn } from './lib/layer-rules.ts';
 import { APP_DIR, agentPageSpec, agentSection, specRoute, viewToolPages } from './lib/routes.ts';
@@ -681,7 +681,7 @@ for (const f of walk('src', /\.tsx?$/).filter((x) => SWEPT.test(x) && !TOOLKIT.t
   }
   if (has('docs/brief.md')) docs.push({ file: 'docs/brief.md', text: read('docs/brief.md') });
   const scripts = new Set(Object.keys(JSON.parse(read('package.json')).scripts ?? {}));
-  problems.push(...scanReferences(docs, has, scripts));
+  problems.push(...scanReferences(docs, has, scripts), ...staleClaims([...STALE_SURFACES, ...SKILL_TREES.flatMap((d) => walk(d, /\.md$/))].filter(has).map((f) => ({ file: f.split(path.sep).join('/'), text: read(f) }))));
 }
 
 judged.push(['a collection\'s rows read through it', collectionRows]);

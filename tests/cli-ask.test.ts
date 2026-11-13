@@ -8,6 +8,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 import { chosenOf, formOf, personaFor, questionsOf, viewsOf } from '../scripts/ask.ts';
+import { collections } from '@/data/collections';
 
 /**
  * `node scripts/ask.ts --base <url> [--view <name>] [--as <persona>]` asks a served product's assistant the questions each
@@ -20,6 +21,19 @@ import { chosenOf, formOf, personaFor, questionsOf, viewsOf } from '../scripts/a
 const ROOT = path.resolve(import.meta.dirname, '..');
 const USAGE = fs.readFileSync(path.join(ROOT, 'app/(dashboard)/usage/README.md'), 'utf8');
 const SENTINEL = 'sk-ask-sentinel-0b7c';
+const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+/** Usage's busiest hour of the day and its busiest weekday-and-hour cell, from the rows the page draws. */
+async function heatmap() {
+  const rows = (await collections.find((c) => c.name === 'hours')!.query({})).rows as { weekday: number; hour: number; requests: number }[];
+  const byHour = Array.from({ length: 24 }, (_, h) => rows.filter((r) => r.hour === h).reduce((n, r) => n + r.requests, 0));
+  const cell = rows.reduce((m, r) => (r.requests > m.requests ? r : m));
+  return {
+    busiestHour: `${String(byHour.indexOf(Math.max(...byHour))).padStart(2, '0')}:00`,
+    column: `${String(cell.hour).padStart(2, '0')}:00`,
+    weekday: WEEKDAYS[cell.weekday]!,
+    value: cell.requests.toLocaleString('en-US'),
+  };
+}
 
 type Seen = { cookie?: string; body?: { messages?: { parts?: { text?: string }[] }[]; page?: { path?: string; title?: string; context?: string; text?: string } } };
 type Part = Record<string, unknown>;
@@ -173,7 +187,8 @@ describe('asked of a served product', () => {
     for (const q of qs) expect(md).toContain(q);
     expect(md).toContain('explore_usage');
     expect(md).toContain('"source":"hours"');
-    expect(md).toContain('Sunday: 43,868,876 requests');
+    const heat = await heatmap();
+    expect(md).toContain(`${heat.weekday}: ${heat.value} requests`);
     expect(md).not.toContain(SENTINEL);
   }, 60_000);
 
@@ -198,8 +213,9 @@ describe('asked of a served product', () => {
     const page = s.seen.find((x) => x.body?.messages?.length)!.body!.page!;
     expect(page.title).toBe('Usage');
     expect(page.text).toMatch(/^Usage\nRequests & errors, 30 complete days\nWhen requests come\n/);
-    expect(page.text).toContain('Weekday\t22:00\nSunday\t43,868,876');
-    expect(page.text).toContain('Busiest hour: 14:00 UTC');
+    const heat = await heatmap();
+    expect(page.text).toContain(`Weekday\t${heat.column}\n${heat.weekday}\t${heat.value}`);
+    expect(page.text).toContain(`Busiest hour: ${heat.busiestHour} UTC`);
     expect(page.text).not.toContain('Loading the figures');
     expect(page.text).not.toContain('Rail entry Home');
     expect(page.text).not.toContain('color:red');

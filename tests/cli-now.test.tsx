@@ -67,7 +67,14 @@ vi.mock('@/components/patterns/featured-metric', async (orig) => mark(await orig
 
 import NowPage from '../app/(dashboard)/engineering/page';
 import NowLoading from '../app/(dashboard)/engineering/loading';
-import { SERVICES } from '@/system/fixtures/sample';
+import { facts } from '@/app.config';
+import { formatDuration } from '@/lib/format';
+import { formatDate } from '@/lib/format-date';
+import { steady } from '@/logic/service-facts';
+import { INCIDENTS, MODELS, SERVICES } from '@/system/fixtures/sample';
+import { DAYS } from '@/system/fixtures/company';
+import { RELEASES, TICKETS } from '@/system/fixtures/sample-engineering';
+import { PAST_INCIDENTS } from '@/system/fixtures/sample-ops';
 import { servedDocument } from './served';
 
 const OWNER = 'members_1';
@@ -100,29 +107,31 @@ const calm = (n: number) => ({ ...SERVICES[0], name: `Service ${n}`, description
 describe("Now's thirteen parts, in order, from the sample", () => {
   it('draws each part with the card the specification names', async () => {
     const doc = await served();
+    const band = steady(DAYS, facts.band)!;
     expect(doc.querySelectorAll('h1')).toHaveLength(1);
     // The line under the title: how long after its start each step of the open incident came, the services, the days inside the band.
     const masthead = doc.getElementById('content')!.textContent ?? '';
     expect(masthead).toMatch(/at the start/);
     expect(masthead).toMatch(/after \d/);
-    expect(masthead).toMatch(/357 of 360 days/);
+    expect(masthead).toContain(`${band.inside} of ${band.of} days`);
     // The Featured metric, first after the head: the days inside the band over the last 360 complete days.
-    expect(doc.querySelector('[data-card="featured-metric"]')!.textContent).toMatch(/357[^]*360/);
-    const titles = ['Services, now', 'Open incident', '357 of 360 days inside the band', 'Models, now', 'Compute in use', 'Shipping', 'Work', 'Slowest endpoints', ...TILES, 'Verification runs a day, by how they ended', 'Changes'].map((t) => titled(doc, t));
+    expect(doc.querySelector('[data-card="featured-metric"]')!.textContent).toContain(`${band.inside}`);
+    expect(doc.querySelector('[data-card="featured-metric"]')!.textContent).toContain(`${band.of}`);
+    const titles = ['Services, now', 'Open incident', `${band.inside} of ${band.of} days inside the band`, 'Models, now', 'Compute in use', 'Shipping', 'Work', 'Slowest endpoints', ...TILES, 'Verification runs a day, by how they ended', 'Changes'].map((t) => titled(doc, t));
     for (let i = 1; i < titles.length; i++) expect(Boolean(titles[i - 1].compareDocumentPosition(titles[i]) & Node.DOCUMENT_POSITION_FOLLOWING), titles[i].textContent ?? '').toBe(true);
   });
 
   it('names the incident\'s owner and opens its ticket', async () => {
     const doc = await served();
     const incident = part(doc, 'Open incident', '[data-card="incident-card"]');
-    expect(incident.textContent).toContain('Jonas Weber');
+    expect(incident.textContent).toContain(INCIDENTS.find((i) => i.state !== 'resolved')!.owner);
     expect(incident.querySelector('a[href^="/operations-tickets?q="]')).toBeTruthy();
   });
 
   it('lists each model, and the endpoints slowest first', async () => {
     const doc = await served();
     const models = part(doc, 'Models, now', 'table, ul, ol').textContent ?? '';
-    for (const m of ['Meridian Large', 'Meridian Swift', 'Meridian Embed', 'No model']) expect(models, m).toContain(m);
+    for (const m of MODELS) expect(models, m.label).toContain(m.label);
     const slowest = part(doc, 'Slowest endpoints', 'table, ul, ol').textContent ?? '';
     expect(slowest.indexOf('/v1/files')).toBeGreaterThan(-1);
     expect(slowest.indexOf('/v1/files')).toBeLessThan(slowest.indexOf('/v1/messages'));
@@ -131,10 +140,11 @@ describe("Now's thirteen parts, in order, from the sample", () => {
   it("puts what ships and the work in front of the reader, the reader's own ticket marked and a link to all", async () => {
     const doc = await served();
     const shipping = part(doc, 'Shipping', 'ul, ol, table').textContent ?? '';
-    for (const v of ['v1.14.0', 'v0.8.3', 'v6.1.0', 'v2.9.0']) expect(shipping, v).toContain(v);
+    for (const release of RELEASES.filter((r) => r.state !== 'released')) expect(shipping, release.version).toContain(release.version);
     expect(shipping).toMatch(/\d+ of \d+ required/);
+    const own = TICKETS.find((t) => t.assigneeId === OWNER && t.state !== 'closed')!;
     const work = part(doc, 'Work', 'a[href="/operations-tickets"]');
-    expect(work.textContent).toMatch(/Parser rejects PDFs with an embedded font table[^]*Yours|Yours[^]*Parser rejects PDFs with an embedded font table/);
+    expect(work.textContent).toMatch(new RegExp(`${own.title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[^]*Yours|Yours[^]*${own.title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`));
   });
 
 });
@@ -151,13 +161,14 @@ describe('Now with one incident, several and none, and with more than eight serv
   it('none open: the card stays and says when the last one was resolved and how long it lasted', async () => {
     store.only.set('incidents', (row) => row.state === 'resolved');
     const doc = await served();
+    const last = [...INCIDENTS, ...PAST_INCIDENTS].filter((i) => i.state === 'resolved' && i.resolved).sort((a, b) => (a.resolved! < b.resolved! ? 1 : -1))[0]!;
     expect(cards(doc)).not.toContain('incident-card:minor');
     let card = titled(doc, 'Open incident').parentElement;
-    while (card && !/17 Aug 2026/.test(card.textContent ?? '')) card = card.parentElement;
+    while (card && !card.textContent?.includes(formatDate(last.resolved!.slice(0, 10)))) card = card.parentElement;
     expect(card, 'the card that names the last one').toBeTruthy();
     // The card itself, not a part beside it that names the same day (the band's facts, the Incidents resolved tile).
     expect(card!.querySelector('[data-card="uptime-bars"], [data-card="metric-tile"]')).toBeNull();
-    expect(card!.textContent).toMatch(/2\.4 ?h/);
+    expect(card!.textContent).toContain(formatDuration(Date.parse(last.resolved!) - Date.parse(last.started)));
   });
 
   it('more than eight services: those not operational, then the three longest runs, then a link to every one', async () => {
@@ -165,8 +176,8 @@ describe('Now with one incident, several and none, and with more than eight serv
     const doc = await served();
     const services = part(doc, 'Services, now', '[data-card="status-list"]');
     expect(cards(services)).toEqual(['status-list:4']);
-    expect(services.textContent).toContain('Inference API');
-    expect(services.querySelector('a[href="/services"]')!.textContent).toMatch(/10/);
+    expect(services.textContent).toContain(SERVICES.find((s) => s.status !== 'operational')!.name);
+    expect(services.querySelector('a[href="/services"]')!.textContent).toContain(String(SERVICES.length + 4));
   });
 });
 
