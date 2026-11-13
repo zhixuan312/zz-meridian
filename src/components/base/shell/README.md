@@ -99,7 +99,7 @@ A page headed by its name keeps the one row it always had: the kicker, the title
 
 ## Agents
 
-Every console page keeps its state in its address (period, filters, the selected record), so an agent or a shared link opens exactly the same view. A title that is a sentence is worked out by code from the page's figures, and the page's shared context leads with the same sentence (`docs/agents.md`, "A page's title and its facts"): what a person reads at the head of the page is what an agent is told first.
+Every console page keeps its state in its address (period, filters, the selected record), so an agent or a shared link opens exactly the same view. A title that is a sentence is worked out by code from the page's figures, and the page's shared context leads with the same sentence (`.agents/skills/zz-meridian/references/customize.md`, "A title that states the figures, and the facts beside it"): what a person reads at the head of the page is what an agent is told first.
 
 ## Accessibility
 
@@ -110,7 +110,7 @@ Every console page keeps its state in its address (period, filters, the selected
 
 ## Content
 
-- A title that is a sentence states a figure the product records, with its unit and its period, and what is wrong today in the same sentence where its rule has a clause for it. It has no full stop, as a name has none, and no word of praise: the figure is what is said (`docs/data-display.md`, "Facts").
+- A title that is a sentence states a figure the product records, with its unit and its period, and what is wrong today in the same sentence where its rule has a clause for it. It has no full stop, as a name has none, and no word of praise: the figure is what is said (`.agents/skills/zz-meridian/references/customize.md`, "A title that states the figures, and the facts beside it").
 - A page works its title out with a function that has a branch for each thing it may say, with a test for each branch, and never writes the sentence by hand.
 
 ## Do and do not

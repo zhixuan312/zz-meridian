@@ -31,7 +31,7 @@ describe('the skill in a project made by create', () => {
     const productOnly = ['src/system/specimen.tsx', 'src/system/registry.ts'];
     const created = new Set([
       ...tracked.filter((f) => !/^(app\/system|docs|decisions|skills|cli|\.github)\//.test(f) && !atlasOnly.includes(f) && !productOnly.includes(f) && !/^(CONTRIBUTING|CHANGELOG)\.md$/.test(f)
-        && !/^src\/components\/.*\/(README\.md|preview\.tsx)$/.test(f) && !/^app\/.*README\.md$/.test(f)),
+        && !/^src\/components\/.*\/preview\.tsx$/.test(f) && !/^app\/.*README\.md$/.test(f)),
       'docs/brief.md', '.meridian/manifest.json', ...skillTrees,
     ]);
     expect(scanReferences(installed, holds(created), createdScripts)).toEqual([]);

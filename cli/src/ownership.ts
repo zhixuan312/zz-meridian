@@ -28,7 +28,7 @@ export const FIXED = [
 
 /** The one rule, a plain-English line per clause. `references/ownership.md` renders it, so the guidance cannot drift. */
 export const OWNERSHIP: readonly string[] = [
-  'Managed: the payload files under `tokens/`, `src/styles/` and `src/components/`, except each component\'s `README.md` and `preview.tsx`.',
+  'Managed: the payload files under `tokens/`, `src/styles/` and `src/components/`, except each component\'s `preview.tsx`; each card\'s `README.md` is Meridian\'s too, next to its component.',
   'Managed: the distributed scripts under `scripts/`, except `scripts/verify.config.ts`, the size baseline `optional:scripts/verify.baseline.json` (first-load JS and the HTML of each page) and a team-local `optional:scripts/check.local.ts`.',
   'Managed: the library helpers `src/lib/cn.ts`, `src/lib/format.ts`, `src/lib/format-date.ts`, `src/lib/calendar-date.ts`, `src/lib/period.ts`, `src/lib/color.ts`, `src/lib/host.ts`, `src/lib/preferences.ts`, `src/lib/csv.ts`, `src/lib/safe-markdown.ts`, `src/lib/logo.ts`, `src/lib/collection.ts`, `src/lib/explore.ts`, `src/lib/live.ts`, `src/lib/shared-context.ts`, `src/lib/agent-guidance.ts`, `src/lib/insight.ts`, `src/lib/facts.ts`, `src/lib/rank.ts`, `src/lib/sort.ts` and `src/lib/contrast-pairs.ts`, and the assistant prompt `src/lib/assistant/prompt.ts`.',
   'Managed: the three `src/logic/` helpers a shipped component imports — `src/logic/after-start.ts`, `src/logic/derivations.ts` and `src/logic/summarise.ts` — so a payload\'s cards build in an adopted project; every other module under `src/logic/` is the team\'s.',
@@ -76,7 +76,7 @@ export function parseManifest(text: string): Manifest {
 
 /** What adopt copies from the template, as payload paths: its rule applied to one release's file list, sorted. */
 export function adoptSetOf(payloadFiles: readonly string[]): string[] {
-  const own = (f: string) => !/(^|\/)(README\.md|preview\.tsx)$/.test(f);
+  const own = (f: string) => !/(^|\/)preview\.tsx$/.test(f);
   const fixed = new Set(FIXED);
   return payloadFiles
     .filter((f) => f.startsWith('tokens/') || f.startsWith('src/styles/')

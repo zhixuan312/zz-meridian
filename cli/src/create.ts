@@ -1,6 +1,6 @@
 /**
  * `zz-meridian create <dir>`: a new dashboard from the template, branded as the person's product (scripts/brand.ts
- * --product removes the Design Atlas, the specifications and the design system's own docs), with the agent skill in
+ * --product removes the Design Atlas, the card previews, the page specifications and the design system's own docs; each card's README stays, managed), with the agent skill in
  * the project and every file recorded in the manifest.
  */
 import fs from 'node:fs';

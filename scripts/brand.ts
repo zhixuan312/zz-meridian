@@ -13,7 +13,7 @@
  * gate then runs; where white on the accent fill fails in a theme, the preset gets a lower fill lightness for that
  * theme, a step at a time, until every pair in every theme passes. --no-atlas removes the Design Atlas: its routes, its
  * modules, its nav entries (the footer's link follows them) and its build tracing (the card previews stay: the gate checks them; the markdown packages stay for Prose).
- * --product goes further, for a dashboard that is not the design system: --no-atlas, and the card specs and previews,
+ * --product goes further, for a dashboard that is not the design system: --no-atlas, and the card previews and page specs (each card's README stays),
  * page specs, docs, decisions, changelog and skill go too (the assistant, its collections and its fake model stay); the components, tokens, scripts and checks stay.
  * --existing is for an existing project that brought Meridian in (route A in the skill): it sets the name, accent and the
  * rest, never renames package.json unless --package is given, and has no Atlas or product branch to run. It never
@@ -237,7 +237,7 @@ if (has('--product')) {
   if (!['pnpm', 'npm', 'yarn', 'bun'].includes(pm)) throw new Error('--package-manager must be pnpm, npm, yarn or bun');
   const cmd = (name: string) => (pm === 'npm' ? (name === 'install' ? 'npm install' : `npm run ${name}`) : pm === 'bun' ? `bun run ${name}` : `${pm} ${name}`);
   const walkDirs = (dir: string): string[] => fs.existsSync(file(dir)) ? fs.readdirSync(file(dir), { withFileTypes: true }).flatMap((e) => e.isDirectory() ? walkDirs(path.join(dir, e.name)) : [path.join(dir, e.name)]) : [];
-  for (const f of walkDirs('src/components')) if (/\/(README\.md|preview\.tsx)$/.test(f)) fs.rmSync(file(f));
+  for (const f of walkDirs('src/components')) if (/\/preview\.tsx$/.test(f)) fs.rmSync(file(f));
   for (const f of walkDirs('app')) if (/\/README\.md$/.test(f)) fs.rmSync(file(f));
   // Tests of removed specimens go with them; production components, tokens, styles and checks stay.
   for (const f of ['src/system/specimen.tsx', 'tests/specimen-still.test.tsx', 'tests/atlas-product-slice.test.tsx', 'tests/atlas-template-contracts.test.tsx', 'tests/popover-preview.test.tsx', 'tests/banner-preview.test.tsx', 'tests/preview-live-controls.test.tsx', 'src/system/registry.ts', 'CONTRIBUTING.md', 'CHANGELOG.md']) fs.rmSync(file(f), { force: true });
@@ -266,7 +266,7 @@ The dashboard carries an assistant panel. It is off until \`ASSISTANT_PROVIDER\`
   const agents = read('AGENTS.md');
   const cut = agents.indexOf('# Working in Meridian');
   if (cut >= 0) write('AGENTS.md', agents.slice(0, cut));
-  done.push('product only: card specs and previews, page specs, docs, decisions, the changelog and the skill removed; README rewritten for the product, AGENTS.md cut at the template\'s own rules');
+  done.push('product only: card previews, page specs, docs, decisions, the changelog and the skill removed; README rewritten for the product, AGENTS.md cut at the template\'s own rules');
 }
 
 execFileSync('node', ['scripts/tokens.ts'], { cwd: ROOT, stdio: 'ignore' });

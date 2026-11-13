@@ -93,4 +93,13 @@ describe('the payload exclusion', () => {
     expect(shipped.filter((f) => /^tests\/deep-[^/]*\.test\.ts$/.test(f) || f.startsWith('scripts/fixtures/deep/'))).toEqual([]);
     expect(shipped).toContain('scripts/lib/deep.ts');
   });
+
+  it('leaves out the documentation, the Atlas and the card previews, and keeps the files a route reads', () => {
+    for (const f of ['docs/surfaces.md', 'decisions/0001-tokens.md', 'CONTRIBUTING.md', 'app/system/(atlas)/page.tsx', 'src/system/registry.ts', 'src/components/ui/card/preview.tsx']) {
+      expect(PAYLOAD_EXCLUDE.test(f), f).toBe(true);
+    }
+    for (const f of ['CHANGELOG.md', 'README.md', 'src/components/ui/card/README.md', 'src/components/ui/card/index.tsx', 'src/system/fixtures/company.ts', 'journeys/workspaces.ts']) {
+      expect(PAYLOAD_EXCLUDE.test(f), f).toBe(false);
+    }
+  });
 });

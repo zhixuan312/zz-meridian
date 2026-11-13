@@ -99,6 +99,13 @@ function checkIgnored(dir: string, label: string) {
   const ignored = sh('git', ['check-ignore', '--no-index', ...temporary, ...kept], dir).stdout.split('\n').filter(Boolean);
   check(temporary.every((f) => ignored.includes(f)) && !kept.some((f) => ignored.includes(f)), `${label}: git ignores local reports and an update in progress, and keeps the manifest, keep.json, the history and the skills`, ignored.join('\n'));
 }
+/** Every card's README the template holds: the documentation that travels with a card, in the project and recorded as managed. */
+const cardReadmes = (): string[] => (fs.readdirSync(path.join(ROOT, 'src/components'), { recursive: true }) as string[]).filter((f) => /(^|[\\/])README\.md$/.test(f)).map((f) => `src/components/${f.split(path.sep).join('/')}`);
+const checkCardReadmes = (route: string, dir: string, manifestFiles: Record<string, string>) => {
+  const wanted = cardReadmes();
+  const lacking = wanted.filter((f) => !fs.existsSync(path.join(dir, f)) || !(f in manifestFiles));
+  check(wanted.length > 0 && lacking.length === 0, `${route}: every card README is in the project and recorded as managed`, lacking.join('\n'));
+};
 const read = (dir: string, rel: string) => (fs.existsSync(path.join(dir, rel)) ? fs.readFileSync(path.join(dir, rel), 'utf8') : '');
 const write = (dir: string, rel: string, text: string) => { fs.mkdirSync(path.dirname(path.join(dir, rel)), { recursive: true }); fs.writeFileSync(path.join(dir, rel), text); };
 const sections = ['--adopt', '--create', '--update', '--update-all'];
@@ -137,6 +144,7 @@ if (args.includes('--adopt') || !sections.some((s) => args.includes(s))) {
   const adoptOffenders = unmanaged(JSON.parse(adoptManifest));
   check(JSON.parse(adoptManifest).version === VERSION && adoptOffenders.length === 0, 'the adopt manifest is the running version and holds only managed paths', adoptOffenders.join('\n'));
   check(fs.existsSync(path.join(app, '.agents/skills/zz-meridian/SKILL.md')) && fs.existsSync(path.join(app, '.claude/skills/zz-meridian/SKILL.md')), 'the skill is in .agents and .claude');
+  checkCardReadmes('adopt', app, JSON.parse(adoptManifest).files);
   // Before the agent restyles, the only problems are the team's own Tailwind defaults, which Meridian's scales do not
   // render; Meridian's own files are clean. Then the restyle, at its smallest, and the checks pass.
   const first = sh('npm', ['run', 'test:t1'], app);
@@ -872,6 +880,7 @@ if (args.includes('--create')) {
   check(text('.gitignore') === read(ROOT, '.gitignore') && !fs.existsSync(path.join(dir, '.npmignore')), "the new dashboard has the template's .gitignore, and no .npmignore");
   checkIgnored(dir, 'create');
   check(text('next.config.ts').includes("'/api/assistant': ['./docs/brief.md']"), "next.config.ts still traces docs/brief.md for /api/assistant");
+  checkCardReadmes('create', dir, JSON.parse(text('.meridian/manifest.json')).files);
   const createOffenders = unmanaged(JSON.parse(text('.meridian/manifest.json')));
   check(JSON.parse(text('.meridian/manifest.json')).version === VERSION && createOffenders.length === 0, 'the create manifest is the running version and holds only managed paths', createOffenders.join('\n'));
   // A created project's test:t1 and next build by default: its first run is what a person who creates a dashboard does.

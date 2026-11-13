@@ -55,7 +55,7 @@ Accent, status and chart colours never bridge: they carry meaning, and the accen
 
 ## Surfaces
 
-This card is the definition of the surfaces; see `docs/surfaces.md` for how every card behaves on each.
+This card is the definition of the surfaces; every other card's `## Surfaces` says how it behaves on each: Console, Mobile and Embed.
 
 ## Agents
 

@@ -11,11 +11,11 @@ const files = (dir: string): string[] => fs.readdirSync(path.join(ROOT, dir), { 
   .flatMap((e) => (e.isDirectory() ? files(`${dir}/${e.name}`) : [`${dir}/${e.name}`]));
 
 /**
- * The payload as the adopt route takes it: every component but its README and preview, and every fixed file. `FIXED` is
+ * The payload as the adopt route takes it: every component but its preview, and every fixed file. `FIXED` is
  * read rather than written out again here, because a fixed file listed in two places is one that drifts from the rule.
  */
 const PAYLOAD = [
-  ...files('src/components').filter((f) => !/(README\.md|preview\.tsx)$/.test(f)),
+  ...files('src/components').filter((f) => !/preview\.tsx$/.test(f)),
   ...FIXED,
 ];
 

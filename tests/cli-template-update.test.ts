@@ -37,8 +37,8 @@ describe('what a project is given, read from this tree', () => {
     for (const f of [RECORDS, LOADING, CHROME]) expect(managed.has(f), f).toBe(true);
   });
 
-  it('leaves out every preview and card spec, and everything the team owns', () => {
-    const ours = [...managed].filter((f) => /^src\/components\/.*\/(README\.md|preview\.tsx)$/.test(f) || /^(app|docs|src\/data|src\/system)\//.test(f) || f === 'src/app.config.ts' || (f.startsWith('src/views/') && f !== CHROME));
+  it('leaves out every preview, and everything the team owns', () => {
+    const ours = [...managed].filter((f) => /^src\/components\/.*\/preview\.tsx$/.test(f) || /^(app|docs|src\/data|src\/system)\//.test(f) || f === 'src/app.config.ts' || (f.startsWith('src/views/') && f !== CHROME));
     expect(ours).toEqual([]);
   });
 });
@@ -72,8 +72,9 @@ describe('an update that brings the template, the card and the new chrome', () =
     expect(read(root, RECORDS)).toBe('records 2');
     expect(read(root, CHROME)).toBe('chrome 2');
     expect(read(root, LOADING)).toBe('loading 2');
+    expect(read(root, 'src/components/templates/records/README.md')).toBe('spec 2');
     for (const [p, content] of Object.entries(TEAM)) expect(read(root, p), p).toBe(content);
-    for (const p of ['src/views/customers.tsx', 'app/(dashboard)/customers/loading.tsx', 'src/components/templates/records/README.md']) expect(fs.existsSync(path.join(root, p)), p).toBe(false);
+    for (const p of ['src/views/customers.tsx', 'app/(dashboard)/customers/loading.tsx']) expect(fs.existsSync(path.join(root, p)), p).toBe(false);
 
     const journal = parseJournal(read(path.join(root, '.meridian/update/0.15.0'), 'state.json'));
     const by = Object.fromEntries(journal.operations.map((o) => [o.path, `${o.disposition}/${o.action}`]));

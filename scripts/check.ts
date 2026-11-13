@@ -90,15 +90,15 @@ const LOCAL = /^(i|w|m-len|bar-(h|at)|cols(-(xl|lg|md|sm))?|readout-(cursor|widt
 
 // ── Cards ────────────────────────────────────────────────────────────────────────────────────────────
 const CARD_SECTIONS = ['## Surfaces', '## Agents', '## Accessibility'];
-for (const c of cards()) {
+const contractCards = fs.existsSync(path.join(ROOT, 'src/system/registry.ts')) ? cards() : []; // Meridian's own contract: judged where the Atlas registry is; a project keeps the READMEs and no preview.
+for (const c of contractCards) {
   if (!c.hasPreview) problems.push(`${c.dir}: no preview.tsx`);
   const md = read(`${c.dir}/README.md`);
   if (!/^# .+\n\n[^#\n].+/.test(md)) problems.push(`${c.dir}/README.md: must open with "# Name" and a one-sentence summary`);
   if (!/^Status: (draft|beta|stable)$/m.test(md)) problems.push(`${c.dir}/README.md: no "Status: draft|beta|stable" line`);
   for (const s of CARD_SECTIONS) if (!md.includes(s)) problems.push(`${c.dir}/README.md: missing ${s}`);
 }
-
-judged.push(['the card contract', cards().length]);
+if (contractCards.length) judged.push(['the card contract', contractCards.length]); else console.log('the card contract: not applicable here (it is judged where src/system/registry.ts is)');
 
 // ── Pages ────────────────────────────────────────────────────────────────────────────────────────────
 const PAGE_SPECS = walk(APP_DIR, /^README\.md$/);

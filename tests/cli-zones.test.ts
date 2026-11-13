@@ -7,7 +7,7 @@ const A = `sha256-${'a'.repeat(64)}` as const;
 const B = `sha256-${'b'.repeat(64)}` as const;
 const C = `sha256-${'c'.repeat(64)}` as const;
 const payload = [
-  'src/components/ui/button/index.tsx', 'src/components/ui/button/README.md', 'src/lib/cn.ts', 'src/lib/logo.ts', 'src/lib/sample-only.ts',
+  'src/components/ui/button/index.tsx', 'src/components/ui/button/README.md', 'src/components/ui/button/preview.tsx', 'src/lib/cn.ts', 'src/lib/logo.ts', 'src/lib/sample-only.ts',
   'scripts/check.ts', 'scripts/verify.config.ts', 'scripts/check.local.ts', 'src/views/console-chrome.tsx', 'src/views/members.tsx',
   'src/data/collections.ts', 'src/app.config.ts', 'app/(dashboard)/page.tsx', 'docs/brief.md', 'README.md', 'tokens/zz-meridian.resolver.json',
   'skills/zz-meridian/SKILL.md',
@@ -18,8 +18,8 @@ describe('the canonical managed set', () => {
   for (const route of ['adopt', 'create'] as const) {
     it(`is one rule for ${route}, with the generated brand outputs`, () => {
       const s = managedPaths(payload, route, generated);
-      for (const p of ['src/components/ui/button/index.tsx', 'src/lib/cn.ts', 'src/lib/logo.ts', 'scripts/check.ts', 'src/views/console-chrome.tsx', 'tokens/zz-meridian.resolver.json', 'tokens/accent.brand.tokens.json', 'src/styles/theme.css', 'scripts/package.json', '.agents/skills/zz-meridian/SKILL.md', '.claude/skills/zz-meridian/SKILL.md']) expect(s.has(p), p).toBe(true);
-      for (const p of ['src/components/ui/button/README.md', 'src/lib/sample-only.ts', 'scripts/verify.config.ts', 'scripts/check.local.ts', 'src/views/members.tsx', 'src/data/collections.ts', 'src/app.config.ts', 'app/(dashboard)/page.tsx', 'app/globals.css', 'docs/brief.md', 'README.md', 'AGENTS.md', 'package.json', '.meridian/manifest.json', 'skills/zz-meridian/SKILL.md']) expect(s.has(p), p).toBe(false);
+      for (const p of ['src/components/ui/button/index.tsx', 'src/components/ui/button/README.md', 'src/lib/cn.ts', 'src/lib/logo.ts', 'scripts/check.ts', 'src/views/console-chrome.tsx', 'tokens/zz-meridian.resolver.json', 'tokens/accent.brand.tokens.json', 'src/styles/theme.css', 'scripts/package.json', '.agents/skills/zz-meridian/SKILL.md', '.claude/skills/zz-meridian/SKILL.md']) expect(s.has(p), p).toBe(true);
+      for (const p of ['src/components/ui/button/preview.tsx', 'src/lib/sample-only.ts', 'scripts/verify.config.ts', 'scripts/check.local.ts', 'src/views/members.tsx', 'src/data/collections.ts', 'src/app.config.ts', 'app/(dashboard)/page.tsx', 'app/globals.css', 'docs/brief.md', 'README.md', 'AGENTS.md', 'package.json', '.meridian/manifest.json', 'skills/zz-meridian/SKILL.md']) expect(s.has(p), p).toBe(false);
     });
   }
   it('leaves a team file added under a managed folder to the team', () => {

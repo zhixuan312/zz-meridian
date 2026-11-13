@@ -18,8 +18,12 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 - **`node scripts/test-run.ts stage <static|sweep <name>|deep --since <ref> [--part i/n]|tier2>` runs one part of `test:release`,** so CI can run each once in its own job. `stage deep` runs only the deep tests a change reaches: every one when `scripts/`, `journeys/` or a deep test changed, none when nothing reaches them.
 - **The Tier 2 history can travel with the releases.** `nextHistory` in `scripts/lib/tier2.ts` adds a release's record to the last five.
 
+- **The package no longer carries Meridian's docs, decisions, contributor guide, card previews or Design Atlas;** no route read them. The changelog still ships whole: an update's MERGE.md shows every release since the project's.
+- **Every card's README ships next to its component,** managed, in created and adopted projects, so an agent reads the documentation of the version it has. A project's `check.ts` no longer judges the card contract, which is Meridian's own.
+
 ### Breaking
 
+- **`adopt` exits 1 when the type check fails after install.** The files stay adopted; fix the type errors, then run the project's gate (`npx tsc --noEmit` re-checks).
 - **A created project carries no Meridian tests.** Only `tests/setup.ts` is Meridian's; `tests/examples/` holds two tests that are the team's to rewrite. The next `update` deletes each Meridian test a project has not edited and stages each one it has.
 - **The recurring `sample-with-its-tests` migration is removed.** Nothing pins the sample now, so no update reports sample files that differ from the release.
 

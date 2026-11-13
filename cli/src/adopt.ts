@@ -43,6 +43,11 @@ export function adoptDependencies(pkg: Template, tpl: Template, field: 'dependen
   return notes;
 }
 
+/** adopt's exit code from `adoptionTypes`: only a failed type check says no; a skipped one ('not run …') or a pass says yes. */
+export function adoptExit(types: string): 0 | 1 {
+  return types.startsWith('fails:') ? 1 : 0;
+}
+
 /** Adoption is installed even when a team's existing routes need type repairs; report both diagnostic stages. */
 function adoptionTypes(root: string): string {
   const route = runTool(root, 'next/dist/bin/next', ['typegen']);
@@ -458,7 +463,9 @@ standard in references/standard.md. The
 template to read from is https://github.com/zhixuan312/zz-meridian/tree/v${VERSION}. Import Meridian's components as
 '@meridian/components/…'. Before the first browser diagnostic, read step 5: it presses every control, Delete included —
 set fakeApi or noLiveApi in scripts/verify.config.ts first, and point a database URL at a local backend.`);
-  return 0;
+  const exit = adoptExit(typed);
+  if (exit) console.error('zz-meridian adopt: the files are adopted, but the type check failed (above). The type errors are the project\'s to fix before running its gate; re-check with npx tsc --noEmit.');
+  return exit;
 }
 
 function fail(msg: string): number {
