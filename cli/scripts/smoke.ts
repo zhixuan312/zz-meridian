@@ -44,10 +44,13 @@ import { MANAGED_PATH, NEVER_MANAGED } from '../src/ownership.ts';
 import { causeLines, writeNestedRun } from './nested-run.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '../..');
-const VERSION: string = JSON.parse(fs.readFileSync(path.join(ROOT, 'cli/package.json'), 'utf8')).version;
 const HEADINGS = ['## Product', '## Users', '## Data', '## Decisions', '## Glossary'];
 const args = process.argv.slice(2);
 const opt = (k: string) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : undefined; };
+// The version under test is the tarball's own when one is named (it may be labelled as the next release), else the repository's.
+const VERSION: string = JSON.parse(opt('--tarball')
+  ? execFileSync('tar', ['-xzOf', path.resolve(opt('--tarball')!), 'package/package.json'], { encoding: 'utf8' })
+  : fs.readFileSync(path.join(ROOT, 'cli/package.json'), 'utf8')).version;
 // Without --tarball, this version's pack: a tarball left from an earlier pack would be smoked as this one.
 const tarball = path.resolve(opt('--tarball') ?? path.join(ROOT, 'cli', `zz-meridian-${VERSION}.tgz`));
 if (!fs.existsSync(tarball)) throw new Error(`no tarball at ${tarball}: run npm pack in cli/ first, or pass --tarball`);
@@ -199,7 +202,7 @@ const said = (r: Ran) => [r.out, r.err, r.log].join('\n');
  * The migrations `cli/src/migrations.ts` declares since 0.5.0: changes in the team's own files, resolved by editing them.
  * `verify-modes` is not here: its edit is a flag in a script, and no origin passes one.
  */
-const RELEASE_IDS = ['shell-assistant-promise', 'assistant-available-promise', 'clock-now-required', 'cache-components-config', 'connection-boundaries', 'authorized-read', 'scoped-invalidation', 'live-provider', 'authorized-endpoints', 'share-view-context', 'agent-reads-section', 'assistant-view-tools', 'nav-needs', 'agent-reads-own-group', 'refusal-declared', 'managed-exports-removed', 'view-tool-page-explore', 'agent-does-here-section', 'sample-pages-renamed', 'marker-measured-on-observe', 'view-page-matched-as-next', 'journey-moved', 'today-in-timezone', 'no-data-mark', 'table-grid', 'four-layers', 'direct-query-escape', 'app-description', 'live-stream-shutdown', 'missing-routes', 'use-size-callback-ref', 'self-hosted-fonts', 'nav-item-fields', 'workspace-homes-moved', 'sample-with-its-tests', 'env-reset-before-each', 'computed-series-slot', 'proposal-approve-required', 'open-command-moved'];
+const RELEASE_IDS = ['shell-assistant-promise', 'assistant-available-promise', 'clock-now-required', 'cache-components-config', 'connection-boundaries', 'authorized-read', 'scoped-invalidation', 'live-provider', 'authorized-endpoints', 'share-view-context', 'agent-reads-section', 'assistant-view-tools', 'nav-needs', 'agent-reads-own-group', 'refusal-declared', 'managed-exports-removed', 'view-tool-page-explore', 'agent-does-here-section', 'sample-pages-renamed', 'marker-measured-on-observe', 'view-page-matched-as-next', 'journey-moved', 'today-in-timezone', 'no-data-mark', 'table-grid', 'four-layers', 'direct-query-escape', 'app-description', 'live-stream-shutdown', 'missing-routes', 'use-size-callback-ref', 'self-hosted-fonts', 'nav-item-fields', 'workspace-homes-moved', 'env-reset-before-each', 'computed-series-slot', 'proposal-approve-required', 'open-command-moved'];
 
 const filesUnder = (dir: string, rel = ''): string[] => {
   if (!fs.existsSync(path.join(dir, rel))) return [];
@@ -279,9 +282,8 @@ function bringReleaseOver(proj: string, route: string, reported: string[] = [], 
   const created = createdRelease();
   // The template's console, its data seam, the logic its views read (since 0.28.0 a view imports `@/logic/…`, so a view
   // that came over without the logic beside it named an export its project's logic did not have yet) and the assistant's
-  // route-side code (which takes the guard), and the library modules the sample's pages import (`src/lib/totals.ts`, which
-  // `sample-with-its-tests` names; the managed ones come over as the update wrote them), and the demo check, `proxy.ts`. A test is replaced only where the
-  // project already has it.
+  // route-side code (which takes the guard), and the library modules the sample's pages import (the managed ones come over as the
+  // update wrote them), and the demo check, `proxy.ts`. A test is replaced only where the project already has it.
   const owned = (f: string) => (f.startsWith('app/') && !f.startsWith('app/system/')) || f.startsWith('src/views/') || f.startsWith('src/data/') || f.startsWith('src/logic/') || f.startsWith('src/system/fixtures/') || f === 'src/system/sample-cells.tsx' || (f.startsWith('src/lib/') && f !== 'src/lib/assistant/prompt.ts') || f === 'proxy.ts';
   const release = new Set(filesUnder(created).filter(owned));
   for (const f of filesUnder(proj).filter(owned)) if (!release.has(f)) fs.rmSync(path.join(proj, f));
@@ -300,13 +302,11 @@ function bringReleaseOver(proj: string, route: string, reported: string[] = [], 
         .replace(/(['"])@\/data\/alerts\1/g, '$1@/logic/alerts$1'));
     }
   }
-  // A created project wrote none of its tests, so a test the release no longer has is one it removed or renamed (a test of
-  // a page it renamed reads that page's old files) and goes.
+  // A created release holds `tests/setup.ts` (managed, which the update wrote) and the team-owned examples. An example the
+  // project has comes over from the release; no test is deleted here, the update having removed the managed ones.
   for (const f of filesUnder(path.join(proj, 'tests'))) {
     const rel = `tests/${f}`;
-    if (rel === 'tests/setup.ts') continue;
-    if (fs.existsSync(path.join(created, rel))) write(proj, rel, read(created, rel));
-    else fs.rmSync(path.join(proj, rel));
+    if (rel !== 'tests/setup.ts' && fs.existsSync(path.join(created, rel))) write(proj, rel, read(created, rel));
   }
   // The configuration names the pages, their features and the facts their titles read, so it comes over with them, the
   // project's own `app` (its name, workspace, accent, zone, currency and user) kept; the verify config names their routes.
@@ -585,6 +585,7 @@ function originUpgrade(version: string, route: 'adopt' | 'create') {
   }
   const owned = Object.fromEntries(teamOwned.map((f) => [f, sha(path.join(proj, f))]));
   const files = Object.keys(finalManifest(proj).files);
+  const originTests = filesUnder(proj, 'tests');
   const historical = ['src/app.config.ts', 'app/page.tsx'].filter((p) => p in finalManifest(proj).files);
 
   const before = projectState(proj);
@@ -594,6 +595,12 @@ function originUpgrade(version: string, route: 'adopt' | 'create') {
   const up = zz(tarball, proj, ['update'], `${label} update`);
   const merge = read(proj, `.meridian/update/${VERSION}/MERGE.md`);
   check(!/ is declared as "[^"]*", a specification Meridian cannot compare/.test(merge), `${label}: the update reads every dependency range the project holds`, merge);
+  // Taken where the updater has applied and nothing of the fixture has touched tests/: only `classify`'s deletions can have removed these.
+  if (route === 'create' && (up.status === 0 || up.status === 2)) {
+    const left = new Set(filesUnder(proj, 'tests'));
+    const stale = originTests.filter((f) => f !== 'tests/setup.ts' && left.has(f));
+    check(left.has('tests/setup.ts') && stale.length === 0, `${label}: the update deletes the origin's untouched tests and keeps tests/setup.ts`, stale.join('\n'));
+  }
   if (up.status === 2) {
     check(/^outcome: migration-required/m.test(up.out) && /^Next: .*update --finalize/m.test(up.out), `${label}: the update applies and stops on what it lists, with the pinned next command`, up.out + up.err);
     resolveAll(proj, VERSION, 'Kept ours; the project works as it is.', true);
@@ -615,6 +622,10 @@ function originUpgrade(version: string, route: 'adopt' | 'create') {
   }
   const manifest = finalManifest(proj);
   check(manifest.version === VERSION && manifest.route === route && unmanaged(manifest).length === 0, `${label}: the manifest is ${VERSION}, route ${route}, and holds only managed paths`, unmanaged(manifest).join('\n'));
+  if (route === 'create') {
+    const managedTests = Object.keys(manifest.files).filter((f) => f.startsWith('tests/'));
+    check(managedTests.length === 1 && managedTests[0] === 'tests/setup.ts', `${label}: the manifest records tests/setup.ts and no other path under tests/`, managedTests.join('\n'));
+  }
   if (route === 'create' && historical.length > 0) {
     check(historical.every((p) => fs.existsSync(path.join(proj, p)) && !(p in manifest.files)) && files.length > Object.keys(manifest.files).length, `${label}: its historical page and config entries stay on disk and leave the manifest`, historical.join('\n'));
   }
@@ -847,7 +858,11 @@ if (args.includes('--create')) {
   check(create.status === 0, 'create exits 0', create.stdout + create.stderr);
   const config = fs.readFileSync(path.join(dir, 'src/app.config.ts'), 'utf8');
   check(config.includes("timezone: 'Europe/London'") && config.includes("currency: 'GBP'") && config.includes("accent: 'brand' as const") && config.includes("user: { name: 'Ada Park', role: 'Admin' }"), 'create wrote the timezone, currency, accent and user it was asked for');
-  check(!fs.existsSync(path.join(dir, 'app/system')) && !fs.existsSync(path.join(dir, 'skills')) && !fs.existsSync(path.join(dir, 'tests/atlas-unknown-entry.test.ts')), 'create leaves out the Atlas, the shipped test of its pages, and the skill source');
+  check(!fs.existsSync(path.join(dir, 'app/system')) && !fs.existsSync(path.join(dir, 'skills')), 'create leaves out the Atlas and the skill source');
+  const createdTests = filesUnder(dir, 'tests').filter((f) => f !== 'tests/setup.ts' && !f.startsWith('tests/examples/'));
+  check(fs.existsSync(path.join(dir, 'tests/setup.ts')) && createdTests.length === 0, 'create ships tests/setup.ts and the files under tests/examples/ and no other test', createdTests.join('\n'));
+  const createdManifestTests = Object.keys(JSON.parse(read(dir, '.meridian/manifest.json')).files).filter((f) => f.startsWith('tests/'));
+  check(createdManifestTests.length === 1 && createdManifestTests[0] === 'tests/setup.ts', 'the create manifest records tests/setup.ts and no other path under tests/', createdManifestTests.join('\n'));
   const pm = fs.existsSync(path.join(dir, 'pnpm-lock.yaml')) ? 'pnpm' : 'npm';
   const text = (f: string) => read(dir, f);
   check(text('AGENTS.md').includes(managedBlock(VERSION, pm)) && text('AGENTS.md').includes('# Built on ZZ Meridian'), `AGENTS.md holds the managed block, written for ${pm}`);

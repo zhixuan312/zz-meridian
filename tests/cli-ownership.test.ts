@@ -48,13 +48,21 @@ describe('managedPaths', () => {
     for (const p of ['src/app.config.ts', 'app/(dashboard)/page.tsx', 'docs/brief.md', 'src/views/members.tsx', 'scripts/verify.config.ts']) expect(MANAGED_PATH.test(p) && !NEVER_MANAGED(p), p).toBe(false);
   });
 
-  it('takes tests/setup.ts and no other test, on either route', () => {
-    for (const route of ['adopt', 'create'] as const) {
-      expect(managedPaths(payload, route).has('tests/setup.ts'), route).toBe(true);
-      expect(managedPaths(payload, route).has('tests/format.test.ts'), route).toBe(false);
-      expect(managedPaths(payload, route).has('tests/key-value.test.tsx'), route).toBe(false);
-    }
-    expect([...managedPaths(payload, 'create')].sort()).toEqual([...managedPaths(payload, 'adopt')].sort());
+  it('takes every top-level test the payload holds on the create route, and only tests/setup.ts on adopt', () => {
+    const held = [...payload, 'tests/format.test.ts', 'tests/setup.ts'];
+    expect(managedPaths(held, 'create').has('tests/format.test.ts')).toBe(true);
+    expect(managedPaths(held, 'create').has('tests/setup.ts')).toBe(true);
+    expect(managedPaths(held, 'adopt').has('tests/format.test.ts')).toBe(false);
+    expect(managedPaths(held, 'adopt').has('tests/setup.ts')).toBe(true);
+    // A test the project wrote itself is not in the payload, so it is never managed on either route.
+    expect(managedPaths(held, 'create').has('tests/our-own.test.ts')).toBe(false);
+  });
+
+  it('manages the same tests on both routes for a payload that ships only tests/setup.ts', () => {
+    const lean = ['tests/setup.ts', 'tests/examples/format.test.ts', 'tests/examples/key-value.test.tsx'];
+    const tests = (route: 'adopt' | 'create') => [...managedPaths(lean, route)].filter((p) => p.startsWith('tests/')).sort();
+    expect(tests('create')).toEqual(['tests/setup.ts']);
+    expect(tests('adopt')).toEqual(['tests/setup.ts']);
   });
 
   for (const route of ['adopt', 'create'] as const) {

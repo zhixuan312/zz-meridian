@@ -7,6 +7,8 @@ Every release of ZZ Meridian, newest first. Versions follow semver: a removed or
 ### Changed
 
 - **`node cli/scripts/consumer.ts` runs the consumer path from the working tree.** It builds the payload, compiles the CLI, packs it and runs the consumer smoke against that tarball; `scripts/test-run.ts` packs through it, so there is one packing path.
+- **An update removes the tests an older release shipped.** On the create route a top-level test a release ships is Meridian's by that release's own rule, so updating from such a release deletes each one the project has not edited and stages each one it has. This release ships only `tests/setup.ts` at that level.
+- **The consumer smoke runs from the working tree on a published version.** `consumer.ts` packs the CLI labelled as the next patch, as the weekly job does, and the smoke reads the version from the tarball it is given.
 - **A created project's smoke suite is its Tier 1 run and a build.** The release's consumer job runs `test:t1` then `next build` in the new dashboard instead of a second full `test:release`; the weekly job still runs the created project's whole `test:release` (`--created-release`).
 
 ### Breaking

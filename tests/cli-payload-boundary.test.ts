@@ -12,12 +12,15 @@ describe('what a project receives from tests/', () => {
     }
   });
 
-  it('manages tests/setup.ts and no other test in a created project', () => {
-    const payload = ['tests/setup.ts', 'tests/format.test.ts', 'tests/examples/example-data.test.ts', 'src/lib/cn.ts', 'tokens/zz-meridian.resolver.json'];
-    const created = managedPaths(payload, 'create');
-    expect(created.has('tests/setup.ts')).toBe(true);
-    expect(created.has('tests/format.test.ts')).toBe(false);
-    expect(created.has('tests/examples/example-data.test.ts')).toBe(false);
-    expect([...created].sort()).toEqual([...managedPaths(payload, 'adopt')].sort());
+  it('manages tests/setup.ts and no other test in a project this release creates', () => {
+    const shipped = ['tests/setup.ts', 'tests/examples/example-data.test.ts', 'tests/examples/example-page.test.tsx', 'src/lib/cn.ts', 'tokens/zz-meridian.resolver.json'];
+    const created = managedPaths(shipped, 'create');
+    expect([...created].filter((p) => p.startsWith('tests/'))).toEqual(['tests/setup.ts']);
+  });
+
+  it("counts an older release's shipped tests as Meridian's on the create route, so an update can remove them", () => {
+    const older = ['tests/setup.ts', 'tests/format.test.ts', 'src/lib/cn.ts'];
+    expect(managedPaths(older, 'create').has('tests/format.test.ts')).toBe(true);
+    expect(managedPaths(older, 'adopt').has('tests/format.test.ts')).toBe(false);
   });
 });

@@ -29,22 +29,56 @@ function step(label: string, cmd: string, args: string[], cwd = ROOT): void {
   }
 }
 
-fs.rmSync(PACK, { recursive: true, force: true });
-fs.mkdirSync(PACK, { recursive: true });
-step('smoke: the template snapshot', process.execPath, ['cli/scripts/build-payload.ts', '--worktree']);
-step('smoke: the CLI compiles', bin('tsc'), ['-p', 'cli/tsconfig.json']);
-const packed = spawnSync('npm', ['pack', '--ignore-scripts', '--pack-destination', PACK], { cwd: path.join(ROOT, 'cli'), encoding: 'utf8' });
-const tarball = (packed.stdout ?? '').trim().split('\n').filter(Boolean).at(-1);
-if (packed.status !== 0 || !tarball) {
-  process.stderr.write(packed.stderr ?? '');
-  console.error('consumer: the CLI pack failed, so no smoke ran');
-  process.exit(1);
+/** The next patch of an x.y.z version: the one a release would publish, so not on the registry yet. */
+export function nextPatch(version: string): string {
+  const [a, b, c] = version.split('.').map(Number);
+  return `${a}.${b}.${c + 1}`;
 }
-console.log(`ok   smoke: the CLI packs (${tarball})`);
 
-const smoke = spawnSync(process.execPath, ['cli/scripts/smoke.ts', '--tarball', path.join(PACK, tarball), ...process.argv.slice(2)], {
-  cwd: ROOT,
-  stdio: 'inherit',
-  env: { ...process.env, CI: 'true' },
-});
-process.exit(smoke.status ?? 1);
+/**
+ * Packs the compiled CLI labelled as the next patch, as weekly.yml does: master usually carries a version already on
+ * npm, and `update` refuses a running package whose bytes differ from the published one. `cli/package.json` is written
+ * just before the pack and its original bytes are restored after, also on failure or an interrupt.
+ */
+function packCli(): { tarball: string | null; error: string } {
+  const file = path.join(ROOT, 'cli', 'package.json');
+  const original = fs.readFileSync(file);
+  const restore = () => fs.writeFileSync(file, original);
+  const onSignal = (signal: NodeJS.Signals) => { restore(); process.kill(process.pid, signal); };
+  process.once('SIGINT', onSignal);
+  process.once('SIGTERM', onSignal);
+  try {
+    const manifest = JSON.parse(original.toString('utf8'));
+    manifest.version = nextPatch(manifest.version);
+    fs.writeFileSync(file, `${JSON.stringify(manifest, null, 2)}\n`);
+    console.log(`packed as ${manifest.version}`);
+    const packed = spawnSync('npm', ['pack', '--ignore-scripts', '--pack-destination', PACK], { cwd: path.join(ROOT, 'cli'), encoding: 'utf8' });
+    const tarball = (packed.stdout ?? '').trim().split('\n').filter(Boolean).at(-1) ?? null;
+    return { tarball: packed.status === 0 ? tarball : null, error: packed.stderr ?? '' };
+  } finally {
+    process.off('SIGINT', onSignal);
+    process.off('SIGTERM', onSignal);
+    restore();
+  }
+}
+
+if (import.meta.main) {
+  fs.rmSync(PACK, { recursive: true, force: true });
+  fs.mkdirSync(PACK, { recursive: true });
+  step('smoke: the template snapshot', process.execPath, ['cli/scripts/build-payload.ts', '--worktree']);
+  step('smoke: the CLI compiles', bin('tsc'), ['-p', 'cli/tsconfig.json']);
+  const { tarball, error } = packCli();
+  if (!tarball) {
+    process.stderr.write(error);
+    console.error('consumer: the CLI pack failed, so no smoke ran');
+    process.exit(1);
+  }
+  console.log(`ok   smoke: the CLI packs (${tarball})`);
+
+  const smoke = spawnSync(process.execPath, ['cli/scripts/smoke.ts', '--tarball', path.join(PACK, tarball), ...process.argv.slice(2)], {
+    cwd: ROOT,
+    stdio: 'inherit',
+    env: { ...process.env, CI: 'true' },
+  });
+  process.exit(smoke.status ?? 1);
+}

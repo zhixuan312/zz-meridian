@@ -370,6 +370,48 @@ describe('a managed file on the create route', () => {
   }, 60_000);
 });
 
+describe('a test an earlier release managed', () => {
+  // 0.39.2 managed every shipped test and recorded it; the running release manages tests/setup.ts alone.
+  const T = { 'tests/setup.ts': 'setup1', 'tests/old.test.ts': 'old1', 'tests/edited.test.ts': 'edited1', 'tests/gone.test.ts': 'gone1' };
+  const created = (disk: Record<string, string>) => {
+    const root = mk();
+    put(root, {
+      ...BASE, ...T, ...disk,
+      'package.json': '{\n  "name": "team-app"\n}\n', 'tsconfig.json': '{ "compilerOptions": { "incremental": true } }\n', '.gitignore': 'node_modules\n.env.local\n',
+      '.meridian/manifest.json': JSON.stringify({ version: '0.3.0', route: 'create', brand: { name: 'Acme' }, files: Object.fromEntries(Object.entries({ ...BASE, ...T }).map(([p, c]) => [p, sha256(c)])) }, null, 2) + '\n',
+    });
+    fs.rmSync(path.join(root, 'tests/gone.test.ts'));
+    git(root, 'init', '-q');
+    git(root, 'add', '-A');
+    git(root, 'commit', '-qm', 'created with 0.3.0');
+    return root;
+  };
+  const base = () => release('0.3.0', { ...BASE, ...T });
+  const target = () => release('0.5.0', { ...TARGET, 'tests/setup.ts': 'setup2' });
+
+  it('is deleted when untouched, staged when edited and left when deleted; the new manifest records none', () => {
+    const root = created({ 'tests/edited.test.ts': 'edited-ours' });
+    expect(start(ctx(root, { base: base(), target: target() }).c, opts)).toBe(2);
+    const ops = Object.fromEntries(state(root).operations.map((o) => [o.path, `${o.disposition}/${o.action}`]));
+    expect(ops['tests/old.test.ts']).toBe('removed/delete');
+    expect(ops['tests/edited.test.ts']).toBe('removed/stage');
+    expect(ops['tests/gone.test.ts']).toBe('removed/leave');
+    expect(ops['tests/setup.ts']).toBe('untouched/write');
+    expect(has(root, 'tests/old.test.ts')).toBe(false);
+    expect(read(root, 'tests/edited.test.ts')).toBe('edited-ours');
+    expect(read(root, 'tests/setup.ts')).toBe('setup2');
+    expect(Object.keys(state(root).targetManifest.files).filter((p) => p.startsWith('tests/'))).toEqual(['tests/setup.ts']);
+  }, 60_000);
+
+  it('leaves a path the manifest records and the target still manages as before', () => {
+    const root = created({});
+    expect(start(ctx(root, { base: base(), target: target() }).c, opts)).toBe(0);
+    expect(read(root, ui('a'))).toBe('a2');
+    expect(has(root, ui('c'))).toBe(false);
+    expect(Object.keys(manifest(root).files).filter((p) => p.startsWith('tests/'))).toEqual(['tests/setup.ts']);
+  }, 60_000);
+});
+
 describe('resume', () => {
   it('takes over a stale lock after reading the journal', () => {
     const root = project();
