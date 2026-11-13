@@ -151,4 +151,32 @@ describe('scripts/brand.ts', () => {
       fs.writeFileSync(path.join(dir, 'src/app.config.ts'), before);
     }
   });
+  it('leaves Meridian\'s own test engine out of the product it brands', () => {
+    // --product turns the template into a dashboard: the card contract suite and the previews it reads go, and with them
+    // the accessibility engine only that suite uses. It runs on a copy of its own — one holding only what it reads,
+    // because it deletes what it touches and the cases above brand the shared copy in place.
+    const product = fs.mkdtempSync(path.join(os.tmpdir(), 'zz-product-'));
+    try {
+      for (const d of ['scripts', 'tokens']) fs.cpSync(path.join(ROOT, d), path.join(product, d), { recursive: true });
+      for (const d of ['src/lib', 'src/styles', 'tests']) fs.mkdirSync(path.join(product, d), { recursive: true });
+      for (const f of ['src/app.config.ts', 'src/lib/color.ts', 'package.json', 'pnpm-lock.yaml', 'AGENTS.md', 'next.config.ts']) {
+        fs.copyFileSync(path.join(ROOT, f), path.join(product, f));
+      }
+      fs.writeFileSync(path.join(product, 'tests/cards-contract.test.tsx'), "// Meridian's own card contract suite.\n");
+      fs.symlinkSync(path.join(ROOT, 'node_modules'), path.join(product, 'node_modules'));
+      execFileSync(process.execPath, ['scripts/brand.ts', '--product'], { cwd: product, encoding: 'utf8', stdio: 'pipe' });
+      const pkg = JSON.parse(fs.readFileSync(path.join(product, 'package.json'), 'utf8'));
+      expect(pkg.devDependencies['axe-core']).toBeUndefined();
+      // Only the engine goes: the toolchain the project keeps its own tests with stays.
+      expect(pkg.devDependencies.vitest).toBeDefined();
+      expect(pkg.scripts.registry).toBeUndefined();
+      // The suite that reads the deleted previews and registry goes with them, rather than failing in the product.
+      expect(fs.existsSync(path.join(product, 'tests/cards-contract.test.tsx'))).toBe(false);
+      // A product installs where CI freezes the lockfile, which refuses a manifest its lockfile does not match: the
+      // removed devDependency has to leave the lockfile too, or `create` cannot install the dashboard it just made.
+      expect(() => execFileSync('pnpm', ['install', '--frozen-lockfile', '--lockfile-only', '--offline'], { cwd: product, env: { ...process.env, CI: 'true' }, stdio: 'pipe' })).not.toThrow();
+    } finally {
+      fs.rmSync(product, { recursive: true, force: true });
+    }
+  }, 120_000);
 });

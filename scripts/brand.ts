@@ -241,10 +241,23 @@ if (has('--product')) {
   for (const f of walkDirs('src/components')) if (/\/preview\.tsx$/.test(f)) fs.rmSync(file(f));
   for (const f of walkDirs('app')) if (/\/README\.md$/.test(f)) fs.rmSync(file(f));
   // Tests of removed specimens go with them; production components, tokens, styles and checks stay.
-  for (const f of ['src/system/specimen.tsx', 'tests/specimen-still.test.tsx', 'tests/atlas-product-slice.test.tsx', 'tests/atlas-template-contracts.test.tsx', 'tests/popover-preview.test.tsx', 'tests/banner-preview.test.tsx', 'tests/preview-live-controls.test.tsx', 'src/system/registry.ts', 'CONTRIBUTING.md', 'CHANGELOG.md']) fs.rmSync(file(f), { force: true });
+  for (const f of ['src/system/specimen.tsx', 'tests/cards-contract.test.tsx', 'tests/specimen-still.test.tsx', 'tests/atlas-product-slice.test.tsx', 'tests/atlas-template-contracts.test.tsx', 'tests/popover-preview.test.tsx', 'tests/banner-preview.test.tsx', 'tests/preview-live-controls.test.tsx', 'src/system/registry.ts', 'CONTRIBUTING.md', 'CHANGELOG.md']) fs.rmSync(file(f), { force: true });
   for (const d of ['docs', 'decisions', 'skills']) fs.rmSync(file(d), { recursive: true, force: true });
   const p = json('package.json');
   delete p.scripts?.registry;
+  // The accessibility engine is Meridian's own suite: the contract suite it serves went with the previews above, and a
+  // product never gains it, because `adopt` raises only the names in `TOOLCHAIN`. The lockfile records the root's
+  // devDependencies too, and a project whose package.json has one fewer than its lockfile fails `pnpm install` wherever
+  // CI freezes the lockfile — which is how `create` runs it. The entry is its name, its specifier and its version.
+  if (p.devDependencies?.['axe-core'] !== undefined) {
+    delete p.devDependencies['axe-core'];
+    if (fs.existsSync(file('pnpm-lock.yaml'))) {
+      const before = read('pnpm-lock.yaml');
+      const after = before.replace(/^ {6}axe-core:\n {8}specifier: [^\n]*\n {8}version: [^\n]*\n/m, '');
+      if (after === before) throw new Error('pnpm-lock.yaml records no axe-core devDependency to match package.json: reconcile them and run again');
+      write('pnpm-lock.yaml', after);
+    }
+  }
   write('package.json', JSON.stringify(p, null, 2) + '\n');
   const product = read('src/app.config.ts').match(/name: '([^']*)'/)?.[1] ?? 'Dashboard';
   write('README.md', `# ${product}\n\nA dashboard built on ZZ Meridian (Next.js, React, Tailwind v4, DTCG tokens).\n\n## Run it\n\n\`\`\`sh\n${cmd('install')}\n${cmd('dev')}          # http://localhost:3000\n${cmd('test:t1')}      # the tests affected by the change since the last green run\n${cmd('test:t2')}      # the affected Tier 2 tests too\n${cmd('test:release')} # every Tier 1 and Tier 2 test, with lint and the type check\n\`\`\`\n\n## Where things are\n\n| Path | What |\n|---|---|\n| \`src/app.config.ts\` | Name, workspace, accent, timezone, currency, the signed-in user and the navigation |\n| \`src/data/collections.ts\` | Where pages, actions and the assistant read and change records |\n| \`src/views/\`, \`app/\` | The pages |\n| \`src/components/\` | Meridian's components and patterns |\n| \`tokens/\` | Colour, type, space and motion (run \`${cmd('tokens')}\` after a change) |

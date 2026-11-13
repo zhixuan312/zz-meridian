@@ -28,6 +28,12 @@ export default function TabsPreview() {
             <Tab value="slow" count="31">Slow</Tab>
             <Tab value="disabled" disabled count="0">Archived</Tab>
           </TabList>
+          {/* The strip is the specimen, so its panels are mounted empty: a tab's `aria-controls` names the panel it
+              opens, and a strip drawn without one points at an id that is not in the document. */}
+          <TabPanel value="all" forceMount />
+          <TabPanel value="failed" forceMount />
+          <TabPanel value="slow" forceMount />
+          <TabPanel value="disabled" forceMount />
         </Tabs>
       </Specimen>
       <Specimen label="Narrow" note="At 340px the strip scrolls sideways with snap points; it never wraps." stack>
@@ -41,6 +47,12 @@ export default function TabsPreview() {
               <Tab value="billing">Billing</Tab>
               <Tab value="settings">Settings</Tab>
             </TabList>
+            <TabPanel value="overview" forceMount />
+            <TabPanel value="usage" forceMount />
+            <TabPanel value="keys" forceMount />
+            <TabPanel value="logs" forceMount />
+            <TabPanel value="billing" forceMount />
+            <TabPanel value="settings" forceMount />
           </Tabs>
         </div>
       </Specimen>

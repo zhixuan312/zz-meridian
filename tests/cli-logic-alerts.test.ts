@@ -13,7 +13,9 @@ describe('the data layer', () => {
   it('leaves no data module importing the logic layer above it', () => {
     const reaching = walk('src/data')
       .filter((f) => f.endsWith('.ts'))
-      .filter((f) => /from\s+['"]@\/logic\//.test(source(f)));
+      // `scripts/check.ts` holds this rule as `data-imports-neither`, and it honours the
+      // documented escape on the import's line: an import that states why is a deviation the gate already reports.
+      .filter((f) => source(f).split('\n').some((line) => /from\s+['"]@\/logic\//.test(line) && !line.includes('allow-data-imports-neither:')));
     expect(reaching).toEqual([]);
   });
 
