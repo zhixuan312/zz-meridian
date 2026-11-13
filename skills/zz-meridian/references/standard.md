@@ -140,7 +140,7 @@ Run rounds until the stop condition holds. Order matters here, because each step
 1. **List the views** into the scoreboard (above), and write the floors' rows as `not run`.
 2. **Build or fix.** Change working code only for a problem you can name, as simply as it allows, from Meridian's tokens
    and components. When a defect is one a test can catch (a wrong total, a missing state, a formatter), write the failing
-   test at the lowest layer first, then fix it. Update the page's `README.md` and any doc that describes what you changed.
+   test at the lowest layer first, then fix it. Update the page's README and any doc that describes what you changed.
 3. **Measure what changed.** `pnpm test:t1` after each change, with `pnpm test:t2` when the change touches shared
    components, the shell or the data. A round that touched only some views checks only those: build once
    (`pnpm build`), serve it (`node_modules/.bin/next start --port 3100`, stopped by its own id), and run

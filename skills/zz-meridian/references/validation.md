@@ -152,7 +152,7 @@ never readies or a link that never responds is a red under a fixed, generous bou
 |---|---|---|
 | `tokens.css is out of date` | A token file changed | `pnpm tokens` |
 | `registry.ts is out of date` / `no preview.tsx` | A card folder was added, renamed or has no preview | Add `preview.tsx`; `node scripts/registry.ts` |
-| `missing ## Structure` (page) or `## Surfaces` (card) | A specification is incomplete | Write the section; see a template page's `README.md` |
+| `missing ## Structure` (page) or `## Surfaces` (card) | A specification is incomplete | Write the section; see a template page's README |
 | `literal colour #...` | A hex or rgb in a component | Use a role (`bg-surface`, `text-ink-2`, `border-line`, `text-accent-ink`) or add a token |
 | `font-bold is outside Meridian's scale` | A Tailwind default utility | Use `font-semibold`, `rounded-xl`, `shadow-card`… |
 | `names \`x\`, which is not a token` | A spec names a token that does not exist | Correct the name or add the token |

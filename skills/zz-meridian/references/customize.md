@@ -227,7 +227,7 @@ Rules that make every page look like it belongs:
   not in the list. A priority, a region or a retention period is a `Select`: fewer than about fifteen, fixed, and every
   option worth seeing at once. Both take their wiring from the same `Field`, so the label, hint, error, required and
   invalid state need no code of their own.
-- **A page spec** next to each route (`README.md`: summary, Structure, States, Surfaces, Agents), so the next person, or
+- **A page spec** next to each route (a README beside it: summary, Structure, States, Surfaces, Agents), so the next person, or
   agent, knows what the page is for. `node scripts/check.ts` requires Structure and States, and under `## Agents` a
   `### What the agent reads` part for every page in `optional:app/(dashboard)/` and `optional:app/embed/`. A page with a
   view tool also needs `### What the agent does here`: a line `Protagonist: <name>.` naming the card worth asking
@@ -595,7 +595,7 @@ then stays off without them). Then fix what still points at the sample:
   `contrast-pairs` — while the sample's are not: `optional:src/lib/totals.ts` and `optional:src/lib/ticket-steps.ts` are
   Meridian's text but no path of the manifest, so deleting what called them means deleting them.
 - `example:src/system/content.ts`: `PAGES` names a sample request id route.
-- Each page `README.md`: its States rows must describe what your view renders; `check.ts` only checks that the section
+- Each page's README: its States rows must describe what your view renders; `check.ts` only checks that the section
   exists.
 
 This finds what is left:

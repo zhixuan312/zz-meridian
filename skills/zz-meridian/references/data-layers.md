@@ -174,7 +174,7 @@ uptime at render, and a write to any other collection never re-stamps it.
 
 ## Where this sits among the content layers
 
-Meridian's `README.md` numbers six content layers: 0 Tokens, 1 Base, 2 Components, 3 Patterns, 4 Pages and 5 Product
+Meridian's `example:README.md` numbers six content layers: 0 Tokens, 1 Base, 2 Components, 3 Patterns, 4 Pages and 5 Product
 workspaces. They describe how a surface is composed — a value, a part, a pattern, a page, how a product assembles its
 pages.
 

@@ -40,19 +40,42 @@ export function checkBrief(text: string): { errors: string[]; warnings: string[]
 }
 
 /** A path reference starts with one of these, after an optional `required:`, `optional:` or `example:`. */
-const PATH_ROOTS = ['.agents/', '.claude/', 'src/', 'app/', 'scripts/', 'docs/', '.meridian/', 'tokens/', 'tests/', 'references/'];
+const PATH_ROOTS = ['.agents/', '.claude/', 'src/', 'app/', 'scripts/', 'docs/', '.meridian/', 'tokens/', 'tests/', 'references/', 'decisions/', 'journeys/', 'README.md', 'CONTRIBUTING.md'];
+
+/**
+ * The roots a project may genuinely lack, so a fenced command that names one is read too. A fence holds commands,
+ * examples and placeholders, so every other root stays unchecked there.
+ */
+const FENCED_ROOTS = ['decisions/', 'journeys/', 'README.md', 'CONTRIBUTING.md'];
 
 /** `pnpm <name>`, `pnpm run <name>`, `npm run <name>`, `yarn <name>` or `bun run <name>`, then nothing, ` -- ...` or flags. */
 const SCRIPT = /^(pnpm run|pnpm|npm run|yarn|bun run) ([\w:.-]+)(?: --(?: .*)?| -.*)?$/;
 /** What a bare `pnpm <name>` or `yarn <name>` runs as the package manager's own command, never a package script. */
 const OWN_COMMANDS = new Set(['add', 'approve-builds', 'audit', 'bin', 'config', 'create', 'dedupe', 'deploy', 'dlx', 'env', 'exec', 'fetch', 'i', 'import', 'init', 'install', 'licenses', 'link', 'list', 'ls', 'outdated', 'pack', 'patch', 'prune', 'publish', 'rebuild', 'remove', 'rm', 'root', 'setup', 'store', 'uninstall', 'unlink', 'up', 'update', 'upgrade', 'why']);
 
+/** The problem one path reference makes, if any: a root it starts with, a filter that admits it, and whether it is held. */
+function pathProblem(
+  ref: string,
+  prefix: string | undefined,
+  at: string,
+  file: string,
+  roots: readonly string[],
+  exists: (path: string) => boolean,
+): string | null {
+  if (!roots.some((r) => ref.startsWith(r)) || /[*?<>{} ]/.test(ref)) return null;
+  if (prefix === 'optional') return null;
+  const target = ref.startsWith('references/') ? path.posix.join(path.posix.dirname(file), ref) : ref;
+  const asGiven = ref.endsWith('/') && !target.endsWith('/') ? `${target}/` : target;
+  return exists(asGiven) ? null : `${at}: path "${asGiven}" does not exist`;
+}
+
 /**
- * Check what documents point at. Only inline code spans count, and fenced code is skipped. A path reference must exist,
- * unless it is `optional:` or `example:`; a script reference must be in `scripts`. Globs, placeholders, URLs,
- * `node_modules/` paths and plain words are not references. `references/...` resolves against the document's own folder,
- * everything else from the repository root. `docs[i].file` is repository-relative and `firstLine` (default 1) is the line
- * of `text`'s first line in it. Returns one `<file>:<line>: <what is missing>` per problem.
+ * Check what documents point at. Outside a fence only inline code spans count; inside one, a bare word that starts with
+ * `FENCED_ROOTS` is read too, because a project may lack those and a fenced command still has to tell the truth. A path
+ * reference must exist, unless it is `optional:` or `example:`; a script reference must be in `scripts`. Globs,
+ * placeholders, URLs, `node_modules/` paths and plain words are not references. `references/...` resolves against the
+ * document's own folder, everything else from the repository root. `docs[i].file` is repository-relative and
+ * `firstLine` (default 1) is the line of `text`'s first line in it. Returns one `<file>:<line>: <what is missing>`.
  */
 export function scanReferences(
   docs: { file: string; text: string; firstLine?: number }[],
@@ -63,13 +86,22 @@ export function scanReferences(
   for (const { file, text, firstLine = 1 } of docs) {
     let fenced = false;
     text.split('\n').forEach((line, i) => {
+      const at = `${file}:${firstLine + i}`;
       if (/^\s*```/.test(line)) {
         fenced = !fenced;
         return;
       }
-      if (fenced) return;
+      if (fenced) {
+        for (const token of line.split(/\s+/)) {
+          const prefix = /^(required|optional|example):/.exec(token)?.[1];
+          if (prefix === 'example') continue;
+          const ref = prefix ? token.slice(prefix.length + 1) : token;
+          const problem = pathProblem(ref, prefix, at, file, FENCED_ROOTS, exists);
+          if (problem) problems.push(problem);
+        }
+        return;
+      }
       for (const [, span] of line.matchAll(/`([^`]+)`/g)) {
-        const at = `${file}:${firstLine + i}`;
         const prefix = /^(required|optional|example):/.exec(span)?.[1];
         if (prefix === 'example') continue;
         const ref = prefix ? span.slice(prefix.length + 1) : span;
@@ -80,11 +112,8 @@ export function scanReferences(
           if (!own && !scripts.has(name)) problems.push(`${at}: package script "${name}" is not in package.json`);
           continue;
         }
-        if (!PATH_ROOTS.some((r) => ref.startsWith(r)) || /[*?<>{} ]/.test(ref)) continue;
-        if (prefix === 'optional') continue;
-        const target = ref.startsWith('references/') ? path.posix.join(path.posix.dirname(file), ref) : ref;
-        const asGiven = ref.endsWith('/') && !target.endsWith('/') ? `${target}/` : target;
-        if (!exists(asGiven)) problems.push(`${at}: path "${asGiven}" does not exist`);
+        const problem = pathProblem(ref, prefix, at, file, PATH_ROOTS, exists);
+        if (problem) problems.push(problem);
       }
     });
   }
