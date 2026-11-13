@@ -6,6 +6,8 @@ import { DEMO_NOW, SERVICES, uptimeOf } from '@/system/fixtures/sample';
 import type { Service } from '@/components/patterns/status-list';
 import { StatusList } from '.';
 
+const NOUN = { one: 'service', other: 'services' };
+
 // Every day operational, so every figure says so: a strip with nothing on it cannot read 99.81%.
 const healthy: Service[] = SERVICES.map((s) => ({ ...s, status: 'operational', uptime: 1, days: s.days.map(() => 'operational') }));
 // Files down today: its uptime is worked out again from the days it now has, by the sample's rule.
@@ -20,22 +22,22 @@ export default function StatusListPreview() {
   return (
     <>
       <Specimen label="Wide" note="The bars sit beside each service from 42rem of card width." stack>
-        <Card className="overflow-hidden"><StatusList services={SERVICES} end={DEMO_NOW} /></Card>
+        <Card className="overflow-hidden"><StatusList noun={NOUN} services={SERVICES} end={DEMO_NOW} /></Card>
       </Specimen>
       <Specimen label="Narrow" note="Under 42rem the bars drop under the name; they scale down with the card, every day still drawn." stack>
-        <div className="w-full max-w-sm"><Card className="overflow-hidden"><StatusList services={SERVICES.slice(0, 3)} end={DEMO_NOW} descriptions={false} /></Card></div>
+        <div className="w-full max-w-sm"><Card className="overflow-hidden"><StatusList noun={NOUN} services={SERVICES.slice(0, 3)} end={DEMO_NOW} descriptions={false} /></Card></div>
       </Specimen>
       <Specimen label="Runs" note="Under each strip, the operational days that end today: its longest in the days kept when no run among them is longer, at least the days kept when no day has a mark, and the state alone when today has one." stack>
-        <Card className="overflow-hidden"><StatusList run services={runs} end={DEMO_NOW} /></Card>
+        <Card className="overflow-hidden"><StatusList noun={NOUN} run services={runs} end={DEMO_NOW} /></Card>
       </Specimen>
       <Specimen label="Runs, narrow" note="The run keeps its line under the bars and wraps before it is cut." stack>
-        <div className="w-full max-w-sm"><Card className="overflow-hidden"><StatusList run services={[runs[5], runs[0], runs[1], runs[3]]} end={DEMO_NOW} descriptions={false} /></Card></div>
+        <div className="w-full max-w-sm"><Card className="overflow-hidden"><StatusList noun={NOUN} run services={[runs[5], runs[0], runs[1], runs[3]]} end={DEMO_NOW} descriptions={false} /></Card></div>
       </Specimen>
       <Specimen label="All operational" note="The summary is calm: ink, a still dot." stack>
-        <Card className="overflow-hidden"><StatusList services={healthy.slice(0, 2)} end={DEMO_NOW} /></Card>
+        <Card className="overflow-hidden"><StatusList noun={NOUN} services={healthy.slice(0, 2)} end={DEMO_NOW} /></Card>
       </Specimen>
       <Specimen label="Down" note="The worst state wins the summary, in words and colour; its dot pulses." stack>
-        <Card className="overflow-hidden"><StatusList services={outage.slice(2, 5)} end={DEMO_NOW} /></Card>
+        <Card className="overflow-hidden"><StatusList noun={NOUN} services={outage.slice(2, 5)} end={DEMO_NOW} /></Card>
       </Specimen>
     </>
   );

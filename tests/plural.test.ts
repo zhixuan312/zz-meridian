@@ -14,8 +14,15 @@ describe('a count and its word', () => {
 
   it('reads as one in the line a reader takes away, not "1 services are down"', () => {
     const one = [{ name: 'Edge gateway', description: '', status: 'outage' as const, uptime: 0.99, latency: 38, days: [] }];
-    expect(summarise(one).text).toBe('1 service is down');
-    expect(summarise([...one, { ...one[0], name: 'Files' }]).text).toBe('2 services are down');
+    const service = { one: 'service', other: 'services' };
+    expect(summarise(one, service).text).toBe('1 service is down');
+    expect(summarise([...one, { ...one[0], name: 'Files' }], service).text).toBe('2 services are down');
+  });
+
+  it('names the rows "item" until the caller passes its own noun', () => {
+    const one = [{ name: 'Edge gateway', description: '', status: 'outage' as const, uptime: 0.99, latency: 38, days: [] }];
+    expect(summarise(one).text).toBe('1 item is down');
+    expect(summarise([...one, { ...one[0], name: 'Files' }]).text).toBe('2 items are down');
   });
 });
 

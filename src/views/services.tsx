@@ -10,6 +10,7 @@ import { TrendChart } from '@/components/charts/trend-chart';
 import { FeaturedMetric } from '@/components/patterns/featured-metric';
 import { IncidentCard } from '@/components/patterns/incident-card';
 import { StatusList } from '@/components/patterns/status-list';
+import { SERVICE_NOUN } from '@/logic/service-facts';
 import { unpackServices, type PackedService } from '@/logic/summarise';
 import { AskAbout } from '@/components/patterns/ask-about';
 import { formatDateTime } from '@/lib/format-date';
@@ -133,7 +134,7 @@ export function ServicesBody(data: ServicesBodyData) {
       <Row split="2/3">
         <Card className="overflow-hidden">
           <CardHeader title={PARTS.services} description="In the order the team reads its stack: the state now, p95, every day's mark and how long each has run" divided />
-          <StatusList services={services} end={end} run />
+          <StatusList services={services} end={end} run noun={SERVICE_NOUN} />
         </Card>
         {incidents ? <Incidents incidents={incidents} end={end} /> : <Unread title={PARTS.incidents} what="the incidents" />}
       </Row>

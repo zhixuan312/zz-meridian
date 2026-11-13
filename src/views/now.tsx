@@ -20,6 +20,7 @@ import { FeaturedMetric } from '@/components/patterns/featured-metric';
 import { IncidentCard } from '@/components/patterns/incident-card';
 import { MetricTile } from '@/components/patterns/metric-tile';
 import { StatusList } from '@/components/patterns/status-list';
+import { SERVICE_NOUN } from '@/logic/service-facts';
 import { AskAbout } from '@/components/patterns/ask-about';
 import { app, facts as rules } from '@/app.config';
 import type { Endpoint } from '@/data/sample';
@@ -117,7 +118,7 @@ function Services({ data, end }: { data: NowData; end: Date }) {
         actions={<><AskAbout question="Which service needs attention now, and why?" />{all}</>}
         divided
       />
-      <StatusList services={shown} end={end} run />
+      <StatusList services={shown} end={end} run noun={SERVICE_NOUN} />
     </Card>
   );
 }

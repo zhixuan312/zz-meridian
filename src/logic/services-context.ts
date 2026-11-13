@@ -9,7 +9,8 @@ import { afterStart } from '@/logic/after-start';
 import type { Service } from '@/components/patterns/status-list';
 import { summarise } from '@/logic/summarise';
 import type { DailyPoint } from '@/data/sample';
-import { run, runOf, steady } from '@/lib/facts';
+import { run, runOf } from '@/lib/facts';
+import { SERVICE_NOUN, steady } from '@/logic/service-facts';
 import { formatDuration, formatPercent, plural } from '@/lib/format';
 import { dayOf, formatDate, formatDateTime, shiftDay } from '@/lib/format-date';
 import { freshnessOf, type Fact, type Insight, type SharedContext } from '@/lib/shared-context';
@@ -42,7 +43,7 @@ export function servicesNow(services: Service[]): string {
   const apart = services.filter((s) => s.status !== 'operational');
   const named = apart.slice(0, APART_NAMED).map((s) => `${s.name} ${s.status}`);
   if (apart.length > APART_NAMED) named.push(`and ${apart.length - APART_NAMED} more`);
-  return `${summarise(services).text}${named.length ? ` (${named.join(', ')})` : ''}`;
+  return `${summarise(services, SERVICE_NOUN).text}${named.length ? ` (${named.join(', ')})` : ''}`;
 }
 
 /** The open incidents past those a context states in full, counted: "And 4 more incidents open, 6 in all." */

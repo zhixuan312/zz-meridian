@@ -289,10 +289,10 @@ orders is the sample's, not the product's.
 - **A fact is stated by a rule with a guard.** The rules are in `src/lib/facts.ts`, which an update brings: `record`
   (the highest period yet, once enough history is kept), `first` (the first day a threshold was passed, when the
   records begin below it), `all` (every member of a set, written N of N), `total` (everything recorded, with its first
-  day and its latest), `run` (how long a state has held, its longest only when no run kept is longer, worked out by
-  `runOf`, which the Status list draws) and `steady` (how many complete days were inside a band, and the days outside
-  it by date). A rule returns its fact with the one line it wrote, or nothing, and nothing weaker stands in for a fact
-  that stopped holding. Meridian's `optional:tests/facts.test.ts` and `optional:tests/facts-engineering.test.ts` hold the rules in its
+  day and its latest) and `run` (how long a state has held, its longest only when no run kept is longer, worked out by
+  `runOf`, which the Status list draws). The sample's steady-state rule, `steady` (how many complete days were inside a
+  band, and the days outside it by date), is its own, in `optional:src/logic/service-facts.ts`. A rule returns its fact
+  with the one line it wrote, or nothing, and nothing weaker stands in for a fact that stopped holding. Meridian's `optional:tests/facts.test.ts` and `optional:tests/facts-engineering.test.ts` hold the rules in its
   repository; hold yours with a test of your own.
 - **No word of praise**, in a title or in a fact: the figure is what is said. The rules' test refuses twelve words.
 - **The title is shared.** The page's context leads its insights with the sentence the page is headed by, word for

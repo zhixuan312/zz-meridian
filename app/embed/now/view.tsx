@@ -7,6 +7,7 @@ import { EmbedFrame } from '@/components/patterns/embed-frame';
 import { Freshness } from '@/components/patterns/freshness';
 import { AskAbout } from '@/components/patterns/ask-about';
 import { StatusList } from '@/components/patterns/status-list';
+import { SERVICE_NOUN } from '@/logic/service-facts';
 import { ShareContext } from '@/components/base/use-share-view';
 import dynamic from 'next/dynamic';
 import { NOW_PARTS, nothingArrived, nowContext, unpackNow, type PackedNowData } from '@/logic/now-context';
@@ -46,7 +47,7 @@ export function EmbedNow(packed: PackedNowData) {
           ) : null}
           {p.services.length && !p.unread.includes('the services') ? (
             <Card className="overflow-hidden">
-              <StatusList services={p.services} end={new Date(p.now)} descriptions={false} />
+              <StatusList services={p.services} end={new Date(p.now)} descriptions={false} noun={SERVICE_NOUN} />
             </Card>
           ) : <NoServices data={p} />}
         </div>

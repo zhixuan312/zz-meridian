@@ -1,7 +1,8 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest';
 import { facts } from '@/app.config';
-import { first, record, steady } from '@/lib/facts';
+import { first, record } from '@/lib/facts';
+import { steady } from '@/logic/service-facts';
 
 /**
  * The band, the thresholds a first is counted against and the history a record needs are the product's configuration.

@@ -4,6 +4,7 @@ import { app, nav } from '@/app.config';
 import { StatusDot } from '@/components/ui/status-dot';
 import type { Service } from '@/components/patterns/status-list';
 import { summarise } from '@/logic/summarise';
+import { SERVICE_NOUN } from '@/logic/service-facts';
 
 /** The Atlas's entry in the navigation: brand.ts --no-atlas takes it out, and the footer's link goes with it. */
 const atlas = nav.flatMap((g) => g.items).find((i) => i.href === '/system');
@@ -32,7 +33,7 @@ async function ServicesState({ services }: { services: () => Promise<Service[] |
   const list = await services();
   // A product that monitors nothing says nothing: `summarise([])` would call an empty list "All services operational".
   if (!list?.length) return null;
-  const status = summarise(list);
+  const status = summarise(list, SERVICE_NOUN);
   return (
     <Link href="/services" className="hit ml-auto inline-flex items-center gap-2 hover:text-ink-2">
       <StatusDot tone={status.status === 'operational' ? 'positive' : status.status === 'degraded' ? 'warning' : 'critical'} />

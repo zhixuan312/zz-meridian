@@ -1,6 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest';
-import { run, steady } from '@/lib/facts';
+import { run } from '@/lib/facts';
+import { steady } from '@/logic/service-facts';
 import { formatDate } from '@/lib/format-date';
 
 /**

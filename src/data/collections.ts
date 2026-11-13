@@ -18,7 +18,7 @@
 import { z } from 'zod';
 import { app, facts, workspaceSlug } from '@/app.config';
 import { arrayCollection, type AnyCollection, type Collection } from '@/lib/collection';
-import { inBand } from '@/lib/facts';
+import { inBand } from '@/logic/service-facts'; // allow-data-imports-neither: the sample's day rule, the one function `steady` counts with
 import { API_KEYS, type ApiKey } from '@/system/fixtures/sample-records';
 import { MEMBERS, STATUSES, TEAMS, type Member } from '@/system/fixtures/sample-members';
 import { ADD_ONS, MAIN_ROLES } from '@/data/roles';

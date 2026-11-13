@@ -76,7 +76,7 @@ A Card (`overflow-hidden`) holding: the summary line, then one row per service. 
 
 A run is the operational days in a row that end today, today included, counted from `days` by `runOf` in `src/lib/facts.ts`, so the figure and the strip above it are the same days. Today is the last day of `days`, whatever `status` says of this minute. The number after "its longest in" is how many days the service keeps. A run an earlier run only equals is still its longest: only a longer one takes the words away. A run that goes back to the earliest day kept is at least that long, because what came before is not known, and is never called the longest.
 
-The list assumes software services by default. For other things that are up or not (warehouses, branches, sites), pass `noun` (`{ one: 'warehouse', other: 'warehouses' }`) for the summary and the count, `measure` for the word after each row's percentage ("on time"), and `metric` for the figure under the state word (default `p95 <latency>`).
+The list names its rows `item` by default ("All items operational"). Pass `noun` (`{ one: 'service', other: 'services' }`, `{ one: 'warehouse', other: 'warehouses' }`, sites, branches) for the summary and the count, `measure` for the word after each row's percentage ("on time"), and `metric` for the figure under the state word (default `p95 <latency>`).
 
 ## Surfaces
 
@@ -123,4 +123,4 @@ import { StatusList } from '@/components/patterns/status-list';
 </Card>
 ```
 
-Props: `services`, `end` (today), `summary`, `descriptions`, `run`, `noun`, `measure`, `metric`, `className`. `summarise(services)` (from `src/logic/summarise.ts`, safe on the server) returns the worst state and its sentence for a page's own summary.
+Props: `services`, `end` (today), `summary`, `descriptions`, `run`, `noun`, `measure`, `metric`, `className`. `summarise(services, noun)` (from `src/logic/summarise.ts`, safe on the server) returns the worst state and its sentence for a page's own summary.

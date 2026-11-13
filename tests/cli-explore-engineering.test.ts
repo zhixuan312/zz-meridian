@@ -11,7 +11,7 @@ vi.mock('next/headers', () => ({
 import { facts } from '@/app.config';
 import { readDays } from '@/data/metrics';
 import { readAll } from '@/data/read';
-import { steady } from '@/lib/facts';
+import { steady } from '@/logic/service-facts';
 import { type PreparedQuery } from '@/lib/explore';
 import { keysExplore } from '@/logic/keys-explore';
 import { membersExplore } from '@/logic/members-explore';

@@ -15,7 +15,7 @@ import { summarise } from '@/logic/summarise';
 import type { ReleaseRow, RunRow } from '@/data/engineering';
 import type { ComputeRow, DailyPoint, Endpoint, Model, UsageRow } from '@/data/sample';
 import type { TicketRow } from '@/data/tickets';
-import { steady } from '@/lib/facts';
+import { SERVICE_NOUN, steady } from '@/logic/service-facts';
 import { formatDuration, inWords, plural } from '@/lib/format';
 import { dayOf, formatDate, formatDay, shiftDay } from '@/lib/format-date';
 import { PERIOD_DAYS } from '@/lib/period';
@@ -117,7 +117,7 @@ export function nowData(r: NowReads): NowData {
     ...(times.length > 1 ? [`${times.length} updates, the latest ${times.at(-1)}${others}`] : []),
     `${lead.length} ${plural(lead.length, 'incident')} open`,
   ] : [null];
-  const state = services.length ? summarise(services).text : null;
+  const state = services.length ? summarise(services, SERVICE_NOUN).text : null;
   const inBand = held && `${held.inside} of ${held.of} days inside the band`;
   const shortest = incident.at(-1) ?? null;
   const line = [...incident.map((i) => [i, state, inBand]), [shortest, state], [shortest]]
