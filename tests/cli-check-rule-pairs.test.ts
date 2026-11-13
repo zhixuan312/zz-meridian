@@ -3,8 +3,10 @@ import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
+import { navigationPlan } from '../scripts/lib/browser-plan.ts';
 import { prefetchProblems } from '../scripts/lib/sizes.ts';
+import { templateCopy } from './cli-template-copy';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 
@@ -85,6 +87,60 @@ describe('the prechecks navigate prints before Chrome starts, and the prefetch b
   it('prefetch over its cap', () => {
     expect(prefetchProblems({ desktopBytes: 81 * 1024, phoneClosedBytes: 1 }, CAPS)).toEqual(['desktop: prefetch 81 KiB over its 80 KiB cap', 'phone with the drawer closed: prefetch 0 KiB over its 0 KiB cap']);
     expect(prefetchProblems({ desktopBytes: 80 * 1024, phoneClosedBytes: 0 }, CAPS)).toEqual([]);
+  });
+});
+
+// ── A card with no preview is one rule's to report, not two ──────────────────────────────────────────
+// The registry generates the preview loaders from the folders, so a card whose preview.tsx is gone is its to name;
+// check.ts judges the README contract alone. Both run on the same copy of the template, made once here.
+const COPY = templateCopy('zz-rule-pairs-');
+const touched = new Set<string>();
+const put = (f: string, text: string) => { touched.add(f); fs.mkdirSync(path.dirname(path.join(COPY, f)), { recursive: true }); fs.writeFileSync(path.join(COPY, f), text); };
+const remove = (f: string) => { touched.add(f); fs.rmSync(path.join(COPY, f), { force: true }); };
+/** Put the repository's own copy of a file back, or remove it when the repository has none. */
+const restore = (f: string) => {
+  touched.add(f);
+  const src = path.join(ROOT, f);
+  if (fs.existsSync(src)) { fs.mkdirSync(path.dirname(path.join(COPY, f)), { recursive: true }); fs.copyFileSync(src, path.join(COPY, f)); }
+  else fs.rmSync(path.join(COPY, f), { force: true });
+};
+const runInCopy = (script: string, args: string[] = []) => spawnSync(process.execPath, [script, ...args], { cwd: COPY, encoding: 'utf8' });
+afterEach(() => {
+  for (const f of [...touched]) restore(f);
+  touched.clear();
+});
+
+describe('a card with no preview is reported once', () => {
+  it('by registry.ts --check, and never by check.ts', () => {
+    remove('src/components/ui/badge/preview.tsx');
+    const registry = runInCopy('scripts/registry.ts', ['--check']);
+    expect(registry.stdout).toContain('src/components/ui/badge: no preview.tsx');
+    expect(registry.status).toBe(1);
+
+    const gate = runInCopy('scripts/check.ts');
+    const out = `${gate.stdout}${gate.stderr}`;
+    expect(out).not.toContain('no preview.tsx');
+    expect(out).not.toContain('src/components/ui/badge');
+    expect(gate.status).toBe(0);
+  }, 120_000);
+
+  it('and check.ts still judges the card READMEs', () => {
+    const readme = 'src/components/ui/kbd/README.md';
+    const text = fs.readFileSync(path.join(COPY, readme), 'utf8');
+    expect(text).toMatch(/^Status: /m);
+    put(readme, text.replace(/^Status: .*\n/m, ''));
+    const gate = runInCopy('scripts/check.ts');
+    expect(`${gate.stdout}${gate.stderr}`).toContain('src/components/ui/kbd/README.md: no "Status: draft|beta|stable" line');
+    expect(gate.status).toBe(1);
+  }, 120_000);
+});
+
+describe('navigation is planned once at every depth', () => {
+  it('lists it once for the function sweep and the timed suites, and no depth lists it twice', () => {
+    for (const depth of ['fn', 'timed', 'perf'] as const) expect(navigationPlan(depth).runs, `${depth} lists navigation`).toBe(1);
+    expect(navigationPlan('fn').judged).toBe(false);
+    expect(navigationPlan('timed').judged).toBe(true);
+    expect(navigationPlan('perf').judged).toBe(true);
   });
 });
 

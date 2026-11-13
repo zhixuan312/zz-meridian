@@ -3,7 +3,8 @@
  *
  *   node scripts/check.ts
  *
- * - Every card folder has its README.md and preview.tsx, and every README follows the card anatomy.
+ * - Every card folder has its README.md, which opens with "# Name" and a one-sentence summary, states its
+ *   "Status: draft|beta|stable", and carries the card anatomy's "## Surfaces", "## Agents" and "## Accessibility".
  * - Every page specification exists and follows the page anatomy, and a page with a view tool says what the agent does
  *   there: its protagonist and at least three questions its prepared query answers.
  * - Every token a specification names in backticks, and every var(--x) or (--x) a component uses, exists.
@@ -92,7 +93,6 @@ const LOCAL = /^(i|w|m-len|bar-(h|at)|cols(-(xl|lg|md|sm))?|readout-(cursor|widt
 const CARD_SECTIONS = ['## Surfaces', '## Agents', '## Accessibility'];
 const contractCards = fs.existsSync(path.join(ROOT, 'src/system/registry.ts')) ? cards() : []; // Meridian's own contract: judged where the Atlas registry is; a project keeps the READMEs and no preview.
 for (const c of contractCards) {
-  if (!c.hasPreview) problems.push(`${c.dir}: no preview.tsx`);
   const md = read(`${c.dir}/README.md`);
   if (!/^# .+\n\n[^#\n].+/.test(md)) problems.push(`${c.dir}/README.md: must open with "# Name" and a one-sentence summary`);
   if (!/^Status: (draft|beta|stable)$/m.test(md)) problems.push(`${c.dir}/README.md: no "Status: draft|beta|stable" line`);

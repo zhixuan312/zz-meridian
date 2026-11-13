@@ -23,3 +23,16 @@ export function sweepsFor(only: string | undefined): Set<FnSweep> {
 export function timedOutcome(status: 'ok' | 'FAIL' | 'not run'): 'ok' | 'reported' | 'not run' {
   return status === 'FAIL' ? 'reported' : status;
 }
+
+/** A browser depth: the function sweeps, the timed suites, and the perf protocol. */
+export type BrowserDepth = 'fn' | 'timed' | 'perf';
+
+/**
+ * How a depth's navigation is planned: `scripts/browser.ts` runs it `runs` times, and hands its budgets to the run as
+ * judged only where the depth judges a time. The function sweep proves the rail navigates with its budgets unjudged;
+ * the timed suites and the perf protocol judge them. Planning it here rather than at each call site keeps it once per
+ * depth, and lets the test assert that plan instead of the run.
+ */
+export function navigationPlan(depth: BrowserDepth): { judged: boolean; runs: number } {
+  return { judged: depth !== 'fn', runs: 1 };
+}

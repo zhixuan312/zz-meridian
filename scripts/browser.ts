@@ -44,7 +44,7 @@ import { answers, bin, freePort, spawnNext } from './lib/bin.ts';
 import { CHROME, launch } from './lib/chrome.ts';
 import { fakeModelArgs, fakeModelProblems, type FakeModelStep } from './lib/config-hooks.ts';
 import { declaredNotRun, selectSmokeRoutes } from './lib/coverage.ts';
-import { FN_SWEEPS, sweepsFor, timedOutcome, type FnSweep } from './lib/browser-plan.ts';
+import { FN_SWEEPS, navigationPlan, sweepsFor, timedOutcome, type FnSweep } from './lib/browser-plan.ts';
 import { clearParts, readParts } from './lib/tier2.ts';
 import { unsafeDataUrls } from './lib/data-url.ts';
 import { APP_DIR, railRoutes } from './lib/routes.ts';
@@ -355,7 +355,7 @@ if (sweep('rest') || want('timed')) {
     args: (timing) => ['--base', `http://127.0.0.1:${server.port}`, '--mode', full ? 'full' : 'default', '--timing', timing, '--routes', navRoutes.join(',')],
   };
   if (sweep('rest')) {
-    const nav = await run('scripts/navigate.ts', navPlan.args('off'), app);
+    const nav = await run('scripts/navigate.ts', navPlan.args(navigationPlan('fn').judged ? 'on' : 'off'), app);
     report(`navigation: ${navPlan.label}, its budgets unjudged`, nav);
   }
   if (failed) finish();
@@ -473,7 +473,7 @@ if (want('fn')) {
 if (want('timed')) {
   const here = `http://127.0.0.1:${server.port}`;
   if (navPlan) {
-    reportTimed(`navigation: ${navPlan.label}, its budgets judged`, await run('scripts/navigate.ts', navPlan.args('on'), app));
+    reportTimed(`navigation: ${navPlan.label}, its budgets judged`, await run('scripts/navigate.ts', navPlan.args(navigationPlan('timed').judged ? 'on' : 'off'), app));
     if (failed) finish();
   }
   if (hasLiveSample) {

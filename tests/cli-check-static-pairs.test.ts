@@ -33,7 +33,6 @@ const RULE_TESTS = 'tests/cli-check-rules.test.ts';
 const AGENT_TESTS = 'tests/cli-check-agent-section.test.ts';
 const RULES: Rule[] = [
   // Cards.
-  { id: 'card has a preview', source: ': no preview.tsx', batch: 'T', fails: ['src/components/ui/badge: no preview.tsx'] },
   { id: 'card README opens with a name and a sentence', source: '/README.md: must open with', batch: 'T', fails: ['src/components/ui/card/README.md: must open with "# Name"'] },
   { id: 'card README has a status', source: 'no "Status: draft|beta|stable" line', batch: 'T', fails: ['src/components/ui/kbd/README.md: no "Status: draft|beta|stable" line'] },
   { id: 'card README has its sections', source: '/README.md: missing ${s}', batch: 'T', fails: ['src/components/ui/switch/README.md: missing ## Accessibility'] },
@@ -164,7 +163,6 @@ const edit = (f: string, change: (text: string) => string) => {
   expect(after, `${f}: the edit changed nothing`).not.toBe(before);
   put(f, after);
 };
-const remove = (f: string) => { touched.add(f); fs.rmSync(path.join(dir, f), { force: true }); };
 /** Every file an edit touched goes back to the repository's own copy, or goes away when the repository has none. */
 const reset = () => {
   for (const f of touched) {
@@ -197,7 +195,6 @@ const logo = (value: string) => edit('src/app.config.ts', (t) => t.replace("acce
 /** The edits of each batch. T is the template as it is; M1..M3 are an adopted project, where the update rules speak. */
 const EDITS: Record<Batch | 'M0', () => void> = {
   T: () => {
-    remove('src/components/ui/badge/preview.tsx');
     edit('src/components/ui/card/README.md', (t) => `x\n${t}`);
     edit('src/components/ui/kbd/README.md', (t) => t.replace(/^Status: .*\n/m, ''));
     edit('src/components/ui/switch/README.md', (t) => t.replace(/^## Accessibility$/m, '## Accessibilty'));
