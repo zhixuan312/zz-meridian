@@ -1,6 +1,8 @@
 # Start a dashboard
 
-A new dashboard starts from this repository running, not from a blank page. The journey from ZZ Meridian's own dashboard to yours — its order and the standard it ends at — is the `zz-meridian` skill's: `SKILL.md`, which a created project holds at `.agents/skills/zz-meridian/SKILL.md`.
+A new dashboard starts from this repository running, not from a blank page.
+
+The journey from ZZ Meridian's own dashboard to yours — its order and the standard it ends at — is the `zz-meridian` skill's: `SKILL.md`, which a created project holds at `.agents/skills/zz-meridian/SKILL.md`.
 
 The fastest way is to let your coding agent follow that skill: `npx zz-meridian@latest create my-dashboard --name "Acme Ops"` copies and brands the template and installs the `zz-meridian` skill into it; then describe the dashboard you need to Codex or Claude Code. The sections below are what each part does, for doing it by hand.
 
