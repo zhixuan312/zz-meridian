@@ -781,3 +781,50 @@ describe('the env, series-slot and proposal migrations', () => {
     expect(m.applies(view('<Proposal {...card} />'), '0.36.0')).toBeNull();
   });
 });
+
+// 0.39.2's `src/lib/collection.ts` began importing `dayOfValue` from `src/lib/format-date.ts`. A file the team kept
+// stays as the team wrote it, so the import fails the project's type check and nothing in MERGE.md named it.
+describe('a managed file importing a name a kept file lacks', () => {
+  const HASH = `sha256-${'a'.repeat(64)}`;
+  const manifest = (paths: string[]) => JSON.stringify({ version: '0.39.2', route: 'adopt', brand: {}, files: Object.fromEntries(paths.map((p) => [p, HASH])) });
+  const withKept = (formatDate: string, keep = [{ path: 'src/lib/format-date.ts', reason: 'our own date helpers' }]) => project({
+    '.meridian/manifest.json': manifest(['src/lib/collection.ts', 'src/lib/format-date.ts']),
+    '.meridian/keep.json': JSON.stringify(keep),
+    'src/lib/collection.ts': "import { dayOfValue } from './format-date.ts';\nexport const x = dayOfValue;\n",
+    'src/lib/format-date.ts': formatDate,
+  });
+  const pathsOnKept = (root: string) => releaseMigrations(root, '0.39.2', '0.39.3').find((m) => m.id === 'kept-file-lacks-export')?.paths ?? null;
+
+  it('is reported, naming the kept file, the name and the managed file that imports it', () => {
+    expect(pathsOnKept(withKept("export const shiftDay = (d: string) => d;\n")))
+      .toEqual(['src/lib/format-date.ts: kept, and it exports no `dayOfValue`, which `src/lib/collection.ts` imports']);
+  });
+
+  it('is silent once the kept file exports the name', () => {
+    expect(pathsOnKept(withKept("export function dayOfValue(v: unknown): string | null { return v === null ? null : String(v); }\n"))).toBeNull();
+  });
+
+  it('is silent for a project that kept nothing, since an update writes the release’s own copy', () => {
+    expect(pathsOnKept(withKept("export const shiftDay = (d: string) => d;\n", []))).toBeNull();
+  });
+});
+
+// 0.39.2 required a `type` on every prepared query filter. A project's type check then failed with TS2741 in each file
+// that declares a source, and MERGE.md carried no item for it.
+describe('a prepared query filter with no type', () => {
+  const withSource = (filters: string) => project({ 'src/logic/orders-explore.ts': `export const source = {\n  collection: 'orders',\n  filters: ${filters},\n  facets: [],\n  measures: {},\n  cannot: '',\n};\n` });
+  const pathsOnFilter = (root: string) => releaseMigrations(root, '0.39.0', '0.39.3').find((m) => m.id === 'explore-filter-type')?.paths ?? null;
+
+  it('is reported with the file and the filters that declare none', () => {
+    expect(pathsOnFilter(withSource("{ model: { ops: ['eq', 'ne'] }, total: { ops: ['gt'], type: 'number' } }")))
+      .toEqual(['src/logic/orders-explore.ts: model declares no `type`']);
+  });
+
+  it('is silent once every filter declares one', () => {
+    expect(pathsOnFilter(withSource("{ model: { ops: ['eq'], type: 'text' } }"))).toBeNull();
+  });
+
+  it('says nothing about a file that declares no source', () => {
+    expect(pathsOnFilter(project({ 'src/logic/orders.ts': 'export const x = 1;\n' }))).toBeNull();
+  });
+});

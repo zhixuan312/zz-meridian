@@ -5,11 +5,12 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
+
 import { aliasesOf } from './imports.js';
 import { nextConfigFiles, setsPprFlags } from './next-config.js';
-import { FIXED } from './ownership.js';
+import { FIXED, parseManifest } from './ownership.js';
 import { isNewer } from './update.js';
-import type { Migration } from './update-session.js';
+import { parseKeep, type Migration } from './update-session.js';
 
 export type ReleaseMigration = {
   id: string;
@@ -404,7 +405,7 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     recurring: true,
     applies: (root, source) => removedCommandMentions(root, isNewer('0.39.0', source)),
     summary: '`pnpm gate`, `pnpm verify` and the other removed commands are replaced by the three test commands.',
-    instructions: 'Read "Test runs" in AGENTS.md and "The tiers" in `references/validation.md`. `pnpm gate` and `pnpm verify` with its flags — `--full`, `--timed`, `--perf`, `--quick`, `--no-vitals` and `--extra` — are removed, and so are the `test`, `audit`, `interactions`, `live`, `keyboard` and `vitals` scripts and `scripts/gate.ts` and `scripts/verify.ts`. Run `pnpm test:t1` after a change (the affected Tier 1 tests, the static checks and the type check), `pnpm test:t2` when the change can alter what a page draws or a control does (the affected Tier 2 checks and the browser sweeps as well), and `pnpm test:release` before a release (every Tier 1 and Tier 2 test once, the timed browser suites, lint and the type check). None takes an argument: the command selects the tests. Replace every removed call in the files listed — scripts, workflows, shell files, documents and comments — and read the line each run ends with: it says what ran and what did not. `scripts/verify.config.ts` and `scripts/verify.baseline.json` stay.',
+    instructions: 'Read "Test runs" in AGENTS.md and "The tiers" in `references/validation.md`. `pnpm gate` and `pnpm verify` with its flags — `--full`, `--timed`, `--perf`, `--quick`, `--no-vitals` and `--extra` — are removed, and so are the `test` script and `scripts/gate.ts` and `scripts/verify.ts`. `scripts/audit.ts`, `scripts/interactions.ts`, `scripts/live.ts`, `scripts/keyboard.ts` and `scripts/vitals.ts` still ship, so a script of your own that runs one still works: it is the commands that wrapped them that went. Run `pnpm test:t1` after a change (the affected Tier 1 tests, the static checks and the type check), `pnpm test:t2` when the change can alter what a page draws or a control does (the affected Tier 2 checks and the browser sweeps as well), and `pnpm test:release` before a release (every Tier 1 and Tier 2 test once, the timed browser suites, lint and the type check). None takes an argument: the command selects the tests. Replace every removed call in the files listed — scripts, workflows, shell files, documents and comments — and read the line each run ends with: it says what ran and what did not. `scripts/verify.config.ts` and `scripts/verify.baseline.json` stay.',
     checks: ['test:t1'],
   },
   {
@@ -554,6 +555,25 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     applies: removedExportReaders,
     summary: 'A file of the team\'s imports an export the release removed from a managed module: `deviations`, `largest`, `runs` or `weekendRatio` from `src/lib/insight.ts`, `queryInput` from `src/lib/collection.ts`, or `inBand`, `steady` or `DayService` from `src/lib/facts.ts`.',
     instructions: 'The update brought `src/lib/insight.ts` and `src/lib/collection.ts` without them, so each file listed here fails the type check. A file of the sample\'s comes over from the release: the Overview context is Home\'s, `src/views/home-context.ts` (see `sample-pages-renamed`); the assistant reads through `view_<name>` and `explore_<view>` and has no `query_<name>` tools, so bring `src/lib/assistant/tools.ts` and `src/lib/assistant/respond.ts` over and pass `readable`, every collection the person may read, from the assistant route to `respond` beside `collections` (read "Prepared queries" in references/agents.md); and a shipped test that imports one, such as `tests/shared-context.test.tsx` or `tests/collection.test.ts`, comes over as the release has it. A file of your own that still needs one of the functions writes it in that file, from its 0.15.0 source. `src/lib/facts.ts` no longer exports `inBand`, `steady` or `DayService` either: they rule on a service day, which is the sample\'s business, and the release carries them in `src/logic/service-facts.ts`. A file of the sample\'s comes over from the release with that module; a file of your own imports them from `@/logic/service-facts`, or states the rule in that file itself.',
+    checks: TEST_AND_BUILD,
+  },
+  {
+    id: 'explore-filter-type',
+    since: '0.39.2',
+    applies: exploreFiltersWithoutType,
+    summary: 'A prepared query filter declares no `type`, which this release requires: the project\'s type check fails with TS2741 in each file that declares a source.',
+    instructions: 'Each line names a file of your team\'s and the filters in it that declare no `type`. Add one to each: `type: \'text\'` for a word, a name or an id, `\'number\'` for a figure, `\'date\'` for a calendar day written `YYYY-MM-DD`, and `\'boolean\'` for yes or no. A condition whose value is another type is refused before anything is read, which is what the declaration is for; `\'text\'` is the right default and what the sample\'s own filters take. Read "Prepared queries" in `references/agents.md`, then run the project\'s `test:t1`.',
+    checks: TEST_AND_BUILD,
+  },
+  {
+    id: 'kept-file-lacks-export',
+    since: '0.39.2',
+    // Every upgrade rechecks it: a kept file that still lacks an export a managed file imports is still broken, and one
+    // that has caught up reports nothing.
+    recurring: true,
+    applies: keptFilesMissingExport,
+    summary: 'A file the team kept does not export a name a managed file of this release imports from it, so the project\'s type check fails on it and no update could make that change for the team.',
+    instructions: 'Each line names a file of your team\'s, the name it lacks, and the managed file that imports it. Take the release\'s copy of that file with `npx zz-meridian@<the version you are updating to> create <scratch folder> --no-install` and bring the export over, writing it yourself from that copy when the rest of the file is yours; or, when the file no longer differs from the release\'s in any way you want to keep, remove it from `.meridian/keep.json` and the update writes the release\'s copy. Then run the project\'s `test:t1`, which is what names this in the first place.',
     checks: TEST_AND_BUILD,
   },
   {
@@ -821,6 +841,101 @@ function removedExportReaders(root: string): string[] | null {
     const gone = removed[from] ?? [];
     return names.some((n) => gone.includes(n)) || (namespace !== null && gone.some((g) => new RegExp(`(?<![\\w$.])${namespace.replace(/\$/g, '\\$')}\\.${g}\\b`).test(src)));
   }));
+}
+
+/** The names a module exports, as `importsOf` names them: a declaration, or a name in an `export { … }` list. */
+function exportedNames(src: string): Set<string> {
+  const out = new Set<string>();
+  for (const m of src.matchAll(/^[ \t]*export\s+(?:default\s+)?(?:declare\s+)?(?:async\s+)?(?:function|const|let|var|class|type|interface|enum)\s+([\w$]+)/gm)) out.add(m[1]!);
+  for (const m of src.matchAll(/^[ \t]*export\s*\{([^}]*)\}/gm)) {
+    for (const part of m[1]!.split(',')) {
+      const name = part.trim().replace(/^type\s+/, '').split(/\s+as\s+/).at(-1)?.trim();
+      if (name) out.add(name);
+    }
+  }
+  return out;
+}
+
+/** The index just past the `}` closing the `{` at `open`, or -1 when it never closes; strings and comments are skipped. */
+function closeBrace(src: string, open: number): number {
+  let depth = 0;
+  for (let i = open; i < src.length; i++) {
+    const skipped = skipLiteral(src, i);
+    if (skipped !== i) { i = skipped - 1; continue; }
+    if (src[i] === '{') depth++;
+    else if (src[i] === '}' && --depth === 0) return i + 1;
+  }
+  return -1;
+}
+
+/** Each filter a `filters: { … }` block declares without a `type`, which this release requires of every one. */
+function filtersWithoutType(src: string): string[] {
+  const out: string[] = [];
+  for (const m of src.matchAll(/\bfilters\s*:\s*\{/g)) {
+    const open = m.index! + m[0].length - 1;
+    const end = closeBrace(src, open);
+    if (end < 0) continue;
+    const block = src.slice(open + 1, end - 1);
+    for (const f of block.matchAll(/([\w$]+)\s*:\s*\{/g)) {
+      const at = f.index! + f[0].length - 1;
+      const fEnd = closeBrace(block, at);
+      if (fEnd < 0) continue;
+      if (!/\btype\s*:/.test(block.slice(at, fEnd))) out.push(f[1]!);
+    }
+  }
+  return out;
+}
+
+/**
+ * A prepared query filter that declares no `type`. The release requires one on every filter, so a project's type check
+ * fails with `TS2741` in each file that declares a source, and nothing else names them.
+ */
+function exploreFiltersWithoutType(root: string): string[] | null {
+  const hits = new Set<string>();
+  for (const { rel, src } of teamSources(root)) {
+    if (!rel.startsWith('src/')) continue;
+    const names = filtersWithoutType(src);
+    if (names.length) hits.add(`${rel}: ${names.join(', ')} declare${names.length === 1 ? 's' : ''} no \`type\``);
+  }
+  return hits.size ? [...hits].sort() : null;
+}
+
+/**
+ * A managed file that imports a name the project's own kept copy of that file does not export. The managed code arrives
+ * with the release; a file the team kept stays as the team wrote it, so a release that starts importing a name from one
+ * fails the project's type check with nothing in MERGE.md naming it. 0.39.2's `src/lib/collection.ts` began importing
+ * `dayOfValue` from `src/lib/format-date.ts`, which a dashboard had kept.
+ */
+function keptFilesMissingExport(root: string): string[] | null {
+  const rawKeep = text(root, '.meridian/keep.json');
+  const rawManifest = text(root, '.meridian/manifest.json');
+  if (rawKeep === null || rawManifest === null) return null;
+  let kept: { path: string }[];
+  let managed: string[];
+  try {
+    kept = parseKeep(rawKeep);
+    managed = Object.keys(parseManifest(rawManifest).files);
+  } catch { return null; }
+  // `importsOf` names a target without its extension, so a kept file is held by that form and reported by its own path.
+  const keptSource = new Map<string, { path: string; src: string }>();
+  for (const e of kept) {
+    const src = text(root, e.path);
+    if (src !== null) keptSource.set(e.path.replace(/\.[mc]?[jt]sx?$/, ''), { path: e.path, src });
+  }
+  if (!keptSource.size) return null;
+  const hits = new Set<string>();
+  for (const rel of managed) {
+    if (!/\.tsx?$/.test(rel)) continue;
+    const src = text(root, rel);
+    if (src === null) continue;
+    for (const { from, names } of importsOf(rel, src)) {
+      const have = keptSource.get(from);
+      if (have === undefined) continue;
+      const exported = exportedNames(have.src);
+      for (const name of names) if (!exported.has(name)) hits.add(`${have.path}: kept, and it exports no \`${name}\`, which \`${rel}\` imports`);
+    }
+  }
+  return hits.size ? [...hits].sort() : null;
 }
 
 /**
