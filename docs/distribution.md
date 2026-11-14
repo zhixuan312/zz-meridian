@@ -87,9 +87,9 @@ Three things make the copy safe in someone else's project. Meridian's own files 
 pinned to the exact module (`…/button/index`), so a team's `components/ui/button.tsx` can never be resolved in place
 of Meridian's whatever their `@/` alias says; the team imports Meridian as `@meridian/…`, which `adopt` adds to
 `tsconfig.json`. Meridian's scripts carry their own lint exceptions, so they pass the team's eslint config — and a
-project that has none is given Meridian's `eslint.config.ts`, since `test:release` runs the lint and the project would
-otherwise be handed a check it cannot pass; a project whose configuration is a legacy `.eslintrc`, which ESLint 9 no
-longer loads, keeps it and is told. And
+project that has none is given Meridian's `eslint.config.ts`, since every test command runs the lint over the project's
+files and one with no config would otherwise be handed findings it cannot act on; a project whose configuration is a
+legacy `.eslintrc`, which ESLint 9 no longer loads, keeps it and is told. And
 `scripts/package.json` declares the scripts ES modules when the project's own `package.json` does not, without
 changing how the rest of the project is read.
 
