@@ -22,8 +22,10 @@ When it is absent, use the skill's brief template with the person's answers; do 
   upgrade: resolve the report and run the pinned finalization command.
 - Test runs, and the only test commands: \`pnpm test:t1\` (the Tier 1 tests affected since the last green run),
   \`pnpm test:t2\` (the affected Tier 2 tests too) and \`pnpm test:release\` (every Tier 1 and Tier 2 test, lint and the
-  type check). The tool picks the tests; never name one. Label every plan phase Tier 1, 2 or 3: Tier 1 phases use
-  \`test:t1\`, Tier 2 and Tier 3 phases use \`test:t2\`. \`test:release\` passes before a release.
+  type check). The tool picks the tests; never name one. Label every plan phase by its tier — 1 make it work, 2 make it
+  work well, 3 build to last: Tier 1 phases use \`test:t1\`, Tier 2 and Tier 3 phases use \`test:t2\`. Only Tier 1 fails a
+  run: lint, the type check and the contrast pairs run, are reported on the last line as "reported, not failed", and hold
+  nothing. \`test:release\` passes before a release.
 - Agents in the product read through authorized collections and write only through an approved Proposal.
 ${END}`;
 

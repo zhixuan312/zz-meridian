@@ -409,6 +409,17 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     checks: [],
   },
   {
+    id: 'reported-not-blocking',
+    since: '0.39.5',
+    recurring: true,
+    applies: (root) => matching(root, (rel, src) => /^\.github\/workflows\//.test(rel)
+      && /\btest:(?:t1|t2|release)\b/.test(src)
+      && !/\beslint\b|\btsc\b|\btypecheck\b|\bnext build\b/.test(src)),
+    summary: '`test:t1`, `test:t2` and `test:release` report lint, type and contrast findings and no longer fail on them.',
+    instructions: 'Read "The tiers" in `references/validation.md`. Only Tier 1 fails a run now. Lint and the type check are Tier 3 and the contrast pairs are Tier 2: each of the three test commands prints what they found on its last line as `reported, not failed` and exits 0, so a workflow whose only hold on lint or types was one of those commands no longer holds anything. Add a step of your own where you want them to block — `pnpm exec eslint .` and `pnpm exec tsc --noEmit` — and decide whether it stops the job. Compilation is still Tier 1: `next build` fails on anything that cannot compile, and the test commands build. The same sort reaches the audit: a target under 44px, low contrast, text cut but still visible, a page that scrolls sideways, a heading that skips a level and a card that scrolls on its own are printed under `reported:` and fail nothing, while a page that answered an error, content nobody can see or reach at all, an unnamed control and a focus ring that never appears still fail the run. The closing line names all of it; read it rather than the exit code alone.',
+    checks: [],
+  },
+  {
     id: 'verify-modes',
     since: '0.5.0',
     recurring: true,

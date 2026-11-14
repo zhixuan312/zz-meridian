@@ -2,7 +2,8 @@
 # end to end, then publish with provenance, then tag LAST.
 #
 # WHAT GATES A RELEASE. The checks that decide whether this tarball works, each run once, each its own job on its own
-# clock: the static stage (lint, the type check, every Vitest file but the browser-fixture tests), the four browser
+# clock: the static stage (every Vitest file but the browser-fixture tests, with lint and the type check beside them —
+# both Tier 3, so a finding in either is reported and gates nothing), the four browser
 # sweeps (audit, interactions, keyboard, rest), the browser-fixture tests the changes since the release before reach
 # (two parallel legs), and the consumer smoke from the tarball, which adopts, creates (test:t1, a production build and
 # the rest sweep in the new dashboard), and updates a project of the release before (adopted and created) to finalize.
@@ -131,7 +132,8 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
-  # The static stage: lint, the type check and every Vitest file but the browser-fixture tests. The template snapshot
+  # The static stage: every Vitest file but the browser-fixture tests, with lint and the type check beside them — both
+  # report and neither fails this job (Tier 3; the build is what proves the tree compiles). The template snapshot
   # the package carries is a build output, so a fresh checkout has none, and the package's own tests read it (`adopt`'s
   # configuration and skill tests). Built from HEAD, which is the release commit here.
   static:

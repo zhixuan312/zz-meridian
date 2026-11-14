@@ -64,7 +64,7 @@ describe('update --finalize', () => {
     resolve(root);
     const done = ctx(root);
     expect(finalize(done.c), done.lines.join('\n')).toBe(0);
-    expect(done.lines.join('\n')).toMatch(/^tests: the Tier 1 tests affected by the change, the static checks and the type check passed$/m);
+    expect(done.lines.join('\n')).toMatch(/^tests: the Tier 1 tests affected by the change and the static checks passed; lint and the type check reported$/m);
     expect(done.lines.join('\n')).toMatch(/^build: the production build passed$/m);
     expect(done.lines.join('\n')).toMatch(/^not run route policy: the project's next\.config sets no cacheComponents and partialPrefetching, which the route policy presupposes \(see the cache-components-config item in MERGE\.md\)$/m);
     expect(done.lines.join('\n')).toMatch(/^not run sizes: the project has no scripts\/verify\.baseline\.json; /m);

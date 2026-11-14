@@ -11,7 +11,7 @@ import { NAV_HOMES, NAV_RAIL } from '../scripts/fixtures/deep/pages.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 
-type Entry = { page: string; suite: string; outcome: 'fail' | 'pass' | 'note' | 'measured' | 'clear'; line?: string; args?: string[] };
+type Entry = { page: string; suite: string; outcome: 'fail' | 'pass' | 'reported' | 'note' | 'measured' | 'clear'; line?: string; args?: string[] };
 const MANIFEST: Entry[] = JSON.parse(fs.readFileSync(path.join(ROOT, 'scripts/fixtures/deep/expected.json'), 'utf8'));
 
 let server: ChildProcess;
@@ -68,6 +68,10 @@ function casesFor(suite: string, command: (page: string, base: string) => string
       // its own rule, since the cases run side by side and a floor they do not plant measures the machine.
       if (e.outcome === 'clear') { expect([0, 1], r.out).toContain(r.code); expect(r.out).not.toContain(e.line); return; }
       if (e.outcome === 'measured') expect([0, 1], r.out).toContain(r.code);
+      // `reported`: the suite found it and said so, and the run stayed green because the tiers rule makes that finding
+      // Tier 2. Both halves are the case: a planted defect the audit stopped printing would be a blind suite, and one it
+      // printed while reddening the run would be a gate that fails on the look of a page.
+      else if (e.outcome === 'reported') { expect(r.code, r.out).toBe(0); expect(r.out, 'the suite reports it').toContain('reported '); }
       else expect(r.code, r.out).toBe(e.outcome === 'fail' ? 1 : 0);
       if (e.line) expect(r.out).toContain(e.line);
       // Vitals exits 1 when a page misses a floor, which these cases do not decide; what they decide is what was tapped.

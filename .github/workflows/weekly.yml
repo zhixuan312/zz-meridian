@@ -8,6 +8,7 @@
 #
 # - `release`: `pnpm test:release` (every Tier 1 and Tier 2 test, the timed browser suites, lint, the type check, a
 #   production build) with the Postgres services configured, so its Postgres suite runs rather than reporting `not run`.
+#   Lint and the type check are Tier 3: the run prints what they found and exits 0 on them.
 # - `consumer`: the consumer smoke from a tarball packed from this commit: the adopted project's own `test:t2`, a
 #   dashboard created from the tarball running its own `test:release`, the update from each of the last three releases
 #   (adopted and created), and every recovery and failure case of the update.

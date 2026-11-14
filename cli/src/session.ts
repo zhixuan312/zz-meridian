@@ -796,7 +796,7 @@ function finalizeLoaded(ctx: Context, l: Loaded): number {
   patchReport(l, 'complete', root);
   const where = archive(root, l);
   log(`time: ${took.join(' · ')}`);
-  log('tests: the Tier 1 tests affected by the change, the static checks and the type check passed');
+  log('tests: the Tier 1 tests affected by the change and the static checks passed; lint and the type check reported');
   log(`build: ${list(['the production build', ...ran])} passed`);
   log(`archived: ${where}`);
   log('outcome: complete');

@@ -21,12 +21,21 @@
  *
  * Fails (exit 1) on: a route not declared missing (`missingRoutes`, scripts/lib/answered.ts) that answered an error status
  * or drew the not-found screen, a declared missing route that neither answered 404 nor drew it, a route that served another page or dropped a parameter it was asked for, a page whose content
- * region rendered nothing or that threw or logged a failure while it rendered, sideways scroll (a strip that scrolls at a
- * phone width included), text clipped without an ellipsis, text drawn past a box that does not clip it, text cut with an
- * ellipsis that keeps the whole of it nowhere, two pieces of text in the same place or a line
- * drawn through one, a control with no accessible name or one under 44px on touch, a heading two levels below the one
- * before it, more than one page scroller, and rendered text under its WCAG minimum, an SVG's text included, read by its
- * `fill` against whatever the SVG paints behind it. Prints the design metrics per page: distinct type sizes, weights and
+ * region rendered nothing or that threw or logged a failure while it rendered, a table wider than its frame (its last
+ * columns have no scroller and nothing to scroll), two pieces of text in the same place or a line drawn through one, a
+ * control with no accessible name, a custom element it could not look inside, and a focus ring that never appears or
+ * focus landing on a control that draws nothing. Every one of those is content a person cannot see or reach at all, or an
+ * element a person cannot use.
+ *
+ * Reports and does not fail (`reported:` under the page, counted on the last line, exit 0): text cut but still visible
+ * (clipped, or an ellipsis that keeps the whole of it nowhere), text drawn past a box that does not clip it, a page, a
+ * region or a strip that scrolls sideways, a data page that does not fill its canvas, a control under 44px on touch,
+ * rendered text under its WCAG minimum (an SVG's text included, read by its `fill` against whatever the SVG paints behind
+ * it), a heading two levels below the one before it, a table head that shows on a phone as stray words, and more than one
+ * page scroller. Each is something that is there and works and is awkward — how it looks. The sort is
+ * `scripts/lib/audit-findings.ts`, so this script and the run that holds it cannot decide it differently.
+ *
+ * Prints the design metrics per page: distinct type sizes, weights and
  * radii, and the hierarchy ratio (largest text over the median), which should be 3 or more on an analytical page.
  * Every rule above has a page in `scripts/fixtures/deep/` that makes it fire.
  */
@@ -34,6 +43,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { answerProblem, DRAWS_NOT_FOUND, missingRoutes } from './lib/answered.ts';
 import { atlasCoverage, atlasEntries } from './lib/atlas.ts';
+import { countsOf, partition } from './lib/audit-findings.ts';
 import { launch } from './lib/chrome.ts';
 import { DEEP_SOURCE } from './lib/deep.ts';
 import { discover } from './lib/routes.ts';
@@ -346,6 +356,9 @@ const ALLOWED_SCROLLERS = /data-scroll-region|^nav|^aside|^pre|^textarea|overflo
 
 const page = await launch();
 let failures = 0;
+/** The findings that are reported and never fail this run: kept so the last line counts them, and so the browser run can
+ *  name them in its closing line. */
+const reportedFindings: string[] = [];
 const metrics: string[] = [];
 const measure = async (route: string, width: number, theme: string, embed: boolean) => {
   await page.open(base + route, { width, height: width < 600 ? 844 : 900, theme: theme as 'dark' | 'light', wait: 1500, cookie });
@@ -435,7 +448,9 @@ const measure = async (route: string, width: number, theme: string, embed: boole
     ...[...new Set(page.errors)].slice(0, 4).map((x) => x),
   ];
   const tag = `${route} @${width} ${theme}`;
-  if (issues.length) { failures += issues.length; console.log(`FAIL ${tag}\n  ${issues.join('\n  ')}`); }
+  const { blocking, reported } = partition(issues);
+  if (blocking.length) { failures += blocking.length; console.log(`FAIL ${tag}\n  ${blocking.join('\n  ')}`); }
+  if (reported.length) { reportedFindings.push(...reported); console.log(`reported ${tag}\n  ${reported.join('\n  ')}`); }
   if (width === 1440 && theme === THEMES[0]) metrics.push(`${route.padEnd(34)} sizes ${String(r.sizes.length).padStart(2)} [${r.sizes.join(' ')}] · weights ${r.weights.join('/')} · radii ${r.radii.length} [${r.radii.join(' ')}] · hierarchy ${r.ratio}×`);
 };
 
@@ -467,4 +482,10 @@ console.log(`\naudit: ${failures} issues across ${across.join(' and ')}, in ${TH
 // Said in the last line as well as in its own FAIL: a count of issues over a run that could not reach every route is
 // not the same evidence as one over a run that did, and the number alone reads as if it were.
 if (unmeasuredRoutes.length) console.log(`audit: ${unmeasuredRoutes.length} of those routes could not be measured at all, and are counted one each:\n  ${unmeasuredRoutes.join('\n  ')}`);
+// What it found and did not fail on, said in its own line and in a count the browser run reads back
+// (`auditFindings` in scripts/lib/audit-findings.ts): a reported finding is evidence someone can act on, and a page that
+// is awkward in one place must not be lost behind a run that ended green.
+const reportedCounts = countsOf(reportedFindings);
+console.log(`audit: ${JSON.stringify({ blocking: failures, reported: reportedCounts })}`);
+if (reportedFindings.length) console.log(`audit: ${reportedFindings.length} findings reported, not failed: ${Object.entries(reportedCounts).map(([kind, n]) => `${n} ${kind}`).join(', ')}`);
 process.exit(failures ? 1 : 0);

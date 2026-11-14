@@ -1,6 +1,8 @@
 // @vitest-environment node
 // A change is linted as it is checked: `test:t1` runs eslint over the source files a change touches, because a lint error
-// reached master through a run that checked types but never linted (the drawer's `react-hooks/refs`, b54c5d7b).
+// reached master through a run that checked types but never linted (the drawer's `react-hooks/refs`, b54c5d7b). Lint is
+// Tier 3, so the run names what it found and exits nothing: `record` (scripts/lib/summary.ts) is what decides that, and
+// `tests/cli-reported-checks.test.ts` holds it.
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -26,7 +28,7 @@ describe('the lint step of a per-change run', () => {
     ])).toEqual(['scripts/navigate.ts', 'src/components/base/shell/index.tsx', 'tests/cli-lint-affected.test.ts']);
   });
 
-  it('runs eslint as `test:t1` runs it, and a lint error fails that command', () => {
+  it('runs eslint as `test:t1` runs it, with the real tool on a real violation', () => {
     // The wiring is the runner's own line; the failure is the real tool on a real violation, with the same arguments.
     expect(fs.readFileSync(path.join(ROOT, 'scripts/test-run.ts'), 'utf8')).toContain('lintTargets(present)');
     const probe = path.join(ROOT, 'tests', 'lint-probe.test.ts');

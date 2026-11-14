@@ -2,7 +2,7 @@
   {
     "page": "/deep-clipped",
     "suite": "audit",
-    "outcome": "fail",
+    "outcome": "reported",
     "line": "clipped:"
   },
   {
@@ -35,7 +35,7 @@
   {
     "page": "/deep-target",
     "suite": "audit",
-    "outcome": "fail",
+    "outcome": "reported",
     "line": "touch target under 44px:"
   },
   {
@@ -46,7 +46,7 @@
   {
     "page": "/deep-contrast",
     "suite": "audit",
-    "outcome": "fail",
+    "outcome": "reported",
     "line": "contrast:"
   },
   {
@@ -57,7 +57,7 @@
   {
     "page": "/deep-alpha",
     "suite": "audit",
-    "outcome": "fail",
+    "outcome": "reported",
     "line": "contrast:"
   },
   {
@@ -220,19 +220,19 @@
   {
     "page": "/svg-contrast",
     "suite": "audit",
-    "outcome": "fail",
+    "outcome": "reported",
     "line": "contrast:"
   },
   {
     "page": "/svg-label-on-bar-dark",
     "suite": "audit",
-    "outcome": "fail",
+    "outcome": "reported",
     "line": "contrast:"
   },
   {
     "page": "/truncated",
     "suite": "audit",
-    "outcome": "fail",
+    "outcome": "reported",
     "line": "truncated:"
   },
   {
@@ -315,19 +315,19 @@
   {
     "page": "/truncated-titled-wrong",
     "suite": "audit",
-    "outcome": "fail",
+    "outcome": "reported",
     "line": "truncated:"
   },
   {
     "page": "/sideways-region",
     "suite": "audit",
-    "outcome": "fail",
+    "outcome": "reported",
     "line": "sideways: scroll region"
   },
   {
     "page": "/sideways-data-page",
     "suite": "audit",
-    "outcome": "fail",
+    "outcome": "reported",
     "line": "sideways: data page"
   },
   {
@@ -339,13 +339,13 @@
   {
     "page": "/double-scroller",
     "suite": "audit",
-    "outcome": "fail",
+    "outcome": "reported",
     "line": "scrollers: "
   },
   {
     "page": "/heading-skip",
     "suite": "audit",
-    "outcome": "fail",
+    "outcome": "reported",
     "line": "heading skips a level: h2 then h4"
   },
   {
@@ -458,9 +458,9 @@
   { "page": "/presses-late-replace", "suite": "presses", "outcome": "pass", "line": "interactions: 4 controls pressed" },
   { "page": "/presses-controls-move", "suite": "presses", "outcome": "pass", "line": "; 0 issues" },
   { "page": "/presses-live-name", "suite": "presses", "outcome": "pass", "line": "; 0 issues" },
-  { "page": "/strip", "suite": "audit", "outcome": "fail", "line": "sideways: strip" },
+  { "page": "/strip", "suite": "audit", "outcome": "reported", "line": "sideways: strip" },
   { "page": "/strip-fixed", "suite": "audit", "outcome": "pass" },
-  { "page": "/spill", "suite": "audit", "outcome": "fail", "line": "spills: p.figure" },
+  { "page": "/spill", "suite": "audit", "outcome": "reported", "line": "spills: p.figure" },
   { "page": "/spill-fixed", "suite": "audit", "outcome": "pass" },
   { "page": "/disclosure", "suite": "keyboard", "outcome": "pass" },
   { "page": "/disclosure", "suite": "presses", "outcome": "pass", "line": "interactions: 2 controls pressed" },
@@ -491,7 +491,7 @@
   { "page": "/drawn-missing", "suite": "keyboard", "outcome": "pass", "args": ["--missing", "/drawn-missing"] },
   { "page": "/drawn-missing", "suite": "vitals", "outcome": "fail", "line": "/drawn-missing draws the not-found screen ([data-missing-page]), so what was measured is not the route" },
   { "page": "/drawn-missing", "suite": "vitals", "outcome": "clear", "args": ["--missing", "/drawn-missing"], "line": "draws the not-found screen" },
-  { "page": "/sideways-document", "suite": "audit", "outcome": "fail", "line": "sideways: document 616px wide at 390" },
+  { "page": "/sideways-document", "suite": "audit", "outcome": "reported", "line": "sideways: document 616px wide at 390" },
   { "page": "/sideways-document-fixed", "suite": "audit", "outcome": "pass" },
   { "page": "/presses-bad-url", "suite": "presses", "outcome": "fail", "line": "link http://[docs is not a URL" },
   { "page": "/presses-bad-url-fixed", "suite": "presses", "outcome": "pass" },
