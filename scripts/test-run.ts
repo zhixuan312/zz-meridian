@@ -93,9 +93,15 @@ export function baseline(): { ref: string; from: 'the last green run' | 'master'
 
 /** The files whose bytes differ from `base`, committed or not, with the untracked ones; a deleted path stays in the change. */
 function changedSince(base: string): { all: string[]; present: string[]; deleted: string[] } {
-  const tracked = git(['diff', '--name-only', '--diff-filter=ACDMR', base, '--']).out.split('\n').filter(Boolean);
-  const untracked = git(['ls-files', '--others', '--exclude-standard']).out.split('\n').filter(Boolean);
-  const all = [...new Set([...tracked, ...untracked])];
+  // A file the index does not hold is not tracked, whatever `git diff <tree>` says: against a tree it reads such a path
+  // as deleted, and the red run's baseline is the working copy's own tree, so every file the run added would come back as
+  // a change on the next run, and an unchanged retry could never see an unchanged tree.
+  const untrackedNow = git(['ls-files', '--others', '--exclude-standard']).out.split('\n').filter(Boolean);
+  const untracked = new Set(untrackedNow);
+  const tracked = git(['diff', '--name-only', '--diff-filter=ACDMR', base, '--']).out.split('\n').filter(Boolean).filter((f) => !untracked.has(f));
+  // A file `base` already holds is not this run's change, untracked or not.
+  const held = new Set(git(['ls-tree', '-r', '--name-only', base]).out.split('\n').filter(Boolean));
+  const all = [...new Set([...tracked, ...untrackedNow.filter((f) => !held.has(f))])];
   const present = all.filter((f) => fs.existsSync(path.join(ROOT, f)));
   const deleted = all.filter((f) => !present.includes(f));
   return { all, present, deleted };
