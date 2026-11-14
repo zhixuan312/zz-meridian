@@ -105,6 +105,16 @@ export function managedPaths(payloadFiles: readonly string[], route: 'adopt' | '
   return out;
 }
 
+/**
+ * The tests an update must delete: the tests the release the project was created by managed, less `tests/setup.ts`,
+ * which every project keeps. Read from that release's manifest and never from the folder, because a release ships tests
+ * it does not manage — `tests/examples/` is the team's to rewrite — and an update that rightly keeps those must not read
+ * as one that left its own tests behind.
+ */
+export function originTestsToDelete(originFiles: Readonly<Record<string, string>>): string[] {
+  return Object.keys(originFiles).filter((f) => f.startsWith('tests/') && f !== 'tests/setup.ts').sort();
+}
+
 /** What `update` does with one path, from the hash it recorded, the one in the target release and the one on disk. */
 export function classify(i: { recorded: Hash; target: Hash; disk: Hash; managed: boolean; kept?: boolean }): { disposition: Disposition; action: Action } {
   const { recorded, target, disk, managed, kept = false } = i;

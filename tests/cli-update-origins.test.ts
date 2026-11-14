@@ -6,6 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 import { sha256 } from '../cli/src/files.ts';
+import { originTestsToDelete } from '../cli/src/ownership.ts';
 import { start, type Context, type Release } from '../cli/src/session.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
@@ -16,6 +17,17 @@ const put = (root: string, files: Record<string, string>) => {
   for (const [p, c] of Object.entries(files)) { fs.mkdirSync(path.dirname(path.join(root, p)), { recursive: true }); fs.writeFileSync(path.join(root, p), c); }
 };
 const git = (root: string, ...a: string[]) => execFileSync('git', ['-c', 'user.email=t@example.com', '-c', 'user.name=t', ...a], { cwd: root, encoding: 'utf8' });
+
+describe('the tests an update must delete', () => {
+  it("asks the origin's manifest, so a test it shipped without managing is the team's and stays", () => {
+    // A project created by 0.39.3 holds `tests/setup.ts` and `tests/examples/*` on disk, and its manifest lists only
+    // the first: the examples are the team's to rewrite. The smoke read the folder instead of the manifest, so an update
+    // that correctly kept them read as a release that had left its own tests behind.
+    expect(originTestsToDelete({ 'tests/setup.ts': 'h', 'src/app.config.ts': 'h' })).toEqual([]);
+    // A test the origin did manage is still owed: that is the rule this asks about.
+    expect(originTestsToDelete({ 'tests/setup.ts': 'h', 'tests/cli.test.ts': 'h' })).toEqual(['tests/cli.test.ts']);
+  });
+});
 
 describe('a project created with 0.3.0', () => {
   it('updates although its manifest records the team-owned .env.example', () => {

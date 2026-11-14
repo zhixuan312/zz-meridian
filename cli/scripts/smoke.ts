@@ -41,7 +41,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { BEGIN, BRIEF_TEMPLATE, END, managedBlock } from '../src/context.ts';
-import { MANAGED_PATH, NEVER_MANAGED } from '../src/ownership.ts';
+import { MANAGED_PATH, NEVER_MANAGED, originTestsToDelete } from '../src/ownership.ts';
 import { causeLines, writeNestedRun } from './nested-run.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '../..');
@@ -594,7 +594,9 @@ function originUpgrade(version: string, route: 'adopt' | 'create') {
   }
   const owned = Object.fromEntries(teamOwned.map((f) => [f, sha(path.join(proj, f))]));
   const files = Object.keys(finalManifest(proj).files);
-  const originTests = filesUnder(proj, 'tests');
+  // The origin release's own rule, from its manifest: a test it shipped without managing (`tests/examples/`, the team's
+  // to rewrite) is not Meridian's, so an update keeps it and only the ones the origin managed are owed.
+  const originTests = originTestsToDelete(finalManifest(proj).files);
   const historical = ['src/app.config.ts', 'app/page.tsx'].filter((p) => p in finalManifest(proj).files);
 
   const before = projectState(proj);
@@ -607,7 +609,7 @@ function originUpgrade(version: string, route: 'adopt' | 'create') {
   // Taken where the updater has applied and nothing of the fixture has touched tests/: only `classify`'s deletions can have removed these.
   if (route === 'create' && (up.status === 0 || up.status === 2)) {
     const left = new Set(filesUnder(proj, 'tests'));
-    const stale = originTests.filter((f) => f !== 'tests/setup.ts' && left.has(f));
+    const stale = originTests.filter((f) => left.has(f));
     check(left.has('tests/setup.ts') && stale.length === 0, `${label}: the update deletes the origin's untouched tests and keeps tests/setup.ts`, stale.join('\n'));
   }
   if (up.status === 2) {
