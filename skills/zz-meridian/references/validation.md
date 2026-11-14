@@ -157,6 +157,11 @@ release before and reported, never a failure: every run records each value (per 
 change is a report that blocks nothing. A functional bound is not a budget: a control that never answers, a page that
 never readies or a link that never responds is a red under a fixed, generous bound, never a timing budget.
 
+A condition the product has no surface for is neither a measurement nor a failure. The 20-sample protocol's `afterLive`
+starts from a rail route that registers live data through the sample `LiveProvider`; a product whose live layer is its own
+answers no route, so the run prints `n/a  perf: afterLive (<why>)` once, measures warm and cold, and ends with
+`judged nothing: perf: afterLive (<why>)`. A run that reads that way measured two conditions and had no third to measure.
+
 ## Gate failures
 
 | Message | Cause | Fix |
