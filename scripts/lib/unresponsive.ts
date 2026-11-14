@@ -6,9 +6,11 @@
  * and when it happens on page after page, from the first, the browser itself has stopped, not the product.
  *
  * On 2026-11-14 that read as 807 `Runtime.evaluate timed out` lines on every route at every width, including a route that
- * does not exist, over three hours, while two full browser gates shared one 8-core machine. The verdict stays the same —
- * a check that could not run is not verified, so the run is not green — but it is one line, with its reason, instead of a
- * suite of them.
+ * does not exist, over three hours. What was loading that machine is not established: no Chrome crash and no sleep,
+ * DarkWake or thermal event was recorded in the window, the other session's gate ran on a hosted runner, and everything
+ * else running there is unknown — the unit-test phase kept its normal pace and the browser stage was starved from the
+ * moment it started. The verdict stays the same — a check that could not run is not verified, so the run is not green —
+ * but it is one line, with its reason, instead of a suite of them.
  *
  * The probe is a fresh tab: a browser whose renderer is wedged still starts one when the machine is only busy, and cannot
  * when the browser has stopped. A busy machine therefore never loses a sweep to this, and a stopped browser never wastes

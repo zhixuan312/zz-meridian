@@ -1,8 +1,9 @@
 // @vitest-environment node
 // A browser that stops answering is not a page that failed. On 2026-11-14 one `test:t2` reported 807 `Runtime.evaluate
 // timed out` lines — every page at every width, including a route that does not exist — from its first page, and spent
-// three hours doing it, because two full browser gates were running on one 8-core machine. The verdict is the same either
-// way (the check did not run, so the run is not green), but it is one line with its reason instead of a suite of 807.
+// three hours doing it. What was loading the machine is not established; the detector is what makes a repeat say so in
+// one line, with its reason, instead of a suite of 807. The verdict is the same either way (the check did not run, so the
+// run is not green).
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
