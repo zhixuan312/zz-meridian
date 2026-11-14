@@ -4,8 +4,9 @@
 import fs from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { parseYaml } from './lib/yaml';
+import { GATE_DEPTHS, STAGE_DEPTHS } from '../scripts/lib/browser-plan.ts';
 
-type Step = { uses?: string; name?: string; run?: string; if?: string; with?: Record<string, unknown> };
+type Step = { uses?: string; name?: string; run?: string; if?: string; 'continue-on-error'?: boolean; 'timeout-minutes'?: number; with?: Record<string, unknown> };
 type Job = {
   needs?: string | string[];
   'continue-on-error'?: boolean;
@@ -73,5 +74,39 @@ describe('the reader the workflows are read through', () => {
   it("reads a quote escaped with '' and keeps a block scalar's own lines", () => {
     const text = parseYaml("note: 'it''s here'\nrun: |\n  set -e\n  echo \"a: b\"\n");
     expect(text).toEqual({ note: "it's here", run: 'set -e\necho "a: b"\n' });
+  });
+});
+
+describe('the 20-sample protocol, off the gate', () => {
+  it('is its own non-blocking job, and no gate stage asks the browser for it', () => {
+    // A gate that waits on a measurement fails for the wrong reason: measured on one product, the protocol took its push
+    // gate from 1 h 47 m to 2 h 37 m against a 180-minute limit.
+    expect(GATE_DEPTHS).not.toContain('perf');
+    expect(STAGE_DEPTHS.tier2).not.toContain('perf');
+    expect(STAGE_DEPTHS.perf).toBe('perf');
+    const perf = release.perf;
+    expect(perf, 'the release has a perf job').toBeDefined();
+    expect(perf!['continue-on-error']).toBe(true);
+    expect(needs(perf!)).toEqual(['build']);
+    expect(runs(perf!)).toContain('stage perf');
+    // It gates nothing: publish and the tag never wait for it.
+    expect(needs(release.publish!)).not.toContain('perf');
+    expect(needs(release.release!)).not.toContain('perf');
+    // And the timed stage does not ask for the protocol it used to carry.
+    expect(runs(release.tier2!)).not.toContain('stage perf');
+    expect(runs(release.tier2!)).not.toContain('perf,');
+  });
+
+  it('still reaches the release comparison: the attach merges its record', () => {
+    const attach = release['tier2-attach']!;
+    expect(needs(attach)).toContain('perf');
+    expect(runs(attach)).toContain('/tmp/perf/perf-record.json');
+    expect(runs(attach)).toContain('merged.values');
+  });
+
+  it('is measured weekly on the quiet runner, where it cannot fail that job', () => {
+    const step = (weekly.release!.steps ?? []).find((s) => (s.run ?? '').includes('stage perf'));
+    expect(step, 'the weekly release runs the protocol').toBeDefined();
+    expect(step!['continue-on-error']).toBe(true);
   });
 });

@@ -108,6 +108,12 @@ jobs:
           mkdir -p out
           for i in $(seq 1 30); do pg_isready -h 127.0.0.1 -p 6432 -U meridian && break; sleep 1; done
           pnpm test:release 2>&1 | tee out/weekly-release.txt
+      # The 20-sample protocol, which no gate carries: measured here, weekly, on the quiet runner it needs, and never
+      # able to fail this run. `test:release` above judges times without it.
+      - name: The 20-sample protocol, measured and never gating
+        continue-on-error: true
+        timeout-minutes: 120
+        run: node scripts/test-run.ts stage perf
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:

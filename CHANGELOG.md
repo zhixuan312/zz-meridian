@@ -2,6 +2,16 @@
 
 Every release of ZZ Meridian, newest first. Versions follow semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Each entry says what breaks and what to do instead.
 
+## [Unreleased]
+
+### Changed
+
+- **The 20-sample protocol is measured in its own job, and never inside a gate.** `pnpm test:release` no longer asks the browser for `--depth perf`, and neither does the release's Tier 2 stage. Twenty samples across three conditions and two devices outrun the clock a gate can carry: measured on one product, the protocol took its push gate from 1 h 47 m to 2 h 37 m against a 180-minute limit, so the gate started failing for the wrong reason — a slow measurement, not a broken one. The protocol now has a stage of its own, `node scripts/test-run.ts stage perf`: it builds, measures, records its values into the same `out/perf-record.json` the timed suites write, and exits 0 whatever it finds, so it cannot fail the job that runs it. Meridian's release runs it as a `perf` job beside `tier2`, both `continue-on-error`, and `tier2-attach` merges the two records so the Release keeps the protocol's values in its table and history; the weekly run measures it on the quiet runner it needs.
+
+### Breaking
+
+- **A push gate that relied on `pnpm test:release` for the protocol's numbers no longer gets them.** Run `node scripts/test-run.ts stage perf` from a step or job of its own with `continue-on-error: true` and a limit sized to it — a scheduled workflow is the usual home. Your `test:release` needs no change: it still runs every Tier 1 check, the timed suites, lint and the type check, and its summary now names the stage that holds the protocol's values. An update reports the workflows affected as `perf-outside-the-gate`.
+
 ## [0.39.4] · 2026-11-14
 
 ### Fixed

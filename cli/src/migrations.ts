@@ -400,6 +400,15 @@ const importsAMovedModule = (root: string): string[] | null =>
 
 export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
   {
+    id: 'perf-outside-the-gate',
+    since: '0.39.5',
+    recurring: true,
+    applies: (root) => matching(root, (rel, src) => /^\.github\/workflows\//.test(rel) && /\btest:release\b/.test(src)),
+    summary: '`pnpm test:release` no longer runs the 20-sample protocol: it has its own stage, in its own non-blocking job.',
+    instructions: 'Read "Test runs" in AGENTS.md. `pnpm test:release` no longer asks the browser for `--depth perf`: 20 samples across three conditions and two devices outran the clock a gate can carry, and on one product it took that product\'s push gate from 1 h 47 m to 2 h 37 m against a 180-minute limit, so the gate failed for the wrong reason. The protocol now has a stage of its own, `node scripts/test-run.ts stage perf`: it builds, measures, records its values into the same Tier 2 record the timed suites write, reports, and exits 0, so it can never fail the job that runs it. Run it from a job or step of its own with `continue-on-error: true` and a limit sized to it — a scheduled workflow is the usual home, and `.github/workflows/weekly.yml` in Meridian\'s repository is that shape — and leave `test:release` where it is in your push gate. The release-to-release comparison keeps the protocol\'s values: `out/perf-record.json` carries them beside the timed ones.',
+    checks: [],
+  },
+  {
     id: 'verify-modes',
     since: '0.5.0',
     recurring: true,

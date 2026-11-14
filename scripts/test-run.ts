@@ -25,15 +25,18 @@
  *   and the sizes) are Tier 1 and fail the run. They run where a build and Chrome exist: test:t2, test:release and the
  *   release sweep jobs. test:t1 does not run them. `--only <audit|interactions|keyboard|rest>` runs one sweep by hand.
  * - Tier 2 is the performance convention `*.perf.test.ts(x)` and the timed browser suites: on a quiet machine, the timed
- *   runs (--depth timed), and the 20-sample protocol (--depth perf) where CI is true: the release workflow's `tier2`
- *   job and the weekly `release` job. They report and never fail: a timed or perf suite that prints FAIL is counted in the closing line's
- *   "Tier 2 over budget (reported, not failed)".
+ *   runs (--depth timed). They report and never fail: a timed or perf suite that prints FAIL is counted in the closing
+ *   line's "Tier 2 over budget (reported, not failed)".
+ * - The 20-sample protocol (--depth perf) is measured by its own stage, `stage perf`, in its own non-blocking job, and
+ *   never inside a gate: 20 samples across three conditions and two devices outruns the job limit a gate can carry. Its
+ *   values join the same record the timed runs write, so the release-to-release comparison keeps them.
  */
 import { spawn, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { bin } from './lib/bin.ts';
+import { GATE_DEPTHS, STAGE_DEPTHS } from './lib/browser-plan.ts';
 import { FIRST_LOAD_CAP_KB, budgetsOf, type BudgetsConfig } from './lib/budgets.ts';
 import { consumerSmokeKind } from './lib/consumer-smoke.ts';
 import { deepFiles, deepPart, deepPlan, deepReach } from './lib/deep-inputs.ts';
@@ -357,12 +360,17 @@ async function release(): Promise<number> {
   // The browser suites against that build: the sweeps first, then the timed runs alone on the quiet machine. The parts
   // dir is cleared first, so values the browser-fixture tests recorded into the same out/ are not this run's.
   clearParts(ROOT);
-  // The 20-sample protocol runs where `CI` is true, as it always has: the weekly run is the one with a quiet runner for
-  // it, and the release workflow asks for it in its own `tier2` job. A local `test:release` judges times without it.
-  const browserRun = await browser(process.env.CI === 'true' ? 'fn,timed,perf' : 'fn,timed', true);
+  // The 20-sample protocol is NOT here. It is measured by its own stage, in its own non-blocking job (`stage perf`),
+  // because it outruns any job limit a gate can carry: measured, it took a product's push gate from 1 h 47 m to 2 h 37 m
+  // against a 180-minute timeout, and a gate that waits on a measurement fails for the wrong reason. A release without it
+  // is a release with fewer numbers, never a release with a red.
+  const browserRun = await browser(GATE_DEPTHS, true);
   if (!browserRun.ok) failed.push('a browser suite');
   notRun.push(...browserRun.notRun.map((s) => `browser suites (${s})`));
   declared.push(...browserRun.declared.map((s) => `browser suites (${s})`));
+  // Said out loud rather than left as silence: the protocol is not skipped, it is measured elsewhere, and whoever reads
+  // this summary should know which stage holds those numbers.
+  declared.push('the 20-sample protocol: measured by its own stage (node scripts/test-run.ts stage perf), never inside the gate');
   // The Postgres code the skill's references hand a team lives outside tests/ and needs services: run it only where the
   // owner supplied them, and say it did not run otherwise, never that it passed.
   const missing = ['MERIDIAN_POSTGRES_URL', 'MERIDIAN_POOLER_URL', 'MERIDIAN_PG'].filter((k) => !process.env[k]);
@@ -570,7 +578,7 @@ function touchesBrowserAll(changed: string[]): boolean {
 }
 
 /** The stages of `test:release`, one CI job each. */
-const STAGES = ['static', 'sweep', 'deep', 'tier2'] as const;
+const STAGES = ['static', 'sweep', 'deep', 'tier2', 'perf'] as const;
 const SWEEPS = ['audit', 'interactions', 'keyboard', 'rest'] as const;
 
 /** A stage's last line and exit: 1 for a failed check, 2 for a check the environment could not run, else 0. */
@@ -622,15 +630,28 @@ function stageDeep(since: string, part: { i: number; n: number } | null): number
   return stageExit('stage deep', deep.status !== 0 ? ['the browser-fixture tests'] : [], deep.ran ? [] : ['browser-fixture tests (tests/deep-*) (no Chrome)'], [], []);
 }
 
-/** A build, then the timed and perf suites against it and the size values, recorded. Reports; always exits 0. */
+/** A build, then the timed suites against it and the size values, recorded. Reports; always exits 0. */
 async function stageTier2(): Promise<number> {
   if (productionBuild() !== 0) console.log('warn test:stage tier2: the production build failed, so no value was measured');
   clearParts(ROOT);
-  const r = await browser('timed,perf', true);
+  const r = await browser(STAGE_DEPTHS.tier2, true);
   const overBudget = [...(await reportTier2(r.tier2)), ...r.reported.map((s) => `browser suites (${s})`)];
   // A browser run that could not finish is a red of this stage and never "every check the stage runs passed": the run
   // measured nothing, and the release's whole Tier 2 table would go missing behind a green job.
   return stageExit('stage tier2', r.ok ? [] : ['the browser suites'], r.notRun.map((s) => `browser suites (${s})`), [], overBudget);
+}
+
+/**
+ * The 20-sample protocol, alone: a build, the protocol against it, its values recorded. It never gates anything, so this
+ * stage reports and exits 0 — a protocol that could not run is `not run` in its own line, never a red of the job holding
+ * it. It writes the same record `stage tier2` does, one part beside the other, which is how its values reach the release
+ * comparison without the gate ever waiting for them.
+ */
+async function stagePerf(): Promise<number> {
+  if (productionBuild() !== 0) console.log('warn test:stage perf: the production build failed, so no value was measured');
+  const r = await browser(STAGE_DEPTHS.perf, true);
+  const overBudget = [...(await reportTier2(r.tier2)), ...r.reported.map((s) => `browser suites (${s})`)];
+  return stageExit('stage perf', [], r.notRun.map((s) => `browser suites (${s})`), [], overBudget);
 }
 
 function stageMain(argv: string[]): Promise<number> | number {
@@ -639,9 +660,9 @@ function stageMain(argv: string[]): Promise<number> | number {
     console.error(`test-run: unknown stage "${name ?? ''}"; the stages are ${STAGES.join(', ')}`);
     return 1;
   }
-  if (name === 'static' || name === 'tier2') {
+  if (name === 'static' || name === 'tier2' || name === 'perf') {
     if (rest.length) { console.error(`test-run: stage ${name} takes no arguments`); return 1; }
-    return name === 'static' ? stageStatic() : stageTier2();
+    return name === 'static' ? stageStatic() : name === 'tier2' ? stageTier2() : stagePerf();
   }
   if (name === 'sweep') {
     if (rest.length !== 1 || !SWEEPS.includes(rest[0] as (typeof SWEEPS)[number])) {
