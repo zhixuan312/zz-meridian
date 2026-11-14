@@ -412,6 +412,11 @@ async function affected(tier: 't1' | 't2'): Promise<number> {
   const failed: string[] = [];
   /** The test files that failed, so a red run can hand the next one its smallest starting set. */
   const failedTests = new Set<string>();
+  // A retry of unchanged bytes re-runs what could have been transient and nothing else. When the red run named no test
+  // file — a browser fixture, a sweep, the consumer smoke — there is no suite to re-run, and the stages below decide for
+  // themselves whether they run.
+  const retryTests = sameTree ? (last?.failed ?? []) : null;
+  const skipTests = retryTests !== null && retryTests.length === 0;
   // The checks that read the whole tree cannot say anything new about bytes they have already read: a retry of an
   // unchanged tree runs its failures, and nothing else (docs/testing.md, "Once per commit").
   if (!sameTree) {
@@ -454,9 +459,11 @@ async function affected(tier: 't1' | 't2'): Promise<number> {
   // The whole tier runs when a deleted source file's importers cannot be computed, or when no selected test reached a
   // changed code file at all. Both are decided below, after the related run reports what it selected.
 
-  let first = runRelated
-    ? vitest('related', [...filters], withTier2, `tier ${withTier2 ? '2 and 1' : '1'} tests related to the change`)
-    : vitest('run', [], withTier2, `tier ${withTier2 ? '2 and 1' : '1'} tests (nothing identifies a smaller set)`);
+  let first = skipTests
+    ? { status: 0, files: 0, tests: 0, failed: [] as string[] }
+    : runRelated
+      ? vitest('related', [...filters], withTier2, `tier ${withTier2 ? '2 and 1' : '1'} tests related to the change`)
+      : vitest('run', [], withTier2, `tier ${withTier2 ? '2 and 1' : '1'} tests (nothing identifies a smaller set)`);
 
   if (first.status !== 0) failed.push(`the tests affected by the change`);
   for (const f of first.failed) failedTests.add(f);
