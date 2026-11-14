@@ -129,9 +129,9 @@ describe('the table after a deep-fixture run', () => {
     } finally {
       fs.rmSync(root, { recursive: true, force: true });
     }
-    // And the command clears them right before it starts the browser, where the fixtures' own runs stop mattering.
-    const runner = fs.readFileSync(path.join(import.meta.dirname, '..', 'scripts', 'test-run.ts'), 'utf8');
-    expect(runner.indexOf('clearParts(ROOT);\n  const browserRun = await browser(')).toBeGreaterThan(0);
+    // And the command clears them before it starts the browser, where the fixtures' own runs stop mattering. That is the
+    // behaviour the round-trip above proves; where in the file it is called is not a guarantee anyone can depend on, and
+    // reading the source to check it is the pin `docs/testing.md` ("Behavior, not pins") asks for the removal of.
   });
 });
 
