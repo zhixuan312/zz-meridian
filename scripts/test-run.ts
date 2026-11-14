@@ -357,7 +357,9 @@ async function release(): Promise<number> {
   // The browser suites against that build: the sweeps first, then the timed runs alone on the quiet machine. The parts
   // dir is cleared first, so values the browser-fixture tests recorded into the same out/ are not this run's.
   clearParts(ROOT);
-  const browserRun = await browser('fn,timed', true);
+  // The 20-sample protocol runs where `CI` is true, as it always has: the weekly run is the one with a quiet runner for
+  // it, and the release workflow asks for it in its own `tier2` job. A local `test:release` judges times without it.
+  const browserRun = await browser(process.env.CI === 'true' ? 'fn,timed,perf' : 'fn,timed', true);
   if (!browserRun.ok) failed.push('a browser suite');
   notRun.push(...browserRun.notRun.map((s) => `browser suites (${s})`));
   declared.push(...browserRun.declared.map((s) => `browser suites (${s})`));
@@ -626,8 +628,9 @@ async function stageTier2(): Promise<number> {
   clearParts(ROOT);
   const r = await browser('timed,perf', true);
   const overBudget = [...(await reportTier2(r.tier2)), ...r.reported.map((s) => `browser suites (${s})`)];
-  stageExit('stage tier2', [], r.notRun.map((s) => `browser suites (${s})`), [], overBudget);
-  return 0;
+  // A browser run that could not finish is a red of this stage and never "every check the stage runs passed": the run
+  // measured nothing, and the release's whole Tier 2 table would go missing behind a green job.
+  return stageExit('stage tier2', r.ok ? [] : ['the browser suites'], r.notRun.map((s) => `browser suites (${s})`), [], overBudget);
 }
 
 function stageMain(argv: string[]): Promise<number> | number {

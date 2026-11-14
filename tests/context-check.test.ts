@@ -82,3 +82,27 @@ describe('staleClaims', () => {
     ])).toEqual(['skills/zz-meridian/SKILL.md:2: names pnpm verify or pnpm gate']);
   });
 });
+
+// A fence holds commands and sentences, so the path a reader types is often followed by `;`, a comma or a full stop, or
+// carries the line it points at. None of that is part of the path, and a project's own gate must not fail on it.
+describe('a fenced command is read without the punctuation around a path', () => {
+  const fence = '```';
+  const scanFenced = (line: string) => scanReferences(
+    [{ file: 'README.md', text: `${fence}\n${line}\n${fence}` }],
+    (p) => p === 'README.md' || p === 'journeys/workspaces.ts',
+    new Set(),
+  );
+
+  it('accepts a path a sentence ended with a semicolon, a comma or a full stop', () => {
+    for (const line of ['cat README.md;', 'see README.md, then go', 'that is README.md.']) expect(scanFenced(line), line).toEqual([]);
+  });
+
+  it('accepts a path that names a line, or a range of lines, of itself', () => {
+    expect(scanFenced('open journeys/workspaces.ts:14')).toEqual([]);
+    expect(scanFenced('open journeys/workspaces.ts:14-22')).toEqual([]);
+  });
+
+  it('still reports a path no project holds, however the line ends', () => {
+    expect(scanFenced('cat CONTRIBUTING.md;')).toEqual(['README.md:2: path "CONTRIBUTING.md" does not exist']);
+  });
+});

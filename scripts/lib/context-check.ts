@@ -95,7 +95,10 @@ export function scanReferences(
         for (const token of line.split(/\s+/)) {
           const prefix = /^(required|optional|example):/.exec(token)?.[1];
           if (prefix === 'example') continue;
-          const ref = prefix ? token.slice(prefix.length + 1) : token;
+          // A command line ends a token with `;`, a comma or a full stop, and names a line of the file after a colon: a
+          // path the project holds must not be reported because the sentence around it added one (`README.md;`,
+          // `journeys/workspaces.ts:14`).
+          const ref = (prefix ? token.slice(prefix.length + 1) : token).replace(/:\d+(?:-\d+)?$/, '').replace(/[;,.]$/, '');
           const problem = pathProblem(ref, prefix, at, file, FENCED_ROOTS, exists);
           if (problem) problems.push(problem);
         }
