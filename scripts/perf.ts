@@ -38,7 +38,7 @@
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { budgetsOf, limitsFor } from './lib/budgets.ts';
-import { launch, type Page } from './lib/chrome.ts';
+import { ChromeStartError, launch, type Page } from './lib/chrome.ts';
 import { declaredNotRun, resolveCoverage, unconfiguredRoutes } from './lib/coverage.ts';
 import { recordPart } from './lib/tier2.ts';
 import { railRoutes } from './lib/routes.ts';
@@ -82,11 +82,10 @@ const text = (r: Result): string =>
 
 const out = (o: Record<string, unknown>) => console.log(`perf: ${JSON.stringify(o)}`);
 
-/** Chrome itself did not start, as opposed to a page or the app failing once it had. */
-class ChromeStartError extends Error {}
-
 async function openTab(refuse?: string): Promise<Page> {
   let page: Page;
+  // `launch` already answers this way for a browser that did not start (scripts/lib/chrome.ts), so the protocol reports it
+  // as a browser that could not start rather than as a page that failed.
   try { page = await launch(); } catch (e) { throw new ChromeStartError((e as Error).message); }
   try {
     await prepare(page, refuse);

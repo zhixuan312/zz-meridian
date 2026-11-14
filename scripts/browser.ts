@@ -226,11 +226,15 @@ function report(name: string, r: Ran): void {
   if (status === 'ok') ran.push(name);
   else if (status === 'FAIL') { failed = true; beneath(`${r.out}\n${r.err}`); }
   else {
+    // A suite that stopped because the browser did says why in its own one line, and the closing line carries that reason
+    // rather than the suite's name alone: "it did not run" is the verdict, and the reason is what someone acts on.
+    const stopped = /^not run: (.+)$/m.exec(r.out)?.[1];
     // A suite left unrun only by the project's own configuration — a rail route with no navigation check, a rail not in
     // a drawer on a phone — is not waiting on evidence a rerun could bring. It is reported as not run with its reason and
     // does not hold the last-green marker; anything else not run is evidence missing, and does.
     const entries = notRunEntries(r.out);
-    if (entries.length && entries.every(declaredNotRun)) declared.push(`${name}: ${entries.join('; ')}`);
+    if (stopped) notRun.push(`${name} (${stopped})`);
+    else if (entries.length && entries.every(declaredNotRun)) declared.push(`${name}: ${entries.join('; ')}`);
     else notRun.push(name);
   }
   if (status === 'ok' && r.out) beneath(r.out, 6);

@@ -44,12 +44,14 @@ import path from 'node:path';
 import { answerProblem, DRAWS_NOT_FOUND, missingRoutes } from './lib/answered.ts';
 import { atlasCoverage, atlasEntries } from './lib/atlas.ts';
 import { countsOf, partition } from './lib/audit-findings.ts';
-import { launch } from './lib/chrome.ts';
+import { launch, type Page } from './lib/chrome.ts';
+import { NOT_RUN_EXIT } from './lib/coverage.ts';
 import { DEEP_SOURCE } from './lib/deep.ts';
 import { discover } from './lib/routes.ts';
 import { phoneHeadProblem } from './lib/table-head.ts';
 import { settle } from './lib/settle.ts';
 import { detailRoutes, personaCookie } from './lib/team-config.ts';
+import { watchForStoppedBrowser } from './lib/unresponsive.ts';
 import { holdArgs } from './lib/args.ts';
 
 const args = process.argv.slice(2);
@@ -354,7 +356,15 @@ const MEASURE = `(() => {
 /** Pages that legitimately have a second scroller: the rail's own list, an open sidebar, a code block. */
 const ALLOWED_SCROLLERS = /data-scroll-region|^nav|^aside|^pre|^textarea|overflow-x-auto|max-h-|^div\.min-h-0\.flex-1\.overflow-y-auto/;
 
-const page = await launch();
+// A browser that did not start is not a verdict about a page and not a stack trace of the run: it is a check that could
+// not run, said once, and the run is not green because it did not run.
+let page: Page;
+try {
+  page = await launch();
+} catch (e) {
+  console.log(`not run: the browser could not start (${(e as Error).message})`);
+  process.exit(NOT_RUN_EXIT);
+}
 let failures = 0;
 /** The findings that are reported and never fail this run: kept so the last line counts them, and so the browser run can
  *  name them in its closing line. */
@@ -456,10 +466,17 @@ const measure = async (route: string, width: number, theme: string, embed: boole
 
 /** One route that could not be measured. A page that hangs is an issue of its own, never the end of the run. */
 const unmeasuredRoutes: string[] = [];
+/**
+ * Pages that stop answering altogether are not this product's pages: when the browser has stopped, the sweep ends as one
+ * `not run` line with its reason — the run is not green, because the check did not run, and it is not 807 failures either.
+ */
+const stoppedBrowser = watchForStoppedBrowser(() => page.responsive());
 const run = async (route: string, width: number, theme: string, embed: boolean) => {
   try {
     await measure(route, width, theme, embed);
   } catch (e) {
+    const stopped = await stoppedBrowser(e);
+    if (stopped) { console.log(`not run: ${stopped}`); page.close(); process.exit(NOT_RUN_EXIT); }
     // A protocol command that times out (30 s: `scripts/lib/chrome.ts`) used to end the whole audit, so one slow page in a
     // machine under load destroyed the evidence for the other 183 routes and the run reported nothing about any of them.
     // The route is a failure — it is named, it counts, the exit code is red — and the walk goes on to the next one.

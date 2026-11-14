@@ -43,6 +43,8 @@ function served(html: string): Page {
     open: async () => { document.body.innerHTML = html; },
     // In the global scope, as a page's own script is: the journey's questions read `document`.
     eval: async <T,>(expression: string) => (0, eval)(expression) as T,
+    // A page that answers is a browser that answers: the sweep's stop-on-unresponsive check never fires here.
+    responsive: async () => true,
   };
 }
 

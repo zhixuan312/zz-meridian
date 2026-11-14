@@ -41,7 +41,11 @@ flags at the top of the script:
 | `node scripts/sizes.ts` | First-load JS and served HTML of a production build. |
 
 A run that judges a time needs a quiet machine; nothing else does. Nothing that did not run is reported as passed: a
-diagnostic says `not run` with the reason (no Chrome, no backend, no service) and never `ok`.
+diagnostic says `not run` with the reason (no Chrome, no backend, no service) and never `ok`. A browser that stops
+answering partway through a sweep is that case too, and it says so once: three pages in a row whose DevTools commands
+timed out, plus a fresh tab that does not answer, end the sweep as one `not run` line with the count and the last error,
+so a starved machine does not read as a page that failed. It is not a pass — the check did not run — and it does not
+advance the marker.
 
 A failing static check is reported and the run carries on: lint, the type check and contrast never fail a run, and a red
 in one test never hides the next. `test:release` runs every stage whatever it meets, and names them all at the end; a
