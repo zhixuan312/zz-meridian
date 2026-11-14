@@ -91,9 +91,10 @@ type VerifyConfig = {
   /**
    * The product's own browser checks, beside Meridian's audit, presses and keyboard walk: scripts verify runs with
    * `--base <url>` against the built app, failing when one exits non-zero. An entry is the script's path, for a check that
-   * opens one browser, or `{ script, browsers }` for one that opens more at once. Verify holds that many of the run's
-   * browsers (`--browsers`), the whole ceiling at most, while it runs, and tells it in `VERIFY_BROWSERS` how many that
-   * is: a check that pools browsers sizes its pool from it, not from the machine.
+   * opens one browser, or `{ script, browsers }` for one that opens more at once. The run holds a ceiling of browsers
+   * between all of its checks — one per two cores, or `--browsers <n>` — starts each check only where it fits under that
+   * ceiling, and tells it in `VERIFY_BROWSERS` how many it has: a check that pools browsers sizes its pool from that
+   * number, not from the machine. A check that holds more than the whole ceiling runs alone, and is told the ceiling.
    */
   browserChecks?: (string | { script: string; browsers: number })[];
   /**
