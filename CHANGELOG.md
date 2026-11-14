@@ -2,11 +2,12 @@
 
 Every release of ZZ Meridian, newest first. Versions follow semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Each entry says what breaks and what to do instead.
 
-## [Unreleased]
+## [0.39.4] · 2026-11-14
 
 ### Fixed
 
 - **The browser suites hold a ceiling of browsers between them, and a check that watches a wall-clock window no longer judges the machine.** The function sweeps all start at once, so a product with several `browserChecks` put a dozen browsers on eight cores, and the checks that wait a fixed time for a panel or a chunk went red on a product that was fine: measured on one product, a page settled in 12.5 s with its check alone and in 25.4 s inside the full run, and the same failure took Meridian's own presses sweep with it. Every job now runs through one pool weighted by the `browsers` it opens, so the run never has more browsers open than its ceiling — `--browsers <n>`, and one per two cores by default. A check that declares more than the whole ceiling runs alone and is told the ceiling in `VERIFY_BROWSERS`, which is what `verify.config.ts` already promised and nothing implemented.
+- **A project's own gate no longer refuses a document that names `scripts/perf.ts`.** The retired-entry-point rule reported that file beside `verify.ts` and `gate.ts` as a script a project no longer has, but `perf.ts` still ships: the release's Tier 2 job runs the 20-sample protocol through it. A project that followed the guidance and pointed a document at the file had its own check fail on a path it holds. Only the two scripts that really went are reported now.
 
 ## [0.39.3] · 2026-11-14
 
