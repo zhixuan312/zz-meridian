@@ -106,3 +106,19 @@ describe('a fenced command is read without the punctuation around a path', () =>
     expect(scanFenced('cat CONTRIBUTING.md;')).toEqual(['README.md:2: path "CONTRIBUTING.md" does not exist']);
   });
 });
+
+// 0.39.2 told every document that `scripts/perf.ts` was removed with the `pnpm` commands that wrapped it. It was not:
+// the file still ships, and the release's `tier2` stage runs it as the 20-sample protocol. A rule that refuses a line
+// naming a script the release ships fails a project's own gate on text that is right.
+describe('a script the release still ships', () => {
+  const claims = (text: string) => staleClaims([{ file: '.github/workflows/weekly.yml', text }]);
+
+  it('is accepted, whichever way the line spells it', () => {
+    expect(claims('run: node scripts/perf.ts --base http://127.0.0.1:3000')).toEqual([]);
+    expect(claims('node scripts/perf.ts, the 20-sample protocol')).toEqual([]);
+  });
+
+  it('still refuses the removed `--perf` flag, which is a different thing', () => {
+    expect(claims('pnpm verify --perf')).toEqual(['.github/workflows/weekly.yml:1: names pnpm verify or pnpm gate', '.github/workflows/weekly.yml:1: names a removed flag']);
+  });
+});

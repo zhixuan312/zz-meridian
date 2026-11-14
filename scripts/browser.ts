@@ -20,8 +20,9 @@
  * (scripts/vitals.ts). It runs last, alone. It is Tier 2: a suite that prints FAIL is listed under `reported` and leaves
  * the run green; a suite that could not run is `not run`, never ok.
  *
- * `perf` is the 20-sample navigation protocol (scripts/perf.ts), judged the same way as `timed`. It runs only where CI is true and only for the weekly
- * job, which calls `pnpm test:t2` on a fresh clone; a local run reports it not run rather than judging the machine.
+ * `perf` is the 20-sample navigation protocol (scripts/perf.ts), judged the same way as `timed`. It runs only where CI is
+ * true, and `scripts/perf.ts` still ships: the release workflow's `tier2` job and `test:release`'s own tier 2 stage ask
+ * for it. A local run reports it not run rather than judging the machine.
  *
  * `--built` reuses the production build the caller already made (test:release builds once).
  *
