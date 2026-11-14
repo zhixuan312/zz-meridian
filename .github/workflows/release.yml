@@ -330,11 +330,17 @@ jobs:
 
   # Tier 2: measured and reported, never a gate. The job cannot fail the run (`continue-on-error`), `publish` does not
   # wait for it and neither does the tag. Its record travels to `tier2-attach`, which puts it on the Release.
+  #
+  # The ceiling is sized to the work, not to a gate. `stage tier2` measures every rail route (15) in six conditions at 20
+  # samples and needed more than 90 minutes: on 0.39.4 it was cut at 80 of its 90 measurements, the upload never ran,
+  # `tier2-attach` had nothing to attach, and the Release carried no record or history — so no 0.39.x Release ever got a
+  # `perf-history.json` and every comparison ran against the seed. Measured need is about 110 minutes; this leaves room
+  # for a loaded runner, as the protocol's own job carries 180.
   tier2:
     needs: build
     continue-on-error: true
     runs-on: ubuntu-24.04
-    timeout-minutes: 90
+    timeout-minutes: 150
     env:
       VERSION: ${{ inputs.version }}
       CHROME: /usr/bin/google-chrome
