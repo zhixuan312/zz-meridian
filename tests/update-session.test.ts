@@ -42,6 +42,10 @@ const resolved: Resolution[] = [
 
 describe('parseJournal', () => {
   it('reads a valid journal back', () => expect(parseJournal(JSON.stringify(journal()))).toEqual(journal()));
+  it('reads a journal written before keptDeletions existed as holding none, so an older project can still finalize', () => {
+    const { keptDeletions: _dropped, ...older } = journal();
+    expect(parseJournal(JSON.stringify(older)).keptDeletions).toEqual([]);
+  });
   it('refuses an unknown phase', () => expect(() => parseJournal(JSON.stringify({ ...journal(), phase: 'done' }))).toThrow(/phase/));
   it("refuses an id that is not one folder's name, since archive() joins it into a path", () => {
     for (const id of ['../escape', 'a/b', '..', '.', 'a\\b']) expect(() => parseJournal(JSON.stringify({ ...journal(), id })), id).toThrow(/plain folder name/);
