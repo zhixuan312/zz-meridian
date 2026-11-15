@@ -115,7 +115,7 @@ What exists, by layer, and how it changes per surface. "Same" means the card nee
 | Group | Cards |
 |---|---|
 | Actions | Button, Icon button, Menu |
-| Input | Field, Input, Textarea, Select, Checkbox, Radio group, Switch, Segmented, Search input |
+| Input | Field, Input, Textarea, Select, Combobox, Checkbox, Radio group, Switch, Segmented, Search input |
 | Display | Card, Badge, Status dot, Delta, Avatar, Agent mark, Tooltip, Progress, Key value, Copy field, Kbd, Popover, Disclosure |
 | Navigation | Tabs, Breadcrumb, Pagination |
 | Feedback | Banner, Toast, Dialog, Sheet, Empty state, Skeleton, Spinner |
