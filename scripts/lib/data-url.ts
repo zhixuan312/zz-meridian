@@ -108,3 +108,26 @@ export function unsafeDataUrls(values: Record<string, string>, defaults: Readonl
     return isLocalHost(host) ? [] : [`${name} → ${host}`];
   });
 }
+
+/**
+ * The variables one `.env` file sets, and the lines a reader cannot read as one.
+ *
+ * `export NAME=value` is dotenv's own form and is read. Anything else that is neither blank nor a comment is returned by
+ * line number rather than skipped: skipping is how this gate failed open, since a backend named on a line the gate could
+ * not read was a backend the presses reached without it ever seeing the line. The caller refuses on any unreadable line
+ * unless the person has taken that responsibility (`allowRemoteData`), so an unfamiliar dialect costs a refusal, never a
+ * press against a machine nobody checked.
+ */
+export function envValues(text: string): { values: Record<string, string>; unreadable: number[] } {
+  const values: Record<string, string> = {};
+  const unreadable: number[] = [];
+  for (const [i, raw] of text.split('\n').entries()) {
+    const line = raw.trim();
+    if (!line || line.startsWith('#')) continue;
+    const m = /^(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)$/.exec(line);
+    if (!m) { unreadable.push(i + 1); continue; }
+    const v = m[2].trim();
+    values[m[1]] = (v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'")) ? v.slice(1, -1) : v;
+  }
+  return { values, unreadable };
+}

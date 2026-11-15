@@ -54,7 +54,7 @@ import { afterSetupStep, FN_SWEEPS, navigationPlan, sweepsFor, timedOutcome, typ
 import { auditFindings } from './lib/audit-findings.ts';
 import { capacityFrom, pool } from './lib/pool.ts';
 import { clearParts, readParts } from './lib/tier2.ts';
-import { unsafeDataUrls } from './lib/data-url.ts';
+import { envValues, unsafeDataUrls } from './lib/data-url.ts';
 import { APP_DIR, railRoutes } from './lib/routes.ts';
 import { sampleSurfaces } from './lib/sample.ts';
 import { holdArgs } from './lib/args.ts';
@@ -127,22 +127,21 @@ function beneath(text: string, keep = 60): void {
 
 // ---- what is safe to run against ----
 
-/** The `.env` files Next loads into the build and the server, in its own order: a later file wins over an earlier one. */
-function envFiles(): Record<string, string> {
-  const out: Record<string, string> = {};
+/**
+ * The `.env` files Next loads into the build and the server, in its own order: a later file wins over an earlier one.
+ * A line the reader cannot read is named with its file and line, never skipped — see `envValues` for why.
+ */
+function envFiles(): { values: Record<string, string>; unreadable: string[] } {
+  const values: Record<string, string> = {};
+  const unreadable: string[] = [];
   for (const f of ['.env', '.env.production', '.env.local', '.env.production.local']) {
     const p = path.join(ROOT, f);
     if (!fs.existsSync(p)) continue;
-    for (const raw of fs.readFileSync(p, 'utf8').split('\n')) {
-      const line = raw.trim();
-      if (!line || line.startsWith('#')) continue;
-      const m = /^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)$/.exec(line);
-      if (!m) continue;
-      const v = m[2].trim();
-      out[m[1]] = (v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'")) ? v.slice(1, -1) : v;
-    }
+    const read = envValues(fs.readFileSync(p, 'utf8'));
+    Object.assign(values, read.values);
+    unreadable.push(...read.unreadable.map((n) => `${f}:${n}`));
   }
-  return out;
+  return { values, unreadable };
 }
 
 /** Why the presses and the walk-throughs cannot run here, or null when they can. Decided before anything starts. */
@@ -154,7 +153,15 @@ function unsafeBackend(): { reason: string; fix: string } | null {
       fix: 'this project kept its own data layer: set fakeApi or noLiveApi in scripts/verify.config.ts — fakeApi: { script, env } starts a fake API the browser stage builds and serves the app against, and noLiveApi: true says the pages read and write nothing outside this repository',
     };
   }
-  const fromFiles = envFiles();
+  const { values: fromFiles, unreadable } = envFiles();
+  // A `.env` line this cannot read is a backend it cannot see: the presses press Delete and Revoke, so it refuses rather
+  // than run against a machine nobody has looked at. `allowRemoteData` is the person taking that responsibility.
+  if (unreadable.length && !config.allowRemoteData) {
+    return {
+      reason: `a .env line this gate cannot read: ${unreadable[0]}${unreadable.length > 1 ? ` (+${unreadable.length - 1} more)` : ''}`,
+      fix: 'the presses and the walk-throughs must know where the data goes before they run. Write each variable as NAME=value (dotenv\'s own `export NAME=value` is read too), or set allowRemoteData in scripts/verify.config.ts once you have checked that line yourself',
+    };
+  }
   const named = ['DATABASE_URL', ...(config.dataUrls ?? [])];
   const offenders = unsafeDataUrls(Object.fromEntries(named.map((name) => [name, process.env[name] ?? fromFiles[name] ?? ''])), {
     PGHOST: process.env.PGHOST ?? fromFiles.PGHOST,
