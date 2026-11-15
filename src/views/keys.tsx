@@ -220,7 +220,14 @@ export function KeysView({ rows, now, revisions, createKey, revokeKey, may = { c
             </>
           }
         >
-          {revoking ? <p className="t-small text-ink-2">Last used {revoking.lastUsed ? formatRelative(revoking.lastUsed, asOf) : 'never'} by {revoking.owner}&rsquo;s services.</p> : null}
+          {/* A key nobody has used cannot say "last used never by …": the sentence reads as a time and a use that did not happen. */}
+          {revoking ? (
+            <p className="t-small text-ink-2">
+              {revoking.lastUsed
+                ? <>Last used {formatRelative(revoking.lastUsed, asOf)} by {revoking.owner}&rsquo;s services.</>
+                : <>Never used, since {revoking.owner} created it on {formatDate(revoking.created)}.</>}
+            </p>
+          ) : null}
         </DialogContent>
       </Dialog>
     </PageFrame>

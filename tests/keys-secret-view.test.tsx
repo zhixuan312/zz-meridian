@@ -57,6 +57,14 @@ describe.skipIf(!sample)('creating a key', () => {
     expect(create).toHaveBeenCalledOnce();
   });
 
+  it('says a key nobody used was never used, not "last used never by"', async () => {
+    const unused = { ...API_KEYS[0]!, id: 'keys_unused', name: 'Unused probe', lastUsed: null };
+    render(<KeysView rows={[unused]} now="2026-10-05T09:00:00.000Z" createKey={async () => ({ ok: true, key: { ...unused, secret: 'synthetic' } })} revokeKey={async () => ({ ok: true })} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Revoke Unused probe' }));
+    expect(await screen.findByText(/Never used, since/)).toBeTruthy();
+    expect(document.body.textContent).not.toMatch(/Last used never/);
+  });
+
   it('says why it failed inside the open sheet, not in a toast over it', async () => {
     render(<KeysView rows={API_KEYS} now="2026-10-05T09:00:00.000Z" createKey={async () => ({ ok: false, error: 'You do not have permission to create keys.' })} revokeKey={async () => ({ ok: true })} />);
     fireEvent.click(screen.getAllByRole('button', { name: 'Create key' })[0]);
