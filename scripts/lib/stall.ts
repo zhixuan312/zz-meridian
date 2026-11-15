@@ -101,3 +101,18 @@ export class StallGuard {
     console.log(`reported: the browser stopped drawing frames ${n} ${n === 1 ? 'time' : 'times'}; relaunched (${this.relaunchedWork.map(where).join(', ')})`);
   }
 }
+
+/**
+ * Whether a thrown error says the *connection* to the browser is gone, rather than that a page failed.
+ *
+ * A dead connection is the browser's, not the product's, so it earns the same answer as a stalled one: one relaunch and
+ * the work measured again, then a counted `not run` — never a stack trace. Seen on 2026-11-16 in a dashboard's own
+ * `test:release`: the persona browser sat idle while `interactions.ts` ran in its own process, then answered
+ * `Runtime.evaluate: Chrome closed the connection` on its first page, and because nothing caught it the keyboard walk, the
+ * timed suites, the product's own checks and the vitals all went unreported instead of `not run`. Why Chrome closed the
+ * connection is not established.
+ */
+export function browserGone(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return /Chrome closed the connection|Target closed|Session closed|Connection closed|WebSocket is already in a closed state|Inspector\.detached|Protocol error \([^)]*\): (?:Target|Session) closed/i.test(message);
+}

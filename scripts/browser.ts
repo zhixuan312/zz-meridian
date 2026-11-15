@@ -49,6 +49,7 @@ import { answers, bin, freePort, spawnNext } from './lib/bin.ts';
 import { CHROME, launch } from './lib/chrome.ts';
 import { fakeModelArgs, fakeModelProblems, type FakeModelStep } from './lib/config-hooks.ts';
 import { declaredNotRun, selectSmokeRoutes } from './lib/coverage.ts';
+import { browserGone } from './lib/stall.ts';
 import { afterSetupStep, FN_SWEEPS, navigationPlan, sweepsFor, timedOutcome, type FnSweep } from './lib/browser-plan.ts';
 import { auditFindings } from './lib/audit-findings.ts';
 import { capacityFrom, pool } from './lib/pool.ts';
@@ -413,7 +414,21 @@ if (sweep('rest') || want('timed')) {
 
   // --as the personas, each against a fresh server: a persona's presses change the sample's state.
   if (sweep('rest') && config.personas && Object.keys(config.personas).length) {
-    const personaPage = await launch();
+    let personaPage = await launch();
+    // One browser serves every persona. Its connection can die between two of them — on 2026-11-16 a dashboard's release
+    // run had this browser sit idle through the whole interactions suite and then answer `Chrome closed the connection` on
+    // its first page. That is the browser's failure, not the product's, so the same answer a stalled browser gets: one
+    // relaunch, the same step again, and a second death is a counted `not run` — never a stack trace that would take the
+    // keyboard walk, the timed suites, the product's own checks and the vitals down with it.
+    const withPage = async <T>(work: (page: Awaited<ReturnType<typeof launch>>) => Promise<T>): Promise<T> => {
+      try { return await work(personaPage); } catch (e) {
+        if (!browserGone(e)) throw e;
+        console.log('warn    the browser stopped answering; relaunching it once');
+        try { personaPage.close(); } catch { /* already gone */ }
+        personaPage = await launch();
+        return work(personaPage);
+      }
+    };
     try {
       for (const name of Object.keys(config.personas)) {
         const persona = config.personas[name];
@@ -438,19 +453,19 @@ if (sweep('rest') || want('timed')) {
             if (presses.status !== 0) problems.push(`${name}: the presses failed on ${roleRoutes.join(', ')} — ${presses.out.split('\n').filter(Boolean).slice(-1)[0] ?? 'no output'}`);
           }
           for (const route of persona.expectedRoutes) {
-            await personaPage.open(here + route, { width: 1440, height: 900, theme: 'dark', cookie: persona.cookie });
-            const denied = await personaPage.eval<boolean>(`(async () => { await new Promise((r) => setTimeout(r, 400)); return !!document.querySelector(${JSON.stringify(refusal.selector)}); })()`);
+            await withPage((p) => p.open(here + route, { width: 1440, height: 900, theme: 'dark', cookie: persona.cookie }));
+            const denied = await withPage((p) => p.eval<boolean>(`(async () => { await new Promise((r) => setTimeout(r, 400)); return !!document.querySelector(${JSON.stringify(refusal.selector)}); })()`));
             if (denied) problems.push(`${name}: ${route} is expected of this persona, but the page shows ${refusal.page}`);
           }
           const deniedProbe = persona.deniedProbe ?? {};
           for (const route of rail.routes.filter((r) => !persona.expectedRoutes.includes(r))) {
-            await personaPage.open(here + route, { width: 1440, height: 900, theme: 'dark', cookie: persona.cookie });
-            const denied = await personaPage.eval<boolean>(`(async () => { const end = Date.now() + 5000; while (Date.now() < end) { if (document.querySelector(${JSON.stringify(refusal.selector)})) return true; await new Promise((r) => setTimeout(r, 100)); } return false; })()`);
+            await withPage((p) => p.open(here + route, { width: 1440, height: 900, theme: 'dark', cookie: persona.cookie }));
+            const denied = await withPage((p) => p.eval<boolean>(`(async () => { const end = Date.now() + 5000; while (Date.now() < end) { if (document.querySelector(${JSON.stringify(refusal.selector)})) return true; await new Promise((r) => setTimeout(r, 100)); } return false; })()`));
             if (!denied) problems.push(`${name}: ${route} should show ${refusal.page} for this persona, and does not`);
-            if (refusal.absent && (await personaPage.eval<boolean>('!!document.querySelector("[data-no-access]")'))) problems.push(`${name}: ${route} shows NoAccess, and the product's refusal is absent`);
+            if (refusal.absent && (await withPage((p) => p.eval<boolean>('!!document.querySelector("[data-no-access]")')))) problems.push(`${name}: ${route} shows NoAccess, and the product's refusal is absent`);
             const probe = deniedProbe[route];
             if (probe) {
-              const text = await personaPage.eval<string>('document.body.innerText');
+              const text = await withPage((p) => p.eval<string>('document.body.innerText'));
               if (text.includes(probe)) problems.push(`${name}: ${route} leaked "${probe}"`);
             }
           }
@@ -460,8 +475,14 @@ if (sweep('rest') || want('timed')) {
         if (problems.length) { failed = true; phase('FAIL', `persona ${name}`, null, problems.join('; ')); }
         else phase('ok', `persona ${name}`, null, `the rail matches its ${persona.expectedRoutes.length} routes`);
       }
+    } catch (e) {
+      // A browser that died a second time, or any other throw here, is this stage's answer — the personas were not measured
+      // — and never the end of the run: what follows (the assistant, the sweeps, the timed suites, the product's checks,
+      // the vitals) is reported whether this stage was or not.
+      if (browserGone(e)) notRun.push(`the personas (the browser stopped answering twice: ${(e as Error).message.split('\n')[0]})`);
+      else { failed = true; phase('FAIL', 'the personas', null, (e as Error).message.split('\n')[0]); }
     } finally {
-      personaPage.close();
+      try { personaPage.close(); } catch { /* already gone */ }
     }
     // Every persona is read, and every sweep after them: one persona's red is that persona's, and the run reports it with
     // the rest rather than hiding what it has not looked at yet.

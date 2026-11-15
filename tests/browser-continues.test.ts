@@ -50,3 +50,23 @@ describe('a step everything below depends on', () => {
     expect(SOURCE).toContain("start({ ...app, LIVE_DROP_HINTS: '1' }, false)");
   });
 });
+
+// The persona block opened its own browser and kept it while `interactions.ts` ran in another process. On a dashboard's
+// 0.39.8 release run (2026-11-16) that browser answered `Runtime.evaluate: Chrome closed the connection` on its first page
+// after the idle spell, the throw escaped the block, and the keyboard walk, the timed suites, the product's own checks and
+// the vitals were never run and never reported.
+describe('a browser whose connection died', () => {
+  it('is relaunched once for the same step, and a second death is a counted not run', () => {
+    expect(SOURCE).toContain('const withPage = async <T>');
+    expect(SOURCE).toContain('if (!browserGone(e)) throw e;');
+    expect(SOURCE).toContain("notRun.push(`the personas (the browser stopped answering twice:");
+    // Every page call in the persona block goes through the wrapper, so no step can throw past it.
+    expect(SOURCE).not.toMatch(/await personaPage\.(open|eval)/);
+  });
+
+  it('never ends the run from that block: the stages after it are reported either way', () => {
+    // The block closes with a catch, not a bare finally: a throw there is the personas' answer, never the run's.
+    expect(SOURCE).toMatch(/\} catch \(e\) \{\n\s+\/\/ A browser that died a second time/);
+    expect(SOURCE).toContain("phase('FAIL', 'the personas', null,");
+  });
+});

@@ -7,7 +7,7 @@ import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { NOT_RUN_EXIT } from '../scripts/lib/coverage.ts';
 import type { Page } from '../scripts/lib/chrome.ts';
-import { StallGuard } from '../scripts/lib/stall.ts';
+import { StallGuard, browserGone } from '../scripts/lib/stall.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 
@@ -134,5 +134,27 @@ describe('the guard a timed script holds when the browser stops painting', () =>
     const r = spawnSync(process.execPath, ['-e', "import('./scripts/lib/stall.ts').then((m) => console.log(m.StallGuard.name))"], { cwd: ROOT, encoding: 'utf8' });
     expect(r.status, r.stderr).toBe(0);
     expect(r.stdout.trim()).toBe('StallGuard');
+  });
+});
+
+// The same browser class, a different symptom: the connection is gone rather than the frames stopped. A dashboard's 0.39.8
+// release run met it on 2026-11-16 — `Runtime.evaluate: Chrome closed the connection` — and nothing caught it, so every
+// stage after the personas went unreported.
+describe('what a dead browser connection looks like', () => {
+  it('recognises the errors Chrome reports when the connection is gone', () => {
+    for (const m of [
+      'Runtime.evaluate: Chrome closed the connection',
+      'Protocol error (Page.navigate): Target closed.',
+      'Session closed. Most likely the page has been closed.',
+      'WebSocket is already in a closed state',
+      'Inspector.detached',
+    ]) expect(browserGone(new Error(m)), m).toBe(true);
+  });
+
+  it("leaves a page's own failure alone, which is the product's and stays one", () => {
+    for (const m of ['timed out waiting for the content', 'AssertionError: expected 3 rows, got 0', 'net::ERR_NAME_NOT_RESOLVED']) {
+      expect(browserGone(new Error(m)), m).toBe(false);
+    }
+    expect(browserGone('some string')).toBe(false);
   });
 });
