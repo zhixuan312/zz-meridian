@@ -43,7 +43,7 @@ import { bin } from './lib/bin.ts';
 import { GATE_DEPTHS, STAGE_DEPTHS } from './lib/browser-plan.ts';
 import { consumerSmokeKind } from './lib/consumer-smoke.ts';
 import { deepFiles, deepPart, deepPlan, deepReach } from './lib/deep-inputs.ts';
-import { markerFor } from './lib/marker.ts';
+import { recordMarker } from './lib/marker.ts';
 import { clearLastRun, failedFilesOf, readLastRun, retryBaseline, retryNumber, writeLastRun } from './lib/last-run.ts';
 import { lintTargets } from './lib/lint.ts';
 import { deepBrowserNotRun } from './lib/report-lines.ts';
@@ -147,18 +147,8 @@ export function testsNaming(file: string): string[] {
 
 /** The commit this run read when it started: the one a passing run records, and the one it proves. */
 const HEAD_AT_START = git(['rev-parse', 'HEAD']).out;
-
-/**
- * A passing run records the commit it proved, so the next run reads a smaller diff instead of the branch's whole
- * history — and it records the commit it *read when it started* (`scripts/lib/marker.ts`), never whichever is current
- * now: a commit made while the run was going was otherwise stamped as proven although nothing had tested it.
- */
-function recordGreen(): void {
-  const { write, moved } = markerFor(HEAD_AT_START, git(['rev-parse', 'HEAD']).out);
-  fs.mkdirSync(path.dirname(MARKER), { recursive: true });
-  fs.writeFileSync(MARKER, `${write}\n`);
-  if (moved) console.log(`note: the marker records ${write.slice(0, 8)}, the tree this run proved; HEAD moved to ${moved.slice(0, 8)} while it ran, and that commit is the next run's to prove`);
-}
+/** A passing run records the commit it proved, not whichever is current now (`scripts/lib/marker.ts`). */
+const recordGreen = () => recordMarker(MARKER, HEAD_AT_START, git(['rev-parse', 'HEAD']).out);
 
 /** Vitest's arguments for a run: `related` limits it to the import graph of `filters`, `run` takes every collected file. */
 function vitestArgs(mode: 'related' | 'run', filters: string[], withTier2: boolean): string[] {
