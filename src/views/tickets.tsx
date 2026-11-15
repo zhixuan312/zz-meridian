@@ -242,11 +242,12 @@ export function TicketsView({ rows, now, revisions, may = { create: true, update
         </div>
       </Records>
 
-      <Dialog open={creating} onOpenChange={setCreating}>
+      <Dialog open={creating} onOpenChange={(open) => { if (!open && making) return; setCreating(open); }}>
         <DialogContent
           title="New ticket"
           description="It starts open. You can move it along once it exists."
-          footer={<><DialogClose asChild><Button variant="ghost">Cancel</Button></DialogClose><Button variant="primary" busy={making} onClick={create}>Create ticket</Button></>}
+          busy={making}
+          footer={<><DialogClose asChild><Button variant="ghost" disabled={making}>Cancel</Button></DialogClose><Button variant="primary" busy={making} onClick={create}>Create ticket</Button></>}
         >
           <div className="flex flex-col gap-5">
             {refusal ? <Banner tone="critical" title="Ticket not created">{refusal}</Banner> : null}

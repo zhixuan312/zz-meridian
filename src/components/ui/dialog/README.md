@@ -45,6 +45,7 @@ Head padding 20px 24px 4px; body 12px 24px 24px; footer 14px 24px. Maximum heigh
 
 - Focus moves to the first field (or the close button) on open, is trapped inside, and returns to the trigger on close.
 - Escape, the close button and the scrim close it.
+- A dialog whose task is on its way is `busy`: Cancel, Escape and the scrim do not close it, and `aria-busy` says so, until the action answers. Closing it would hide the answer to a request already sent, and invite a second one — a second record, on a create.
 - Enter in a single-field form submits.
 
 ## Surfaces

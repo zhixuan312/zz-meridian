@@ -90,8 +90,27 @@ describe('the tickets page, for someone who may', () => {
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
   });
 
-  it('keeps Create ticket ready while a row is moving, which is not a ticket being made', async () => {
-    const updateTicket = vi.fn(() => new Promise<Answer>(() => {}));
+  it('does not let the form be dismissed while the ticket is on its way', async () => {
+    let made!: (a: Answer) => void;
+    const createTicket = vi.fn(() => new Promise<Answer>((resolve) => { made = resolve; }));
+    view({ createTicket });
+    fireEvent.click(screen.getByRole('button', { name: 'New ticket' }));
+    const form = await screen.findByRole('dialog');
+    fireEvent.change(within(form).getByLabelText(/^Title/), { target: { value: 'Rotate the gateway certificate' } });
+    await act(async () => { fireEvent.click(within(form).getByRole('button', { name: 'Create ticket' })); });
+    // Cancel, Escape and the scrim used to close it while the server was already making the ticket: the dialog went away,
+    // the ticket was made anyway, and pressing New ticket again made a second one.
+    const open = screen.getByRole('dialog');
+    expect(within(open).getByRole('button', { name: 'Cancel' })).toBeDisabled();
+    expect(open.getAttribute('aria-busy')).toBe('true');
+    fireEvent.keyDown(open, { key: 'Escape' });
+    expect(screen.queryByRole('dialog')).not.toBeNull();
+    await act(async () => { made({ ok: true }); });
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    expect(createTicket).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps Create ticket ready while a row is moving, which is not a ticket being made', async () => {    const updateTicket = vi.fn(() => new Promise<Answer>(() => {}));
     view({ updateTicket });
     fireEvent.keyDown(screen.getByRole('button', { name: 'Change state of Gateway answers 502 under load' }), { key: 'Enter' });
     await act(async () => { fireEvent.click(within(await screen.findByRole('menu')).getByRole('menuitem', { name: 'Move to closed' })); });

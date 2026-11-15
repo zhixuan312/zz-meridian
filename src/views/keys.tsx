@@ -164,11 +164,12 @@ export function KeysView({ rows, now, revisions, createKey, revokeKey, may = { c
         <p className="t-caption max-w-[72ch]">Keys never expire. To rotate one, create its replacement, move your services to it, then revoke the old key: requests signed with it fail at once.</p>
       </Records>
 
-      <Sheet open={creating} onOpenChange={setCreating}>
+      <Sheet open={creating} onOpenChange={(open) => { if (!open && pending) return; setCreating(open); }}>
         <SheetContent
           title="Create a key"
           description="The key is shown once, after you create it."
-          footer={<><SheetClose asChild><Button variant="ghost">Cancel</Button></SheetClose>{may.create ? <Button variant="primary" onClick={create} disabled={pending || scopes.length === 0}>Create key</Button> : null}</>}
+          busy={pending}
+          footer={<><SheetClose asChild><Button variant="ghost" disabled={pending}>Cancel</Button></SheetClose>{may.create ? <Button variant="primary" onClick={create} disabled={pending || scopes.length === 0}>Create key</Button> : null}</>}
         >
           <div className="flex flex-col gap-6">
             {createError ? <Banner tone="critical" title="Key not created">{createError}</Banner> : null}

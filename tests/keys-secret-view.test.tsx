@@ -40,6 +40,23 @@ describe.skipIf(!sample)('creating a key', () => {
     expect(toasts.at(-1)).toMatchObject({ title: 'Key created', description: warning });
   });
 
+  it('does not let the sheet be dismissed while the key is on its way', async () => {
+    let made!: (r: { ok: true; key: unknown }) => void;
+    const create = vi.fn(() => new Promise<{ ok: true; key: unknown }>((resolve) => { made = resolve; }));
+    render(<KeysView rows={API_KEYS} now="2026-10-05T09:00:00.000Z" createKey={create as never} revokeKey={async () => ({ ok: true })} />);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Create key' })[0]);
+    fireEvent.change(await screen.findByLabelText(/^Name/), { target: { value: 'Billing worker' } });
+    await act(async () => { fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Create key' })); });
+    const sheet = screen.getByRole('dialog');
+    expect(within(sheet).getByRole('button', { name: 'Cancel' })).toBeDisabled();
+    expect(sheet.getAttribute('aria-busy')).toBe('true');
+    fireEvent.keyDown(sheet, { key: 'Escape' });
+    expect(screen.queryByRole('dialog')).not.toBeNull();
+    await act(async () => { made({ ok: true, key: { ...API_KEYS[0], name: 'Billing worker', secret: 'synthetic-one-time-key' } }); });
+    expect(screen.getByText('Copy Billing worker now')).toBeTruthy();
+    expect(create).toHaveBeenCalledOnce();
+  });
+
   it('says why it failed inside the open sheet, not in a toast over it', async () => {
     render(<KeysView rows={API_KEYS} now="2026-10-05T09:00:00.000Z" createKey={async () => ({ ok: false, error: 'You do not have permission to create keys.' })} revokeKey={async () => ({ ok: true })} />);
     fireEvent.click(screen.getAllByRole('button', { name: 'Create key' })[0]);

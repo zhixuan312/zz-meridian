@@ -31,14 +31,22 @@ export function SheetContent({
   title,
   description,
   footer,
+  busy = false,
   className,
   children,
+  onEscapeKeyDown,
+  onInteractOutside,
   ...rest
-}: Omit<ComponentProps<typeof D.Content>, 'title'> & { title: ReactNode; description?: ReactNode; footer?: ReactNode }) {
+}: Omit<ComponentProps<typeof D.Content>, 'title'> & { title: ReactNode; description?: ReactNode; footer?: ReactNode; busy?: boolean }) {
   return (
     <D.Portal>
       <D.Overlay className="scrim-in fixed inset-0 z-(--layer-overlay) bg-scrim" />
       <D.Content
+        aria-busy={busy || undefined}
+        // A sheet whose task is on its way is not dismissable: the request is already sent, so closing it hides the
+        // answer and invites a second press — and on a create, a second record.
+        onEscapeKeyDown={(e) => { onEscapeKeyDown?.(e); if (busy) e.preventDefault(); }}
+        onInteractOutside={(e) => { onInteractOutside?.(e); if (busy) e.preventDefault(); }}
         className={cn(
           'fixed z-(--layer-overlay)',
           'inset-y-0 right-0 w-110 max-w-[calc(100vw-48px)] border-l border-line',

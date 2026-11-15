@@ -27,16 +27,24 @@ export function DialogContent({
   description,
   footer,
   size = 'md',
+  busy = false,
   className,
   children,
   onOpenAutoFocus,
+  onEscapeKeyDown,
+  onInteractOutside,
   ...rest
-}: Omit<ComponentProps<typeof D.Content>, 'title'> & { title: ReactNode; description?: ReactNode; footer?: ReactNode; size?: keyof typeof DIALOG_WIDTH }) {
+}: Omit<ComponentProps<typeof D.Content>, 'title'> & { title: ReactNode; description?: ReactNode; footer?: ReactNode; size?: keyof typeof DIALOG_WIDTH; busy?: boolean }) {
   const body = useRef<HTMLDivElement>(null);
   return (
     <D.Portal>
       <D.Overlay className="scrim-in fixed inset-0 z-(--layer-overlay) bg-scrim" />
       <D.Content
+        aria-busy={busy || undefined}
+        // A dialog whose task is on its way is not dismissable: the request is already sent, so closing it hides the
+        // answer and invites a second press — and on a create, a second record.
+        onEscapeKeyDown={(e) => { onEscapeKeyDown?.(e); if (busy) e.preventDefault(); }}
+        onInteractOutside={(e) => { onInteractOutside?.(e); if (busy) e.preventDefault(); }}
         className={cn(
           'dialog-in fixed z-(--layer-overlay) pb-[env(safe-area-inset-bottom)] sm:pb-0',
           DIALOG_PANEL,

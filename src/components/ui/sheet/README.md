@@ -27,6 +27,7 @@ Status: beta
 ## Behaviour
 
 - Modal: focus moves in, is trapped, and returns to the trigger on close. Escape, the close button and the scrim close it.
+- A sheet whose task is on its way is `busy`: none of those closes it, and `aria-busy` says so, until the action answers.
 - Opening a record in a sheet updates the URL (`?request=req_…`), so it can be linked and the back button closes it.
 
 ## Surfaces
