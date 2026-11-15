@@ -38,4 +38,15 @@ describe('a step everything below depends on', () => {
   it('starts a server and says whether it came back', () => {
     expect(SOURCE).toMatch(/Promise<\{ port: number; server: ChildProcess; ok: boolean \}>/);
   });
+
+  // The reverse defect, and the worse one: the dropped-hint server's branch read the run's flag (`if (failed)`) and then
+  // assigned it false. A FAIL from the audit, the presses or the sizes was erased, the live suite was skipped for a reason
+  // that was not true, and the run exited 0. A failure is never un-recorded, and a server's own result is what decides.
+  it('never takes a failure back, and judges the dropped-hint server by its own result', () => {
+    // The declaration is `let failed = false` (which the lookbehind allows); a later assignment is what took a failure
+    // back, and there is none.
+    expect(SOURCE).not.toMatch(/(?<!let )failed = false/);
+    expect(SOURCE).toContain('if (!dropped.ok)');
+    expect(SOURCE).toContain("start({ ...app, LIVE_DROP_HINTS: '1' }, false)");
+  });
 });
