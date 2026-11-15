@@ -107,6 +107,30 @@ function routes(root: string, dir: string): string[] {
 const label = (route: string) => (route === '/' ? 'Home' : route.split('/').pop()!.replace(/[-_]+/g, ' ').replace(/^./, (c) => c.toUpperCase()));
 
 /**
+ * The Tailwind PostCSS configuration, in the dialect the file it replaces is loaded as.
+ *
+ * Next `require`s a `.js` config unless the project is `"type": "module"` (`next/dist/lib/find-config.js`), and `import`s
+ * an `.mjs`, so the payload's `export default` written into a CommonJS project's `postcss.config.js` is a `SyntaxError`
+ * at build time — an adopted project that could not build. `.cjs` is always CommonJS, whatever the package says.
+ */
+export function postcssConfig(rel: string, payload: string, isModule: boolean): string {
+  const esm = rel.endsWith('.mjs') || (rel.endsWith('.js') && isModule);
+  return esm ? payload : payload.replace(/^export default config;$/m, 'module.exports = config;');
+}
+
+/**
+ * A copy of a file that is about to be replaced, or null when one is already there.
+ *
+ * `adopt` keeps what it replaces beside the file (`globals.before.css`, `postcss.config.before.js`, `tsconfig.before.json`).
+ * Those names go straight into the writes, past the collision check every other write passes, so a second run overwrote
+ * the copy the first one saved with the file it had just written — the team's original, gone — and a run over a team file
+ * that happened to carry the name lost it too. A copy is written once.
+ */
+export function backupWrite<T extends string | Buffer>(root: string, rel: string, content: T): { rel: string; content: T } | null {
+  return fs.existsSync(path.join(root, rel)) ? null : { rel, content };
+}
+
+/**
  * The configuration `adopt` writes: the template's own file with the project's pages as its navigation. Everything that
  * belongs to the sample is left out, because the project does not have it: the feature table (so every item is `public`,
  * the honest default, until the fourth edit of "Decide who may do what" in the Start guide points each at a feature of its own), every icon but the one the
@@ -242,8 +266,13 @@ export function tsconfigWrites(tsPath: string): { writes: Map<string, string>; n
   const was = fs.readFileSync(tsPath, 'utf8');
   writes.set('tsconfig.json', JSON.stringify(ts, null, 2) + '\n');
   if (jsoncExtras(was)) {
-    writes.set('tsconfig.before.json', was);
-    notes.push('tsconfig.json carried comments or trailing commas, which the rewritten file cannot: yours is tsconfig.before.json');
+    const copy = backupWrite(path.dirname(tsPath), 'tsconfig.before.json', was);
+    if (copy) {
+      writes.set(copy.rel, copy.content);
+      notes.push('tsconfig.json carried comments or trailing commas, which the rewritten file cannot: yours is tsconfig.before.json');
+    } else {
+      notes.push('tsconfig.json carried comments or trailing commas, which the rewritten file cannot: tsconfig.before.json was already there and is kept as it was');
+    }
   }
   return { writes, notes, atAlias };
 }
@@ -360,8 +389,13 @@ Rename or move them, then run adopt again.`);
   const cssAbs = path.join(root, cssRel);
   if (fs.existsSync(cssAbs)) {
     const before = cssRel.replace(/\.css$/, '.before.css');
-    writes.set(before, fs.readFileSync(cssAbs));
-    notes.push(`your stylesheet is now Meridian's; the old one is ${before}, to port anything still needed from it as tokens`);
+    const copy = backupWrite(root, before, fs.readFileSync(cssAbs));
+    if (copy) {
+      writes.set(copy.rel, copy.content);
+      notes.push(`your stylesheet is now Meridian's; the old one is ${before}, to port anything still needed from it as tokens`);
+    } else {
+      notes.push(`your stylesheet is now Meridian's; ${before} was already there and is kept as it was`);
+    }
   }
   writes.set(cssRel, globals(cssRel, dir));
   if (!cssImport) {
@@ -372,9 +406,15 @@ Rename or move them, then run adopt again.`);
   const postcss = ['postcss.config.mjs', 'postcss.config.js', 'postcss.config.cjs'].find((f) => fs.existsSync(path.join(root, f)));
   if (!postcss) writes.set('postcss.config.mjs', readPayload('postcss.config.mjs'));
   else if (!fs.readFileSync(path.join(root, postcss), 'utf8').includes('@tailwindcss/postcss')) {
-    writes.set(postcss.replace(/(\.[cm]?js)$/, '.before$1'), fs.readFileSync(path.join(root, postcss)));
-    writes.set(postcss, readPayload('postcss.config.mjs'));
-    notes.push(`${postcss} now runs Tailwind v4; the old one is kept beside it`);
+    const before = postcss.replace(/(\.[cm]?js)$/, '.before$1');
+    const copy = backupWrite(root, before, fs.readFileSync(path.join(root, postcss)));
+    if (copy) {
+      writes.set(copy.rel, copy.content);
+      notes.push(`${postcss} now runs Tailwind v4; the old one is ${before}`);
+    } else {
+      notes.push(`${postcss} now runs Tailwind v4; ${before} was already there and is kept as it was`);
+    }
+    writes.set(postcss, postcssConfig(postcss, readPayload('postcss.config.mjs'), pkg.type === 'module'));
   }
 
   if (!['ts', 'mts', 'js', 'mjs'].some((x) => fs.existsSync(path.join(root, `vitest.config.${x}`)))) writes.set('vitest.config.ts', vitestConfig(atAlias));

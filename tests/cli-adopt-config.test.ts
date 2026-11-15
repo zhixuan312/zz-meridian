@@ -8,7 +8,7 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import ts from 'typescript';
 import { afterAll, describe, expect, it } from 'vitest';
-import { eslintConfigOf, existingFile, projectConfig, stylesheetPath } from '../cli/src/adopt.ts';
+import { backupWrite, eslintConfigOf, existingFile, postcssConfig, projectConfig, stylesheetPath } from '../cli/src/adopt.ts';
 import { installSkill, payloadBytes, skillPaths } from '../cli/src/files.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
@@ -204,5 +204,48 @@ describe('a path adopt is about to copy to', () => {
     const link = tmp('link.tsx');
     fs.symlinkSync(target, link);
     expect(existingFile(link, 'A')).toBe('conflict');
+  });
+});
+
+// Next `require`s a `postcss.config.js` unless the project is `"type": "module"` (`next/dist/lib/find-config.js`), so the
+// template's `export default` written there is a SyntaxError at build time: adopt replaced a CommonJS team's config with a
+// file its own build could not load.
+describe('the PostCSS configuration adopt brings a project', () => {
+  const payload = fs.readFileSync(path.join(ROOT, 'postcss.config.mjs'), 'utf8');
+
+  it('is CommonJS in a .js file of a project that is not a module', () => {
+    const out = postcssConfig('postcss.config.js', payload, false);
+    expect(out).toContain('module.exports = config;');
+    expect(out).not.toContain('export default');
+  });
+
+  it('is CommonJS in a .cjs whatever the package says', () => {
+    expect(postcssConfig('postcss.config.cjs', payload, true)).not.toContain('export default');
+  });
+
+  it('is the payload itself where it will be imported', () => {
+    expect(postcssConfig('postcss.config.mjs', payload, false)).toBe(payload);
+    expect(postcssConfig('postcss.config.js', payload, true)).toBe(payload);
+  });
+});
+
+// The copies adopt leaves beside what it replaces (globals.before.css, postcss.config.before.js, tsconfig.before.json) went
+// into the writes past the collision check, so a second run overwrote what a first one saved.
+describe('the copy adopt leaves of a file it replaces', () => {
+  const dirs: string[] = [];
+  afterAll(() => { for (const d of dirs) fs.rmSync(d, { recursive: true, force: true }); });
+
+  it('is written when nothing is there', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'adopt-backup-'));
+    dirs.push(dir);
+    expect(backupWrite(dir, 'app/globals.before.css', 'the team\'s own')).toEqual({ rel: 'app/globals.before.css', content: 'the team\'s own' });
+  });
+
+  it('is left alone when one is already there, so a re-run cannot destroy it', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'adopt-backup-'));
+    dirs.push(dir);
+    fs.writeFileSync(path.join(dir, 'globals.before.css'), 'the original');
+    expect(backupWrite(dir, 'globals.before.css', 'what is there now')).toBeNull();
+    expect(fs.readFileSync(path.join(dir, 'globals.before.css'), 'utf8')).toBe('the original');
   });
 });
