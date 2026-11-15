@@ -7,7 +7,7 @@ import { contextText } from '@/lib/shared-context';
 import { CUSTOMERS, DAYS, REGIONS, USAGE, demoSeries, demoTotals } from '@/system/fixtures/company';
 import { MODELS } from '@/system/fixtures/sample';
 import { customerFigures } from '@/logic/customers-context';
-import { revenueContext } from '@/logic/revenue-context';
+import { revenueContext, yearAgoNote } from '@/logic/revenue-context';
 import { revenueData, type RevenueReads } from '@/logic/revenue-parts';
 
 const BUDGET = 2600;
@@ -90,5 +90,19 @@ describe("Revenue's context", () => {
     const all = context('all');
     expect(all.facts.find((f) => f.label === 'Against a year ago')!.value).toBe('The period is every day kept, so none comes before it');
     expect(all.unknowns).toContain('No previous period is kept, so no figure has a change.');
+  });
+});
+
+// The tile's one line and the context's sentence name the same window, and a window is read forwards: the note kept
+// the year for its end only, so 90 days against a year ago read "08 Oct–05 Jan 2026" — which begins a year after it
+// ends — while the context beside it said "08 Oct 2025 to 05 Jan 2026". Both now go through `between`.
+describe('the year-ago note reads its window forwards', () => {
+  it('says the year once when both ends share it, and twice when they do not', () => {
+    expect(yearAgoNote({ from: '2025-10-08', to: '2025-11-06', first: false, change: 0 }, '30d')).toBe('08 Oct to 06 Nov 2025');
+    expect(yearAgoNote({ from: '2025-10-08', to: '2026-01-05', first: false, change: 0 }, '90d')).toBe('08 Oct 2025 to 05 Jan 2026');
+  });
+
+  it('says so when the window is the first the product kept', () => {
+    expect(yearAgoNote({ from: '2025-10-08', to: '2026-01-05', first: true, change: 0 }, '90d')).toBe('08 Oct 2025 to 05 Jan 2026, first kept');
   });
 });

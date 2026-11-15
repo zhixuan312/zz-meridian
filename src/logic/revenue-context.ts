@@ -180,8 +180,10 @@ export function yearAgoNote(y: NonNullable<RevenueData['days']>['yearAgo'], peri
   const n = PERIOD_DAYS[period];
   if (!n) return 'No day comes before the period';
   if (!y) return `No whole ${inDays(n)} kept before it`;
-  // The year is said once, at the end: a window runs forwards, so "08 Oct–05 Jan 2026" starts in 2025.
-  const window = `${formatDate(y.from).slice(0, -5)}–${formatDate(y.to)}`;
+  // The window is written the way every other window in this view is (`between`), so the tile and the context beside
+  // it name the same days the same way: a year-crossing window was said with its year only at the end, which begins a
+  // year after it ends.
+  const window = between(y.from, y.to);
   return y.first ? `${window}, first kept` : window;
 }
 
