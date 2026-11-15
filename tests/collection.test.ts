@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, expect, test } from 'vitest';
 import { z } from 'zod';
-import { arrayCollection, visibleFields, writableFields } from '@/lib/collection';
+import { arrayCollection, normalizeAggregate, normalizeQuery, visibleFields, writableFields } from '@/lib/collection';
 
 type Person = { id: string; name: string; team: 'Support' | 'Sales'; seats: number; lastActive: string | null };
 const ROWS: Person[] = [
@@ -168,5 +168,23 @@ describe('offset and ties', () => {
   test('equal sort values fall back to the key', async () => {
     const rows = [{ ...ROWS[1], id: 'p_9' }, { ...ROWS[1], id: 'p_8' }];
     expect((await people(rows).query({ sort: { field: 'team', dir: 'desc' } })).rows.map((p) => p.id)).toEqual(['p_8', 'p_9']);
+  });
+});
+
+// `calendar: true` is how a date filter says "compare days, not strings" (issue #144): a stored instant is compared as
+// the day it falls on, and a bare date as itself. The prepared query that agents ask produced it (explore-filter-types),
+// and both normalizers then rebuilt every condition without it, so the rule was unreachable through read() and
+// aggregate() — `lastUsed gt 2026-10-01` counted a key last used at 09:00 on that very day.
+describe('a calendar condition keeps its day rule through the normalizers', () => {
+  const byDay = { field: 'lastActive', op: 'gt' as const, value: '2026-07-01', calendar: true as const };
+
+  test('normalizeQuery keeps calendar on the condition it normalizes', () => {
+    expect(normalizeQuery(people(), { where: [byDay] }).where).toEqual([byDay]);
+  });
+
+  test('normalizeAggregate keeps it, and on a measure condition too', () => {
+    const q = normalizeAggregate(people(), { where: [byDay], measures: [{ name: 'seats', agg: 'sum', field: 'seats', where: [byDay] }] });
+    expect(q.where).toEqual([byDay]);
+    expect(q.measures[0].where).toEqual([byDay]);
   });
 });
