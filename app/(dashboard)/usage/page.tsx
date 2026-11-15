@@ -1,6 +1,6 @@
 import { Suspense, cache } from 'react';
 import { app, workspaces } from '@/app.config';
-import { gate, gatedMetadata } from '@/data/access';
+import { gate, gatedMetadata, may } from '@/data/access';
 import { RefusalScreen } from '@/views/refusal';
 import { DEMO_NOW, DEMO_UPDATED_AT } from '@/data/sample';
 import { PageFrame } from '@/components/base/shell';
@@ -91,5 +91,5 @@ async function Actions({ searchParams }: { searchParams: SearchParams }) {
 async function Body({ searchParams }: { searchParams: SearchParams }) {
   const { period, day } = await searchParams;
   const { data } = await readPeriod(parsePeriod(period), day);
-  return <UsageBody {...data} />;
+  return <UsageBody {...data} canOpenKeys={await may('keys:read')} />;
 }

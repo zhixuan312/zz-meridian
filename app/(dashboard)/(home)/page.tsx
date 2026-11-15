@@ -5,7 +5,7 @@ import { Freshness } from '@/components/patterns/freshness';
 import { PeriodSelect } from '@/components/patterns/period-select';
 import { HomeBody } from '@/views/home';
 import { PeriodActionsRoom } from '@/views/period-actions';
-import { gate, gatedMetadata } from '@/data/access';
+import { gate, gatedMetadata, may } from '@/data/access';
 import { RefusalScreen } from '@/views/refusal';
 import { DEMO_NOW, DEMO_UPDATED_AT } from '@/data/sample';
 import { dayRows } from '@/logic/home-context';
@@ -91,5 +91,6 @@ async function Actions({ searchParams }: { searchParams: SearchParams }) {
 
 async function Body({ searchParams }: { searchParams: SearchParams }) {
   const { data } = await readHome(searchParams);
-  return <HomeBody {...data} />;
+  // The empty state's way to make data arrive is a key: offered only to someone who may read the keys.
+  return <HomeBody {...data} canOpenKeys={await may('keys:read')} />;
 }

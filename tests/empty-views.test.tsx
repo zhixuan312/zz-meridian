@@ -26,6 +26,19 @@ describe('a page body with no data shows its empty state, not a route error', ()
     expect(container.textContent).not.toMatch(/No requests have arrived yet/);
   });
 
+  // The way to make data arrive is an API key, and a Viewer has no grant to read the keys page: an unconditional link
+  // landed them on the refusal. Reported by the pages review on 2026-11-15.
+  it('offers the API keys link to someone who may open it, and never to someone who may not', () => {
+    const empty = homeData({ period: '30d', day: null, days: { series: [], previous: [], totals: { current: totals, previous: null }, running: null }, history: [], customers: [], usage: [], models: [], compute: [], services: [], incidents: [], releases: [], tickets: [], updatedAt: NOW, now: NOW });
+    const shown = render(<HomeBody {...empty} />);
+    expect(shown.getByRole('link', { name: /API keys/ })).toBeTruthy();
+    shown.unmount();
+    const withheld = render(<HomeBody {...empty} canOpenKeys={false} />);
+    expect(withheld.queryByRole('link', { name: /API keys/ })).toBeNull();
+    // The sentence still says how data arrives; only the door a Viewer cannot open is gone.
+    expect(withheld.getByText('No requests have arrived yet')).toBeTruthy();
+  });
+
   it('Home draws no compute figure when no complete day holds a compute row', () => {
     const data = homeData({ period: '30d', day: null, days: { series: [runningDay], previous: [], totals: { current: { ...totals, requests: runningDay.requests }, previous: null }, running: null }, history: [], customers: [], usage: [], models: [], compute: [], services: [], incidents: [], releases: [], tickets: [], updatedAt: NOW, now: NOW });
     expect(data.compute).toBeNull();

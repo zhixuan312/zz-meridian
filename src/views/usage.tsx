@@ -185,17 +185,19 @@ const isEmpty = (data: UsageData) => data.days !== null && data.days.series.leng
  * period's days: pointing at a day in the Featured metric's chart, or at a day of the period in the calendar, reads it
  * in both.
  */
-export function UsageBody(data: UsageData & { revisions?: Revisions }) {
+export function UsageBody(data: UsageData & { revisions?: Revisions; canOpenKeys?: boolean }) {
   // The collections the page's read touched, kept live: a request or a day recorded somewhere else redraws it.
   useLive(['days', 'hours', 'regions', 'endpoints', 'responses'], data.revisions);
   if (isEmpty(data)) {
     // A day in progress is in no series and no calendar total, but its traffic has arrived: say that instead of "none".
     const running = data.days?.running?.requests ?? 0;
+    // A Viewer may not read the keys: the way to make data arrive is not a door they can open.
+    const keyLink = data.canOpenKeys === false ? undefined : <Link href="/keys" className={linkClass}>API keys <ArrowRight className="size-3.5" /></Link>;
     return (
       <Stack>
         <ShareUsage data={data} />
         <Card>
-          <EmptyState title={running > 0 ? 'Today is still in progress' : 'No requests have arrived yet'} action={running > 0 ? undefined : <Link href="/keys" className={linkClass}>API keys <ArrowRight className="size-3.5" /></Link>} className="py-16">
+          <EmptyState title={running > 0 ? 'Today is still in progress' : 'No requests have arrived yet'} action={running > 0 ? undefined : keyLink} className="py-16">
             {running > 0
               ? `${formatCompact(running)} requests so far on ${formatDate(data.days!.running!.date)}. Requests a day, when they come and where from appear once a day is complete.`
               : 'Requests a day, when they come and where from appear here once a customer makes its first call and a day is complete.'}

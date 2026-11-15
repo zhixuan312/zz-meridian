@@ -326,18 +326,21 @@ export const meridianDates = (data: HomeData) => [...data.series.map((d) => d.da
  * `finding` is the record line the revenue card states, and is passed only by a surface with no headline above it to
  * state that record itself. `data.record` is not it: the read always hands the line over, and the surface decides.
  */
-export function HomeBody(data: HomeData & { finding?: string | null; revisions?: Revisions }) {
+export function HomeBody(data: HomeData & { finding?: string | null; revisions?: Revisions; canOpenKeys?: boolean }) {
   // Exactly the feature's needs (FEATURES.home): /api/live refuses a name the caller may not read, so `costs` is left out.
   useLive(['days', 'usage', 'models', 'compute', 'incidents', 'customers', 'services', 'tickets', 'tests', 'releases'], data.revisions);
   // No complete day kept: one card says nothing has arrived, and no figure is drawn as if it had.
   if (isEmpty(data)) {
     // The day in progress is in no series, but it can still hold traffic: "nothing has arrived" was false while today did.
     const running = data.running?.requests ?? 0;
+    // The way to make data arrive is a key, which a Viewer may not open: the link would land on a refusal, so it is
+    // offered only to someone who may read the keys.
+    const keyLink = data.canOpenKeys === false ? undefined : <Link href="/keys" className={linkClass}>API keys <ArrowRight className="size-3.5" /></Link>;
     return (
       <Stack>
         <Card>
           <ShareHome data={data} />
-          <EmptyState title={running > 0 ? 'Today is still in progress' : 'No requests have arrived yet'} action={running > 0 ? undefined : <Link href="/keys" className={linkClass}>API keys <ArrowRight className="size-3.5" /></Link>} className="py-16">
+          <EmptyState title={running > 0 ? 'Today is still in progress' : 'No requests have arrived yet'} action={running > 0 ? undefined : keyLink} className="py-16">
             {running > 0
               ? `${formatCompact(running)} requests so far on ${formatDay(data.running!.date)}. Revenue, customers and the year's facts appear once a day is complete.`
               : "Revenue, customers and the year's facts appear here once a key makes its first call and a day is complete."}

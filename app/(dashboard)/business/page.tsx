@@ -1,6 +1,6 @@
 import { Suspense, cache } from 'react';
 import { app, workspaces } from '@/app.config';
-import { gate, gatedMetadata } from '@/data/access';
+import { gate, gatedMetadata, may } from '@/data/access';
 import { RefusalScreen } from '@/views/refusal';
 import { DEMO_NOW, DEMO_UPDATED_AT } from '@/data/sample';
 import { PageFrame } from '@/components/base/shell';
@@ -83,5 +83,5 @@ async function Actions({ searchParams }: { searchParams: SearchParams }) {
 
 async function Body({ searchParams }: { searchParams: SearchParams }) {
   const { data } = await readPeriod(parsePeriod((await searchParams).period));
-  return <RevenueBody {...data} />;
+  return <RevenueBody {...data} canOpenKeys={await may('keys:read')} />;
 }

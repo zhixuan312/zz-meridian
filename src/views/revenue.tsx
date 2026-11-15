@@ -308,7 +308,7 @@ const isEmpty = (data: RevenueData) => data.days !== null && data.days.series.le
  * nothing out; a part whose read failed says so in its own place. The wall's order is the person's, and the context
  * follows it.
  */
-export function RevenueBody(data: RevenueData & { revisions?: Revisions }) {
+export function RevenueBody(data: RevenueData & { revisions?: Revisions; canOpenKeys?: boolean }) {
   const [order, setOrder] = useState<WallOrder>('largest');
   useShareView(revenueContext(data, order));
   // Exactly the feature's needs (FEATURES.revenue): /api/live refuses a name the caller may not read.
@@ -317,7 +317,7 @@ export function RevenueBody(data: RevenueData & { revisions?: Revisions }) {
     return (
       <Stack>
         <Card>
-          <EmptyState title="Nothing has arrived yet" action={<Link href="/keys" className={linkClass}>API keys <ArrowRight className="size-3.5" /></Link>} className="py-16">
+          <EmptyState title="Nothing has arrived yet" action={data.canOpenKeys === false ? undefined : <Link href="/keys" className={linkClass}>API keys <ArrowRight className="size-3.5" /></Link>} className="py-16">
             Revenue, customers and what they buy appear here once a customer makes its first call and a day is complete.
           </EmptyState>
         </Card>
