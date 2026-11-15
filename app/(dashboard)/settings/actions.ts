@@ -32,8 +32,15 @@ export async function saveWorkspace(input: WorkspaceInput): Promise<ActionResult
     await requireNeed(ACTIONS['save-workspace'].needs);
     const scope = await resolveAccess();
     await collectionFor(scope, 'workspace').update!(['workspace'], { name });
-    updateTag(collectionTag(scope.tenantId, 'workspace'));
-    return { ok: true };
+    // The write is the commit: a cache that cannot be dropped afterwards is a warning, never a failed save. In the same
+    // `try` it was reported as "The change did not go through." over a name that had already been stored, and the person
+    // would save again. The requests replay isolates the same call the same way.
+    try {
+      updateTag(collectionTag(scope.tenantId, 'workspace'));
+      return { ok: true };
+    } catch {
+      return { ok: true, warning: 'The name was saved, but the workspace could not be re-read. Reload the page to see it.' };
+    }
   } catch (e) {
     return fail(e);
   }
