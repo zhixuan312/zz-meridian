@@ -73,8 +73,10 @@ const until = async <T>(what: string, read: () => Promise<T>, done: (v: T) => bo
 /** A browser whose every page defines the deep-DOM helpers. */
 const browser = async () => { const p = await launch(); await p.send('Page.addScriptToEvaluateOnNewDocument', { source: DEEP_SOURCE }); return p; };
 const page = await browser();
-/** Page expressions: the panel, the page's own content, and the controls in the panel. */
-const PANEL = `deepQuery('aside[data-assistant]')`;
+/** Page expressions: the panel, the page's own content, and the controls in the panel. The panel is an empty-marked
+ *  `[data-assistant=""]`: the column is an `aside` and the phone sheet a dialog's own element, and page nodes that the
+ *  assistant must not read are marked `data-assistant="omit"`, so the empty value is what names the panel in both shapes. */
+const PANEL = `deepQuery('[data-assistant=""]')`;
 const CONTENT = `deepQuery('[data-scroll-region]')`;
 const MESSAGE = `deepQuery('textarea[aria-label="Message"]', ${PANEL})`;
 const SEND = `deepQuery('button[aria-label="Send"]', ${PANEL})`;
@@ -481,13 +483,20 @@ try {
 
     // Layout: a column beside the page at 1440px, over it at 390px; Escape closes it.
     if (!(await panelOpen())) await openPanel();
-    const geometry = () => page.eval<{ position: string; main: number; panel: number; width: number }>(`(() => { const a = ${PANEL}; return { position: getComputedStyle(a).position, main: Math.round(document.querySelector('main').getBoundingClientRect().right), panel: Math.round(a.getBoundingClientRect().left), width: document.documentElement.clientWidth }; })()`);
+    const geometry = () => page.eval<{ position: string; main: number; panel: number; width: number; role: string }>(`(() => { const a = ${PANEL}; return { position: getComputedStyle(a).position, main: Math.round(document.querySelector('main').getBoundingClientRect().right), panel: Math.round(a.getBoundingClientRect().left), width: document.documentElement.clientWidth, role: a.getAttribute('role') ?? 'none' }; })()`);
     const wide = await geometry();
     if (wide.position === 'fixed' || Math.abs(wide.main - wide.panel) > 1) fail(`at 1440px the panel is ${wide.position} with the page ending at ${wide.main}px and the panel starting at ${wide.panel}px`);
+    if (wide.role !== 'none') fail(`at 1440px the panel is role ${wide.role}; a column beside the page must not be a dialog, which would shut the page out`);
     await page.open(`${base}${landing}`, { width: 390 });
     await openPanel();
     const narrow = await geometry();
     if (narrow.position !== 'fixed' || narrow.main !== narrow.width || narrow.panel >= narrow.main) fail(`at 390px the panel is ${narrow.position}, the page ends at ${narrow.main}px and the panel starts at ${narrow.panel}px`);
+    // Over the page it has to behave like a dialog, not like a column drawn on top: modal, and Tab cannot leave it into
+    // the dimmed page behind. The column at 1440px must not be a dialog, or the page beside it would be shut out.
+    const sheet = await page.eval<{ role: string; modal: string | null }>(`(() => { const a = ${PANEL}; const last = deepQueryAll('button, textarea, a[href]', a).filter((el) => !el.disabled).at(-1); last?.focus(); return { role: a.getAttribute('role') ?? 'none', modal: a.getAttribute('aria-modal') }; })()`);
+    if (sheet.role !== 'dialog' || sheet.modal !== 'true') fail(`at 390px the panel is role ${sheet.role} with aria-modal ${sheet.modal}; a sheet over the page must be a modal dialog`);
+    for (const type of ['keyDown', 'keyUp'] as const) await page.send('Input.dispatchKeyEvent', { type, key: 'Tab', code: 'Tab', windowsVirtualKeyCode: 9 });
+    if (!(await page.eval<boolean>(`${PANEL}.contains(document.activeElement)`))) fail('at 390px Tab left the open sheet for the page behind it');
     await page.eval(`${MESSAGE}.focus()`);
     for (const type of ['keyDown', 'keyUp'] as const) await page.send('Input.dispatchKeyEvent', { type, key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
     await until('Escape to close the panel', panelOpen, (v) => !v);

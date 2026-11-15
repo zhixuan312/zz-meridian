@@ -7,7 +7,7 @@ Status: beta
 ## Anatomy
 
 1. **Launcher**: a round 36px button in the top-bar tools with the Agent mark, named "Assistant".
-2. **Panel**: an `aside` named "Assistant", on the `frame` wash with a `line` edge, same as the rail.
+2. **Panel**: a third column of the shell — an `aside` named "Assistant", on the `frame` wash with a `line` edge, same as the rail. Below 1024px the same panel is a modal dialog (the sheet) instead.
 3. **Head**: 56px; the Agent mark, "Assistant" (`t-card`), "Clear" and "Close" (small ghost buttons, an icon and the word; named "Clear conversation" and "Close assistant", which begin with the words shown).
 4. **Thread**: the messages in order, scrolling inside the panel, kept at the newest. Each question carries a quiet "On <page>" caption above its bubble. A change the assistant wants to make is a Proposal card in the message. A failed turn shows a critical Banner with Retry under the thread.
 5. **Composer**: a Textarea (grows to six rows) and Send (primary, icon only), on a `line` top edge.
@@ -60,10 +60,10 @@ The panel enters with no motion of its own yet; the launcher's states ease `colo
 ## Surfaces
 
 - **Console**: from 1024px a third column of the shell at `--assistant-width`; the page narrows by that much.
-- **Mobile** (under 1024px): the same panel as a sheet fixed to the right edge over the page, at most the viewport less 48px; below `sm` (40rem) the whole width, since a strip of cut page words beside it reads as nothing.
-- **Embed**: not applicable; the host is the assistant.
+- **Mobile** (under 1024px): the same panel as a sheet fixed to the right edge over the page, at most the viewport less 48px; below `sm` (40rem) the whole width, since a strip of cut page words beside it reads as nothing. Over the page it is a modal dialog on the `Dialog` primitives: named "Assistant", `aria-modal`, the page behind hidden from assistive technology, Tab held inside, and the scrim or Escape closing it.
 
-Both are decided by CSS breakpoints, never by measuring the window.
+The two shapes are drawn by CSS breakpoints. The one thing the panel reads in script is a `matchMedia` query for the same breakpoint, because a media query cannot come from CSS and the two shapes are not the same thing to a browser: the sheet must be modal and the column must not be. It is a media query, never a measurement of the window.
+- **Embed**: not applicable; the host is the assistant.
 
 ## Agents
 
@@ -71,7 +71,7 @@ This is the agent's seat in the product. It reads the page the person is on and 
 
 ## Accessibility
 
-- The launcher is a button named "Assistant" with `aria-expanded`; the panel is a complementary landmark named "Assistant".
+- The launcher is a button named "Assistant" with `aria-expanded`; the panel is a complementary landmark named "Assistant" from 1024px, and a modal dialog named "Assistant" below it.
 - The composer's textbox is named "Message"; Send and Close assistant are named buttons.
 - Escape closes. Contrast follows Textarea, Button and the frame wash.
 
@@ -86,7 +86,7 @@ This is the agent's seat in the product. It reads the page the person is on and 
 
 - Do keep the panel quiet: one column of text.
 - Do not render it, hidden or not, when the assistant is off.
-- Do not measure the window to choose column or sheet.
+- Do not measure the window to choose column or sheet: the breakpoint is CSS, and the one media query the panel reads is for what the sheet is to assistive technology.
 
 ## Implementation
 

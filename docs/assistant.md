@@ -64,7 +64,7 @@ The route works out what is true of the person asking and says it in the system 
 
 ## What a person sees
 
-- **The panel.** A launcher in the top bar opens it: a third column from 1024px, a sheet over the page below that. Escape and Close assistant shut it; the conversation stays.
+- **The panel.** A launcher in the top bar opens it: a third column from 1024px, a sheet over the page below that. The sheet is a modal dialog — the page behind it is hidden from assistive technology and Tab stays inside it; the column is a landmark beside a page that stays usable. Escape and Close assistant shut either; the conversation stays.
 - **Page labels.** Each question is sent with the page it was asked on and carries a quiet caption, "On Members". Ask on another page later and the earlier question keeps its label.
 - **Proposals.** A change arrives as a Proposal card in the thread: the title, then what changes, from and to. Pending shows Approve and Dismiss ("Approve and remove" for a removal, which is marked critical). Then the card shows its state: applying, applied, dismissed, failed or expired. Once the answer arrives the assistant continues on its own, and the page refreshes once after a change applies.
 - **Expired.** A change still waiting when the page reloads comes back closed: "The page was reloaded before anyone approved it." Sending a new message while one waits closes it too: "You moved on before approving it." A change approved but reloaded before its result arrived comes back closed as well, so it never runs again on the next message: "The page was reloaded before the change finished. Check the page to see whether it applied."

@@ -27,6 +27,14 @@ configure({ asyncUtilTimeout: 5000 });
 // jsdom has no ResizeObserver; Radix controls, the Segmented thumb and the charts observe their size.
 globalThis.ResizeObserver ??= class { observe() {} unobserve() {} disconnect() {} } as unknown as typeof ResizeObserver;
 
+// jsdom has no matchMedia; the shell asks it whether the viewport is a phone (the assistant's sheet), the chart stage
+// whether the system asks for a theme, and the hero whether motion is reduced. No query matches by default: a wide
+// screen, the system's own theme and motion allowed. A test that needs another answer stubs its own.
+globalThis.matchMedia ??= ((query: string) => ({
+  matches: false, media: query, onchange: null,
+  addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {}, dispatchEvent: () => false,
+})) as unknown as typeof globalThis.matchMedia;
+
 // jsdom has no IntersectionObserver; PageFrame watches its masthead to show the compact title.
 globalThis.IntersectionObserver ??= class { observe() {} unobserve() {} disconnect() {} takeRecords() { return []; } } as unknown as typeof IntersectionObserver;
 

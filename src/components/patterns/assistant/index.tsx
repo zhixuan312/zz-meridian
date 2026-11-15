@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type KeyboardEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type ElementType, type KeyboardEvent } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useChat } from '@ai-sdk/react';
+import { Dialog } from 'radix-ui';
 import { APICallError, DefaultChatTransport, lastAssistantMessageIsCompleteWithApprovalResponses, type UIMessage } from 'ai';
 import { ArrowUp, Eraser, X } from 'lucide-react';
 import { cn } from '@/lib/cn';
@@ -97,10 +98,31 @@ function ProposalOf({ message, part, onDecide }: { message: UIMessage; part: Too
   );
 }
 
+/** The breakpoint the shell uses: from 1024px the panel is a column, below it a sheet over the page. */
+const PHONE = '(max-width: 1023px)';
+
+function subscribePhone(onChange: () => void) {
+  const mq = matchMedia(PHONE);
+  mq.addEventListener('change', onChange);
+  return () => mq.removeEventListener('change', onChange);
+}
+
+/**
+ * Whether the panel is the phone sheet rather than the third column.
+ *
+ * Both are drawn by CSS, but they are not the same thing to a browser. The column leaves the page usable beside it; the
+ * sheet covers the page. Only the sheet may trap focus, hide what is behind it from assistive technology and call itself
+ * modal — applying any of that to the column would shut the page out on a wide screen. A media query cannot be read from
+ * CSS, so this is the one place the panel asks.
+ */
+function usePhoneSheet(): boolean {
+  return useSyncExternalStore(subscribePhone, () => matchMedia(PHONE).matches, () => false);
+}
+
 /**
  * The panel, drawn from its messages alone: a third column of the shell from 1024px, a sheet over the page below it,
- * the whole width of a phone, so no strip of cut page words is left beside it. All of it comes from CSS; nothing here
- * measures the window.
+ * the whole width of a phone, so no strip of cut page words is left beside it. The sheet is a dialog, so Tab stays
+ * inside it and the page behind is inert until it closes; the column is a plain landmark and leaves the page alone.
  */
 export function AssistantPanel({
   messages,
@@ -142,12 +164,14 @@ export function AssistantPanel({
   const setDraft = onDraft ?? setOwn;
   const thread = useRef<HTMLDivElement>(null);
   const panel = useRef<HTMLElement>(null);
+  const phone = usePhoneSheet();
   useEffect(() => {
     const el = thread.current;
     if (el) el.scrollTop = el.scrollHeight;
   }, [messages]);
-  // The panel mounts only when it opens (`if (!open) return null`). Focus it, so Escape closes it without first having to
-  // tab into it, and Tab reaches its own controls before the page behind. A preview drawn in the flow takes no focus.
+  // The column mounts when it opens (`if (!open) return null`). Focus it, so Escape closes it without first having to tab
+  // into it, and Tab reaches its own controls before the page beside it. The sheet gets its focus from the dialog, and a
+  // preview drawn in the flow takes none.
   useEffect(() => {
     if (!inline) panel.current?.focus();
   }, [inline]);
@@ -167,31 +191,20 @@ export function AssistantPanel({
 
   const last = messages[messages.length - 1];
   const answering = last?.role === 'assistant' && last.parts.some((p) => p.type === 'text' && p.text);
-  return (
+  // The head takes its title element from the frame that draws it: the sheet's is the dialog's title, which is what names
+  // the dialog; the column's is the plain heading of a landmark.
+  const head = (Title: ElementType) => (
+    <div className="flex h-14 shrink-0 items-center gap-3 border-b border-line px-4">
+      <AgentMark size="md" />
+      <Title title="Assistant" className="t-card min-w-0 flex-1 truncate">Assistant</Title>
+      {/* Named on screen, not only to a screen reader: the accessible names begin with the words shown. */}
+      <Button size="sm" variant="ghost" icon={<Eraser />} aria-label="Clear conversation" disabled={messages.length === 0} onClick={onClear}>Clear</Button>
+      <Button size="sm" variant="ghost" icon={<X />} aria-label="Close assistant" onClick={onClose} className="-mr-2">Close</Button>
+    </div>
+  );
+  const body = (Title: ElementType) => (
     <>
-    {/* Below 1024px the panel is a sheet over the page: a scrim dims the page and closes the panel when pressed. */}
-    {inline ? null : <div aria-hidden onClick={onClose} className="scrim-in fixed inset-0 z-(--layer-overlay) bg-scrim lg:hidden" />}
-    <aside
-      ref={panel}
-      tabIndex={-1}
-      data-assistant
-      aria-label="Assistant"
-      onKeyDown={(e) => e.key === 'Escape' && !e.nativeEvent.isComposing && onClose()}
-      className={cn(
-        'flex h-full min-h-0 flex-col border-l border-line bg-frame backdrop-blur-xl backdrop-saturate-150',
-        inline
-          ? 'w-(--assistant-width) max-w-full'
-          : 'fixed inset-y-0 right-0 z-(--layer-overlay) w-full bg-ground shadow-overlay sm:w-(--assistant-width) sm:max-w-[calc(100vw-48px)] lg:relative lg:z-auto lg:shrink-0 lg:bg-frame lg:shadow-none',
-        className,
-      )}
-    >
-      <div className="flex h-14 shrink-0 items-center gap-3 border-b border-line px-4">
-        <AgentMark size="md" />
-        <h2 title="Assistant" className="t-card min-w-0 flex-1 truncate">Assistant</h2>
-        {/* Named on screen, not only to a screen reader: the accessible names begin with the words shown. */}
-        <Button size="sm" variant="ghost" icon={<Eraser />} aria-label="Clear conversation" disabled={messages.length === 0} onClick={onClear}>Clear</Button>
-        <Button size="sm" variant="ghost" icon={<X />} aria-label="Close assistant" onClick={onClose} className="-mr-2">Close</Button>
-      </div>
+      {head(Title)}
       <div ref={thread} className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto overscroll-contain px-4 py-4">
         {messages.length === 0 ? (
           <div data-assistant-empty className="m-auto flex w-full flex-col items-center gap-4">
@@ -263,8 +276,52 @@ export function AssistantPanel({
         />
         <Button type="submit" variant="primary" icon={<ArrowUp />} aria-label="Send" disabled={!text || busy} className="w-(--control-md) px-0" />
       </form>
-    </aside>
     </>
+  );
+  if (inline) {
+    return (
+      <aside
+        data-assistant
+        aria-label="Assistant"
+        onKeyDown={(e) => e.key === 'Escape' && !e.nativeEvent.isComposing && onClose()}
+        className={cn('flex h-full min-h-0 w-(--assistant-width) max-w-full flex-col border-l border-line bg-frame backdrop-blur-xl backdrop-saturate-150', className)}
+      >
+        {body('h2')}
+      </aside>
+    );
+  }
+  // Below 1024px the panel covers the page, so it is a dialog: the scrim closes it, Escape closes it, Tab stays inside it
+  // and the page behind is inert and hidden from assistive technology until it closes.
+  if (phone) {
+    return (
+      <Dialog.Root open onOpenChange={(open) => { if (!open) onClose(); }}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="scrim-in fixed inset-0 z-(--layer-overlay) bg-scrim" />
+          <Dialog.Content
+            data-assistant
+            aria-modal
+            aria-describedby={undefined}
+            className={cn('fixed inset-y-0 right-0 z-(--layer-overlay) flex h-full min-h-0 w-full flex-col border-l border-line bg-ground shadow-overlay sm:w-(--assistant-width) sm:max-w-[calc(100vw-48px)]', className)}
+          >
+            {body(Dialog.Title)}
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
+    );
+  }
+  // From 1024px it is the shell's third column: it leaves the page beside it usable, so it takes no focus trap and traps
+  // nobody. Escape and the page's own scrolling keep working as they do without it.
+  return (
+    <aside
+      ref={panel}
+      tabIndex={-1}
+      data-assistant
+      aria-label="Assistant"
+      onKeyDown={(e) => e.key === 'Escape' && !e.nativeEvent.isComposing && onClose()}
+      className={cn('relative flex h-full min-h-0 w-(--assistant-width) max-w-[calc(100vw-48px)] shrink-0 flex-col border-l border-line bg-frame backdrop-blur-xl backdrop-saturate-150', className)}
+    >
+      {body('h2')}
+    </aside>
   );
 }
 
