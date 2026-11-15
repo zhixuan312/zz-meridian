@@ -60,6 +60,42 @@ describe('the assistant on a phone', () => {
   });
 });
 
+describe('focus when the column closes', () => {
+  const launcher = () => {
+    const b = document.createElement('button');
+    b.setAttribute('aria-label', 'Assistant');
+    document.body.appendChild(b);
+    return b;
+  };
+
+  it('goes back to the launcher that opened it, not to the top of the page', () => {
+    screenThatMatches(false);
+    const button = launcher();
+    const { unmount } = panel();
+    const box = screen.getByRole('textbox');
+    box.focus();
+    expect(document.activeElement).toBe(box);
+    unmount();
+    // The column is unmounted, so the browser would leave focus on <body> and the next Tab would restart at the shell's
+    // skip link. The phone sheet's dialog already gives focus back; the column did not.
+    expect(document.activeElement).toBe(button);
+    button.remove();
+  });
+
+  it('leaves focus alone when the close was caused by pressing something else', () => {
+    screenThatMatches(false);
+    const button = launcher();
+    const elsewhere = document.createElement('button');
+    document.body.appendChild(elsewhere);
+    const { unmount } = panel();
+    elsewhere.focus();
+    unmount();
+    expect(document.activeElement).toBe(elsewhere);
+    button.remove();
+    elsewhere.remove();
+  });
+});
+
 describe('the assistant on a wide screen', () => {
   it('is a plain landmark, not a dialog, so the page beside it stays usable', () => {
     screenThatMatches(false);

@@ -172,8 +172,20 @@ export function AssistantPanel({
   // The column mounts when it opens (`if (!open) return null`). Focus it, so Escape closes it without first having to tab
   // into it, and Tab reaches its own controls before the page beside it. The sheet gets its focus from the dialog, and a
   // preview drawn in the flow takes none.
+  //
+  // Closing the column unmounts the element that had focus, and the browser then drops focus to `<body>`: a keyboard
+  // user's next Tab starts again at the shell's skip link instead of the launcher that opened the panel — where the
+  // phone sheet's dialog puts it. Only when the focus was the panel's (or nowhere): a close caused by pressing something
+  // else must not pull focus away from what was pressed.
   useEffect(() => {
-    if (!inline) panel.current?.focus();
+    if (inline) return;
+    const el = panel.current;
+    el?.focus();
+    return () => {
+      const active = document.activeElement;
+      if (active && active !== document.body && !el?.contains(active)) return;
+      document.querySelector<HTMLElement>('button[aria-label="Assistant"]')?.focus();
+    };
   }, [inline]);
 
   const text = draft.trim();
