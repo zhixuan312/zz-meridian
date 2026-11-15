@@ -30,7 +30,9 @@ export default async function RequestsPage({ searchParams }: { searchParams: Sea
     <PageFrame
       kicker={<Breadcrumb items={navTrail('/requests', nav)} />}
       title="Requests"
-      description="The most recent calls that reached the gateway, newest first. Open one to see where its time went."
+      // The order is the table's own, in the address (`?sort=`), and it changes: a page that said "newest first" was false the
+      // moment someone sorted by latency.
+      description="The calls that reached the gateway, in the order the table shows. Open one to see where its time went."
       meta={<Suspense fallback={<span className="inline-block h-4 w-28" />}><RequestsFreshness searchParams={searchParams} /></Suspense>}
       actions={<Suspense fallback={<span className="inline-block h-9 w-32" />}><RequestsExport searchParams={searchParams} /></Suspense>}
     >
