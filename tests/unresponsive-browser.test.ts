@@ -8,7 +8,7 @@ import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { isTimeout, watchForStoppedBrowser } from '../scripts/lib/unresponsive.ts';
+import { isTimeout, painting, watchForStoppedBrowser } from '../scripts/lib/unresponsive.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const timeout = new Error('Runtime.evaluate timed out');
@@ -91,6 +91,25 @@ describe('a browser that stops answering', () => {
       expect(source, suite).toContain('not run: ');
     }
     expect(fs.readFileSync(path.join(ROOT, 'scripts/lib/chrome.ts'), 'utf8')).toContain('responsive()');
+  });
+
+  // A page that stops drawing frames has two possible causes, and they need opposite answers: its own renderer is wedged
+  // (that page fails, as it always did), or the browser's compositing has stopped and every tab is frozen (relaunch once;
+  // a second stall means the check did not run). A fresh tab's frame count tells them apart.
+  it('reads a page that stopped drawing frames as drawing, or as a browser that has stopped painting', () => {
+    expect(painting(60)).toBe(true);
+    expect(painting(0)).toBe(false);
+    // The one frame a fresh tab counts as it is created must not read as a drawing browser: measured, 1 against 49-50.
+    expect(painting(1)).toBe(false);
+    expect(painting(4)).toBe(false);
+    expect(painting(5)).toBe(true);
+  });
+
+  it('is what the journey asks, and what the navigation run does about it', () => {
+    expect(fs.readFileSync(path.join(ROOT, 'scripts/lib/journey.ts'), 'utf8')).toContain("'compositor-stalled'");
+    const nav = fs.readFileSync(path.join(ROOT, 'scripts/navigate.ts'), 'utf8');
+    expect(nav).toContain('the browser stopped drawing frames; relaunching it once');
+    expect(nav).toContain('not run: the browser stopped drawing frames');
   });
 
   // Before this, a path that named no browser killed the suite with an unhandled `error` event and a stack trace: the run

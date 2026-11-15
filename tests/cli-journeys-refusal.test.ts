@@ -45,6 +45,7 @@ function served(html: string): Page {
     eval: async <T,>(expression: string) => (0, eval)(expression) as T,
     // A page that answers is a browser that answers: the sweep's stop-on-unresponsive check never fires here.
     responsive: async () => true,
+  frames: async () => 60,
   };
 }
 

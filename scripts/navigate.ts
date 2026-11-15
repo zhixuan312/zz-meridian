@@ -51,7 +51,7 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { budgetsOf, limitsFor, type NavigationCheck } from './lib/budgets.ts';
 import { launch, type Page } from './lib/chrome.ts';
-import { prefetchJudged, resolveCoverage, selectSmokeRoutes } from './lib/coverage.ts';
+import { NOT_RUN_EXIT, prefetchJudged, resolveCoverage, selectSmokeRoutes } from './lib/coverage.ts';
 import { railRoutes } from './lib/routes.ts';
 import { DEVICES, Fail, METRICS, PREFETCH_WAIT, drawerRoutes, journey, journeyStart, loadShell, openStart, prepare, sleep, workspaceHomes, type Device, type Measured, type Metric, type NavConfig } from './lib/journey.ts';
 import { isPrefetch, prefetchProblems } from './lib/sizes.ts';
@@ -330,14 +330,40 @@ async function main(): Promise<number> {
         }
         const limits = limitsFor(budgets, 'warm', device, check);
         let line: Line;
-        try {
-          // A route with no other route to start from has no navigation to time: it is a problem, never a 0 ms pass.
-          if (start === undefined) throw new Fail('never-ready', 'the rail has no other route to start from');
-          line = await measure(page, device, start, route, check, limits);
-        } catch (e) {
-          // The starting page never loading is a failure of this route and device, not of the run.
-          const reason = e instanceof Fail ? `${e.kind}: ${e.message}` : (e as Error).message;
-          line = finish({ route, device, status: 'FAIL', shell: { ms: null, verdict: 'fail', reason }, data: { ms: null, verdict: 'not-run' }, interactive: { ms: null, verdict: 'not-run' }, noisy: false, prefetchCapped: false, problems: [reason], overBudget: [], ...viaOf(start) });
+        let relaunched = false;
+        for (;;) {
+          try {
+            // A route with no other route to start from has no navigation to time: it is a problem, never a 0 ms pass.
+            if (start === undefined) throw new Fail('never-ready', 'the rail has no other route to start from');
+            line = await measure(page, device, start, route, check, limits);
+            break;
+          } catch (e) {
+            // A page whose own renderer stopped drawing is that page's failure, and stays one. The whole browser having
+            // stopped painting is not: relaunch it once, say so, and measure this route again — a product that can wedge
+            // the page will do it on a fresh browser too, so nothing real is hidden. A second one is a check that could
+            // not run, reported once with its reason rather than as this route's verdict.
+            if (e instanceof Fail && e.kind === 'compositor-stalled') {
+              if (!relaunched) {
+                relaunched = true;
+                console.log(`warn    the browser stopped drawing frames; relaunching it once and measuring ${route} ${device} again`);
+                page.close();
+                page = await launch();
+                // A fresh browser has no instrumentation: the journey's own arms and helpers are installed per page.
+                try { await prepare(page); }
+                catch (err) { console.log(`not run: the relaunched browser could not be prepared (${(err as Error).message})`); process.exit(NOT_RUN_EXIT); }
+                continue;
+              }
+              {
+                console.log(`not run: the browser stopped drawing frames (${e.message})`);
+                page.close();
+                process.exit(NOT_RUN_EXIT);
+              }
+            }
+            // The starting page never loading is a failure of this route and device, not of the run.
+            const reason = e instanceof Fail ? `${e.kind}: ${e.message}` : (e as Error).message;
+            line = finish({ route, device, status: 'FAIL', shell: { ms: null, verdict: 'fail', reason }, data: { ms: null, verdict: 'not-run' }, interactive: { ms: null, verdict: 'not-run' }, noisy: false, prefetchCapped: false, problems: [reason], overBudget: [], ...viaOf(start) });
+            break;
+          }
         }
         if (!check) {
           line.data = { ms: null, verdict: 'not-configured', reason: 'no navigation check is configured' };

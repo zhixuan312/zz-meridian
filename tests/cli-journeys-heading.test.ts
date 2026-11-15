@@ -18,6 +18,7 @@ const page: Page = {
   open: async () => {},
   eval: async <T,>(expression: string) => (0, eval)(expression) as T,
   responsive: async () => true,
+  frames: async () => 60,
 };
 
 describe("a page's heading", () => {
