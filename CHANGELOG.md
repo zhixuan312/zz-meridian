@@ -2,6 +2,14 @@
 
 Every release of ZZ Meridian, newest first. Versions follow semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Each entry says what breaks and what to do instead.
 
+## [0.39.6] · 2026-11-15
+
+### Fixed
+
+- **A browser run no longer stops at the first failure.** The app server, the assistant restart and the build were judged by the run's failure flag rather than by their own result, so any earlier FAIL ended the run there: on one product the assistant walk-through, the audit, the presses, the keyboard walk, all six product checks and the whole timed set never ran and were never listed as not run, and the closing line read as one failure among the checks that did run. Each step now consults its own result, a step that cannot run records `every check after <what> (<why>)` rather than dropping it, and the protocol runs whatever came before it.
+- **A browser that stops painting is relaunched once, then reported.** A page that stops drawing frames used to fail on that evidence alone. Two machines produced the other cause — every page in one browser stops drawing while `Runtime.evaluate` keeps answering — so a fresh tab now counts animation frames over 800 ms, and fewer than five means the browser is not painting: the navigation run relaunches it once, says so, and measures that route again; a second stall is `not run: the browser stopped drawing frames`, once, with exit 2, instead of a FAIL for every page left. A page whose own renderer is wedged leaves the browser painting, so it still fails as a page.
+- **Every relaunch stays visible.** The pages measured again on a fresh browser are counted in the run's closing line — `reported: the browser stopped drawing frames 1 time; relaunched (/members desktop)` — so a stall that recurs is seen in every run rather than passing quietly as a `warn` in the middle of one suite's output.
+
 ## [0.39.5] · 2026-11-15
 
 ### Changed
