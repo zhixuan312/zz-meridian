@@ -291,6 +291,9 @@ async function main(): Promise<number> {
   }
 
   const lines: Line[] = [];
+  /** Routes and devices measured again on a fresh browser because the one before it stopped painting: reported, never
+   *  silent. A retry that passes has to stay visible, or a recurring stall hides inside a green run. */
+  const relaunches: { route: string; device: string }[] = [];
   /** The timed values this run measured, recorded for the run's Tier 2 table. */
   const values: { check: string; page: string; unit: 'ms'; value: number; samples?: number[] }[] = [];
   /** What this run reported as not configured: routes without a navigation check, and a prefetch budget that is not the project's promise. */
@@ -330,7 +333,7 @@ async function main(): Promise<number> {
         }
         const limits = limitsFor(budgets, 'warm', device, check);
         let line: Line;
-        let relaunched = false;
+        let retried = false;
         for (;;) {
           try {
             // A route with no other route to start from has no navigation to time: it is a problem, never a 0 ms pass.
@@ -343,8 +346,9 @@ async function main(): Promise<number> {
             // the page will do it on a fresh browser too, so nothing real is hidden. A second one is a check that could
             // not run, reported once with its reason rather than as this route's verdict.
             if (e instanceof Fail && e.kind === 'compositor-stalled') {
-              if (!relaunched) {
-                relaunched = true;
+              if (!retried) {
+                retried = true;
+                relaunches.push({ route, device });
                 console.log(`warn    the browser stopped drawing frames; relaunching it once and measuring ${route} ${device} again`);
                 page.close();
                 page = await launch();
@@ -401,6 +405,10 @@ async function main(): Promise<number> {
   // The least headroom of the run, so a reader sees how near the budgets a green run was, not only that it was green.
   const least = lines.flatMap((l) => METRICS.flatMap((name) => { const r = l[name]; return judged(r) ? [{ l, name, r }] : []; })).sort((a, b) => headroom(a.r.ms, a.r.limit) - headroom(b.r.ms, b.r.limit))[0];
   if (least) console.log(`headroom: the least was ${percent(least.r)}, ${least.l.route} ${least.l.device} ${least.name} ${Math.round(least.r.ms)} of ${least.r.limit} ms; under 20% warns`);
+  if (relaunches.length) {
+    const where = relaunches.map((r) => `${r.route} ${r.device}`).join(', ');
+    console.log(`reported: the browser stopped drawing frames ${relaunches.length} ${relaunches.length === 1 ? 'time' : 'times'}; relaunched (${where})`);
+  }
   const failed = lines.some((l) => l.status === 'FAIL') || problems.length > 0;
   const status = failed ? 'FAIL' : lines.some((l) => l.status === 'warn') ? 'warn' : 'ok';
   summary({
@@ -411,6 +419,7 @@ async function main(): Promise<number> {
     lines: lines.map(({ route, device, status: s, shell, data, interactive, drawerMs, prefetchCapped, noisy, thin: t, problems: p, via, workspace, prefetched, landed, empty }) => ({ route, device, status: s, via, workspace, prefetched, landed, empty, shell, data, interactive, drawerMs, prefetchCapped, noisy, thin: t, problems: p })),
     prefetch: prefetch && { ...prefetch, problems },
     notRun: unrun,
+    relaunched: relaunches,
   });
   // Exit 2 is "left a case unrun": the suite's not-configured cases are never counted as a pass, and the last-green
   // marker is not advanced by a run that has them.

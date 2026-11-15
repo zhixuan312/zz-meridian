@@ -112,6 +112,7 @@ let failed = false;
 const ran: string[] = [];
 /** The timed and perf suites that printed FAIL: Tier 2, reported and never failing the run. */
 const reported: string[] = [];
+const notes: string[] = [];
 /** What a Tier 2 check ran and found — the audit's small targets, low contrast, heading holes and nested scrollers —
  *  counted so the run's closing line names them, and nothing exits on them. */
 const findings: string[] = [];
@@ -241,6 +242,7 @@ function report(name: string, r: Ran): void {
   // A suite can pass and still have found something: the audit sorts its own findings, and what it reports is counted for
   // the closing line rather than read as an issue of this run's exit.
   findings.push(...auditFindings(r.out));
+  notes.push(...relaunchNotes(r.out));
 }
 
 /** A timed or perf suite: its verdict goes through `timedOutcome`, so a FAIL is reported with its output and the run stays green. */
@@ -249,6 +251,22 @@ function reportTimed(name: string, r: Ran): void {
   phase('FAIL', name, r.took);
   reported.push(name);
   beneath(`${r.out}\n${r.err}`);
+}
+
+/**
+ * The pages a suite measured again on a fresh browser because the one before it stopped painting, as one line. A retry
+ * that passes must stay visible: a stall that recurs on every run has to reach the closing line, not sit in the log as a
+ * `warn` nobody counts.
+ */
+function relaunchNotes(out: string): string[] {
+  const line = /^navigate: (\{.*\})$/m.exec(out)?.[1];
+  if (!line) return [];
+  try {
+    const list = (JSON.parse(line) as { relaunched?: { route: string; device: string }[] }).relaunched ?? [];
+    if (!list.length) return [];
+    const where = list.map((r) => `${r.route} ${r.device}`).join(', ');
+    return [`the browser stopped drawing frames ${list.length} ${list.length === 1 ? 'time' : 'times'}; relaunched (${where})`];
+  } catch { return []; }
 }
 
 /** The `notRun` list a suite's own summary printed (`navigate: {...}`, `perf: {...}`), or nothing when it printed none. */
@@ -263,7 +281,7 @@ function finish(): never {
   // The Tier 2 values this run's suites recorded, gathered once: the run's table and record (test-run) read them.
   const tier2 = readParts(ROOT).flatMap((p) => p.values);
   clearParts(ROOT);
-  const state = { ran, failed, notRun, declared, reported, findings, tier2, seconds: Number(secs(started).toFixed(1)) };
+  const state = { ran, failed, notRun, declared, reported, findings, notes, tier2, seconds: Number(secs(started).toFixed(1)) };
   log(`browser: ${JSON.stringify(state)}`);
   process.exit(failed ? 1 : notRun.length ? 2 : 0);
 }
