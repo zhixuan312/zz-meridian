@@ -2,11 +2,22 @@
 
 Every release of ZZ Meridian, newest first. Versions follow semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Each entry says what breaks and what to do instead.
 
-## [Unreleased]
+## [0.39.7] · 2026-11-15
 
 ### Fixed
 
 - **A timed script of a project's own can survive a browser that stops drawing frames.** 0.39.6 put the probe and the single relaunch in the navigation run, inline; a project's own timed check had no such thing, and on 2026-11-15 one paid for it — 46 routes reported no content within 20 s, the browser recovered by itself about 16 minutes later, and the stage that should take 741 s took 1343 s, while the same routes passed the audit and the states sweep in the same run. The recovery is now one export, `scripts/lib/stall.ts` (`StallGuard`): `stopped(page)` asks a fresh tab whether the browser is still painting, `restart(page, work, why)` relaunches it once, prepares it, and returns it to measure the same work again — a second stall of that work is the same `not run: the browser stopped drawing frames` with exit 2, and `report()` counts every relaunch in one closing line. `scripts/navigate.ts` is the first caller; a script that launches its own browser needs no change, and one that measures through a page of its own adds three lines. Nothing about the cause is new: it is still not established.
+- **A browser run can no longer record a failure as a pass.** The dropped-hint server's branch in `scripts/browser.ts` read the run-wide failure flag and then cleared it. When that server started fine and anything earlier had failed — the audit, the presses, the sizes — it erased the failure, skipped the live suite for a reason that was not true, and exited 0: a green run over a red sweep, and a last-green marker advanced on it. Each server start now says whether not starting is the run's failure, and that branch is judged by its own result.
+- **An agent's date filter compares days, not strings (issue #144).** A prepared query marks a date filter `calendar: true`, and both query normalizers rebuilt every condition without that flag, so the day rule was unreachable through `read()` and `aggregate()`: `lastUsed gt 2026-10-01` counted a key last used at 09:00 on that day, because `"2026-10-01T09:00:00Z"` sorts after `"2026-10-01"`. The flag survives both normalizers now, a measure's own `where` included.
+- **A change to `proxy.ts` or `postcss.config.mjs` runs tests.** `proxy.ts` is the request guard Next runs before every page and every API route, and neither it nor the style pipeline matched the paths that select tests: editing either printed "no test is affected", ran nothing, and advanced the marker over the change.
+- **The year-ago window is written forwards.** Revenue's "Against a year ago" tile said `08 Oct–05 Jan 2026` — a window that begins a year after it ends — while the context beside it said `08 Oct 2025 to 05 Jan 2026`. It uses the same `between` helper as the rest of the view.
+- **`parse()` reads every hex form CSS allows, and refuses one that is not a colour.** It read six digits only: `#fff` came back as red 1, green 15/255 and a NaN blue, and `#rrggbbaa` dropped its alpha silently. A contrast ratio computed from either was NaN, and `NaN < 4.5` is false, so a pair that fails WCAG would have passed the gate.
+- **A project made with `create` no longer inherits Meridian's own check switch.** `scripts/check.local.ts` — the file a project keeps its check switches in, ending `export const fourLayers = true` here — was shipped in the payload, so every created project began with the six four-layer rules on although `docs/data-layers.md` says they are off until the project asks. The file stays out of the payload; a project that wants the rules writes them itself.
+- **Three statements the docs made are now true.** `docs/surfaces.md` lists `Combobox` (37 cards in `src/components/ui/`, 36 listed); `docs/data-display.md` and the skill's `customize.md` no longer claim a test refuses twelve praise words when no test does — the rule is review's, and says so; `docs/agents.md` names `callTool`, the fifth `useSurface()` action, which is how a Proposal in an embed applies an approved change.
+
+### Changed
+
+- **The browser-fixture tests are documented where they run.** `CONTRIBUTING.md` said they run inside `pnpm test:t2` and `pnpm test:release`; they also run as their own stage of `pnpm test:t1` when a script changed, as `docs/testing.md` already said.
 
 ## [0.39.6] · 2026-11-15
 
