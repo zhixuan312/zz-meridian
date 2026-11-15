@@ -3,7 +3,7 @@
 import { Dialog as D } from 'radix-ui';
 import { useRouter } from 'next/navigation';
 import { useLeave } from '@/components/base/shell';
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ArrowRight, CornerDownLeft, Monitor, Moon, Search, Sun } from 'lucide-react';
 import type { NavGroup } from '@/lib/app-contract';
 import { cn } from '@/lib/cn';
@@ -128,6 +128,12 @@ export function CommandPanel({
   autoFocus?: boolean;
 }) {
   const paletteKey = usePaletteKey();
+  // One list id per panel. The Atlas renders three of these at once, so a literal id made the second and third fields point
+  // `aria-controls` and `aria-activedescendant` at the first panel's list: a screen reader was told the wrong option and the
+  // wrong set of results. `useId` is stable across a server render and its hydration.
+  const id = useId();
+  const listId = `${id}list`;
+  const optionId = (command: Command) => `${id}opt-${command.id}`;
   let lastGroup = '';
   return (
     <>
@@ -142,15 +148,15 @@ export function CommandPanel({
           aria-label="Search pages and commands"
           role="combobox"
           aria-expanded
-          aria-controls="cmd-list"
-          aria-activedescendant={commands[at] ? `cmd-${commands[at].id}` : undefined}
+          aria-controls={listId}
+          aria-activedescendant={commands[at] ? optionId(commands[at]) : undefined}
           className="h-14 min-w-0 flex-1 bg-transparent text-md outline-none placeholder:text-ink-3"
         />
         <Kbd className="keyboard-only">Esc</Kbd>
       </div>
       {/* A listbox with no option in it is not valid ARIA, and a search that matches nothing draws no list: the field
           still points at this element, which then reads as the message it holds. */}
-      <div ref={listRef} id="cmd-list" role={commands.length ? 'listbox' : undefined} className="max-h-[min(420px,52vh)] overflow-y-auto p-2">
+      <div ref={listRef} id={listId} role={commands.length ? 'listbox' : undefined} className="max-h-[min(420px,52vh)] overflow-y-auto p-2">
         {commands.length === 0 ? (
           <p className="px-3 py-10 text-center text-sm text-ink-3">Nothing matches “{query}”. Try a page’s name.</p>
         ) : (
@@ -160,7 +166,7 @@ export function CommandPanel({
               <div key={c.id}>
                 {head ? <p className="t-eyebrow px-3 pt-3 pb-1.5 first:pt-1.5">{head}</p> : null}
                 <div
-                  id={`cmd-${c.id}`}
+                  id={optionId(c)}
                   role="option"
                   aria-selected={i === at}
                   data-index={i}
