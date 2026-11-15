@@ -64,14 +64,19 @@ export const isTier2 = (file: string): boolean => TIER2.some((rule) => rule.test
 const DEEP = /^tests\/deep-[^/]*\.test\.tsx?$/;
 export const isDeep = (file: string): boolean => DEEP.test(file);
 
-/** The paths whose change means any test may be affected: a docs-only change is not one of them. */
-const CODE = /^(app|src|scripts|cli|tests|tokens|journeys|next\.config\.|package\.json$|pnpm-lock\.yaml$|tsconfig|vitest\.config|eslint\.config)/;
+/**
+ * The paths whose change means any test may be affected: a docs-only change is not one of them. `proxy.ts` is Next's
+ * request guard — it decides what every page and every API route answers — and `postcss.config.mjs` is the style
+ * pipeline. Neither matched here, so a change to either printed "no test is affected", ran nothing, and advanced the
+ * last-green marker over it.
+ */
+const CODE = /^(app|src|scripts|cli|tests|tokens|journeys|proxy\.ts$|postcss\.config\.|next\.config\.|package\.json$|pnpm-lock\.yaml$|tsconfig|vitest\.config|eslint\.config)/;
 
 /** A path that changes what runs: a test is selected for it, or the whole tier falls back to running. */
 export const isCode = (file: string): boolean => CODE.test(file);
 
 /** The paths the browser suites walk: a change to what a page draws or a control does needs them. */
-const BROWSER = /^(app|src|tokens|journeys|scripts|next\.config\.|package\.json$|pnpm-lock\.yaml$)/;
+const BROWSER = /^(app|src|tokens|journeys|scripts|proxy\.ts$|postcss\.config\.|next\.config\.|package\.json$|pnpm-lock\.yaml$)/;
 export const touchesBrowser = (file: string): boolean => BROWSER.test(file);
 
 const isTestFile = (file: string): boolean => /\.test\.tsx?$/.test(file);

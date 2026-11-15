@@ -5,7 +5,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { isCode, isDeep, isTier2 } from '../scripts/test-run.ts';
+import { isCode, isDeep, isTier2, touchesBrowser } from '../scripts/test-run.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const read = (p: string) => fs.readFileSync(path.join(ROOT, p), 'utf8');
@@ -55,6 +55,17 @@ describe('the tier convention', () => {
     expect(isCode('tests/a.test.ts')).toBe(true);
     expect(isCode('docs/testing.md')).toBe(false);
     expect(isCode('README.md')).toBe(false);
+  });
+
+  // Next runs `proxy.ts` before every request: it is the demo's request guard, and a change to it decides what every
+  // page and every API route answers. It matched neither `CODE` nor `BROWSER`, so a change to it printed
+  // "no test is affected", ran nothing, and advanced the last-green marker over it. `postcss.config.mjs` is the same
+  // class: it is what turns a token into a utility the pages are styled with.
+  it('counts the request guard and the style pipeline as code, so a change to either runs tests', () => {
+    for (const file of ['proxy.ts', 'postcss.config.mjs']) {
+      expect(isCode(file), file).toBe(true);
+      expect(touchesBrowser(file), file).toBe(true);
+    }
   });
 
   it('collects every test file the convention classifies', () => {
