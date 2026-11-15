@@ -1,7 +1,7 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { useCallback, useLayoutEffect, useRef, useState, type ComponentProps, type RefObject } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ComponentProps, type RefObject } from 'react';
 import type { Dialog } from 'radix-ui';
 
 /**
@@ -38,6 +38,16 @@ export function useNavDrawer(asked: number, root: RefObject<HTMLElement | null>)
     setOpenOn(path);
   }
   const open = openOn === path;
+  // Above 1024px the drawer cannot be opened and its trigger is hidden, but an open one stays open: its overlay and content
+  // are `lg:hidden`, while Radix keeps the rest of the page `aria-hidden` and the wheel locked. A phone widened, or a
+  // window rotated into landscape, left a page that could not be used and nothing on screen to close it but Escape.
+  useEffect(() => {
+    const wide = matchMedia('(min-width: 1024px)');
+    const close = () => { if (wide.matches) setOpenOn(null); };
+    close();
+    wide.addEventListener('change', close);
+    return () => wide.removeEventListener('change', close);
+  }, []);
   useLayoutEffect(() => {
     const el = root.current;
     if (!open || !el) return;
