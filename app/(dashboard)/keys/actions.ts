@@ -19,15 +19,14 @@ const draft = z.object({
 /** The sentence for a failure this action did not write itself: a store's own words are not the person's to read. */
 const said = (e: unknown, what: string) => (e instanceof Unauthenticated ? `Sign in again to ${what}.` : `Could not ${what}. Try again.`);
 
-/** The write has committed: cache failure is a warning, never a reason to lose a new secret or repeat the write. */
+/**
+ * The write has committed: cache failure is a warning, never a reason to lose a new secret or repeat the write.
+ * `invalidate` reports by returning whether the tag was dropped and never throws — a cache failure must not fail a write
+ * already in the store — so the warning is built from that answer. Its own catch here was dead once it stopped throwing.
+ */
 function refreshKeys(tenantId: string): { warning?: string } {
-  try {
-    invalidate(collectionTag(tenantId, 'keys'));
-    return {};
-  } catch (error) {
-    console.error('keys: the change applied but cached reads could not be refreshed', error);
-    return { warning: 'The change applied, but the key list could not be refreshed. Keep any new key safe and reload the list. Do not repeat this change.' };
-  }
+  if (invalidate(collectionTag(tenantId, 'keys'))) return {};
+  return { warning: 'The change applied, but the key list could not be refreshed. Keep any new key safe and reload the list. Do not repeat this change.' };
 }
 
 /**
