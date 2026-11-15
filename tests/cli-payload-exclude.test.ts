@@ -103,3 +103,14 @@ describe('the payload exclusion', () => {
     }
   });
 });
+
+// `scripts/check.local.ts` is the file a project keeps its own check switches in — the template's own copy ends
+// `export const fourLayers = true`, and it was shipped, so every project made with `create` began with the six
+// four-layer rules on although `docs/data-layers.md` says they are off until the project asks. A team-local switch is
+// not shipped: the file is left out of the payload, so a project that wants the rules writes them itself.
+describe('the team-local check switch', () => {
+  it('is not shipped: a created project starts with the four-layer rules off, as the guide says', () => {
+    expect(PAYLOAD_EXCLUDE.test('scripts/check.local.ts')).toBe(true);
+    expect(PAYLOAD_EXCLUDE.test('scripts/check.ts')).toBe(false);
+  });
+});

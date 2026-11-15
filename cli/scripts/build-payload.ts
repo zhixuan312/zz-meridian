@@ -25,7 +25,7 @@ const worktree = process.argv.includes('--worktree');
 // contributor guide for the repository itself (the CHANGELOG ships whole). The Atlas, Meridian's documentation site:
 // `app/system/` and the modules in `src/system/` only it imports. The previews the Atlas renders: every card's
 // `preview.tsx` (the card's README ships). `src/system/fixtures/` and `sample-cells.tsx`/`specimen.tsx` stay: the pages read them.
-export const PAYLOAD_EXCLUDE = /^(cli\/|docs\/|decisions\/|CONTRIBUTING\.md$|app\/system\/|src\/system\/(?:content\.ts|hero\.tsx|markdown\.tsx|page-stage\.tsx|atlas-shell\.tsx|card-stage\.tsx|preview-loaders\.ts|preview-loading\.tsx|strata\.tsx|token-view\.tsx|tokens-data\.ts|registry\.ts)$|src\/components\/.*\/preview\.tsx$|\.github\/|\.claude\/|\.agents\/|\.mma\/|out\/|node_modules\/|scripts\/fixtures\/|tests\/(?!setup\.ts$|examples\/)|scripts\/perf-history\.json$|\.nvmrc$|.*\.tsbuildinfo$|(Dockerfile|captain-definition|\.dockerignore)$)|(?:^|\/)\.env(?!\.example$)[^/]*(?:\/|$)/;
+export const PAYLOAD_EXCLUDE = /^(cli\/|docs\/|decisions\/|CONTRIBUTING\.md$|app\/system\/|src\/system\/(?:content\.ts|hero\.tsx|markdown\.tsx|page-stage\.tsx|atlas-shell\.tsx|card-stage\.tsx|preview-loaders\.ts|preview-loading\.tsx|strata\.tsx|token-view\.tsx|tokens-data\.ts|registry\.ts)$|src\/components\/.*\/preview\.tsx$|\.github\/|\.claude\/|\.agents\/|\.mma\/|out\/|node_modules\/|scripts\/fixtures\/|tests\/(?!setup\.ts$|examples\/)|scripts\/perf-history\.json$|scripts\/check\.local\.ts$|\.nvmrc$|.*\.tsbuildinfo$|(Dockerfile|captain-definition|\.dockerignore)$)|(?:^|\/)\.env(?!\.example$)[^/]*(?:\/|$)/;
 
 if (import.meta.main) {
   fs.rmSync(OUT, { recursive: true, force: true });
