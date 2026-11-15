@@ -40,7 +40,7 @@ import { gzipSync } from 'node:zlib';
 import { FIRST_LOAD_CAP_KB, budgetsOf, type BudgetsConfig } from './lib/budgets.ts';
 import { distDirOf } from './lib/next-config.ts';
 import { verdictTag } from './lib/report-lines.ts';
-import { firstLoad, firstLoadProblems, htmlGrowthProblems, htmlNodeMismatch, htmlProblems, htmlRoutes, KIB, kib, sizeBaselineOwned } from './lib/sizes.ts';
+import { KIB, firstLoad, firstLoadProblems, htmlAnswer, htmlGrowthProblems, htmlNodeMismatch, htmlProblems, htmlRoutes, kib, sizeBaselineOwned } from './lib/sizes.ts';
 import verifyConfig from './verify.config.ts';
 import { holdArgs } from './lib/args.ts';
 import { recordPart } from './lib/tier2.ts';
@@ -93,9 +93,11 @@ function baselineOf(): Baseline | null {
 }
 
 /** Each page's complete response, read through the end of the stream and gzipped: what a person downloads. */
-async function htmlSizes(routes: string[], why: string): Promise<{ sizes: Record<string, number>; problems: string[] }> {
+async function htmlSizes(routes: string[], why: string): Promise<{ sizes: Record<string, number>; problems: string[]; moved: string[] }> {
   const sizes: Record<string, number> = {};
   const problems: string[] = [];
+  // A page that answers with a redirect has no HTML of its own: reported as a warn, never as a failure of the check.
+  const moved: string[] = [];
   // Three at a time: a page's bytes are independent of every other page's, and awaiting each of twenty-one in turn made
   // this the slowest step of the size check. Three is enough to overlap the round trips without loading the app it is
   // measuring, which the time-based checks beside it would read as its own cost.
@@ -105,15 +107,16 @@ async function htmlSizes(routes: string[], why: string): Promise<{ sizes: Record
       try {
         const res = await fetch(base + route, { headers: { 'accept-encoding': 'identity' }, redirect: 'manual' });
         const body = Buffer.from(await res.arrayBuffer());
-        if (res.status !== 200) problems.push(`${route}: ${why}, but the route answered ${res.status}`);
-        else sizes[route] = gzipSync(body).byteLength;
+        const answer = htmlAnswer(route, res.status, why);
+        if (answer.kind === 'ok') sizes[route] = gzipSync(body).byteLength;
+        else (answer.kind === 'moved' ? moved : problems).push(answer.text);
       } catch (e) { problems.push(`${route}: could not be fetched from ${base} (${(e as Error).message})`); }
     }
   };
   await Promise.all([worker(), worker(), worker()]);
   // In the order asked for, so the report reads the same however the fetches interleaved.
   const ordered = Object.fromEntries(routes.filter((r) => r in sizes).map((r) => [r, sizes[r]]));
-  return { sizes: ordered, problems };
+  return { sizes: ordered, problems, moved };
 }
 
 async function main(): Promise<number> {
@@ -126,7 +129,7 @@ async function main(): Promise<number> {
     if (base) {
       const got = await htmlSizes(htmlRoutes(routes.map((r) => r.route)), 'a page');
       // A page that redirects or is refused here (a sign-in, a 404 by design) has no HTML of its own to hold.
-      for (const p of got.problems) console.log(`warn    ${p}; left out of the HTML baseline`);
+      for (const p of [...got.problems, ...got.moved]) console.log(`warn    ${p}; left out of the HTML baseline`);
       html = got.sizes;
       node = NODE_MAJOR;
     }
@@ -168,7 +171,7 @@ async function main(): Promise<number> {
   const built = new Set(routes.map((r) => r.route));
   const held = Object.keys(baseline?.html ?? {}).filter((r) => built.has(r));
   const pages = [...new Set([...held, ...capped])].sort();
-  let html: { status: Status; sizes: Record<string, number>; growth?: 'checked' | 'not-configured'; overCap?: boolean; overAllowance?: boolean; reason?: string; unjudged?: string; problems: string[]; measured?: string[] };
+  let html: { status: Status; sizes: Record<string, number>; growth?: 'checked' | 'not-configured'; overCap?: boolean; overAllowance?: boolean; reason?: string; unjudged?: string; problems: string[]; moved?: string[]; measured?: string[] };
   if (!base) html = { status: 'not run', sizes: {}, reason: 'no app is running to measure', problems: [] };
   else {
     const got = await htmlSizes(pages, 'its HTML is held');
@@ -181,7 +184,7 @@ async function main(): Promise<number> {
     // their line are Tier 2 values, reported and never a failure.
     const measured = got.problems;
     const problems = [...grown.problems, ...caps];
-    html = { status: measured.length ? 'FAIL' : problems.length || unjudged || grown.growth === 'not-configured' ? 'warn' : 'ok', sizes: got.sizes, growth: grown.growth, overCap: caps.length > 0, overAllowance: grown.overAllowance, ...(unjudged ? { unjudged } : {}), problems, measured };
+    html = { status: measured.length ? 'FAIL' : problems.length || got.moved.length || unjudged || grown.growth === 'not-configured' ? 'warn' : 'ok', sizes: got.sizes, growth: grown.growth, overCap: caps.length > 0, overAllowance: grown.overAllowance, ...(unjudged ? { unjudged } : {}), problems, ...(got.moved.length ? { moved: got.moved } : {}), measured };
   }
   const largestPage = Object.entries(html.sizes).sort((a, b) => b[1] - a[1])[0];
   lines.push(html.status === 'not run'
@@ -192,6 +195,7 @@ async function main(): Promise<number> {
       + ` · cap ${html.overCap ? 'exceeded' : 'held'}`
       + (capped.length ? ` · caps ${capped.map((r) => `${r} ${html.sizes[r] === undefined ? 'unmeasured' : `${(html.sizes[r] / KIB).toFixed(1)} KiB`} of ${budgets.htmlKb[r]}`).join(', ')}` : ''));
   for (const p of html.measured ?? []) lines.push(`FAIL    ${p}`);
+  for (const p of html.moved ?? []) lines.push(`warn    ${p}`);
   for (const p of html.problems) lines.push(`warn    ${p}`);
   lines.forEach((l) => console.log(l));
 

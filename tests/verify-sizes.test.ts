@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest';
-import { firstLoad, firstLoadProblems, htmlGrowthProblems, htmlNodeMismatch, htmlProblems, htmlRoutes, isPrefetch, prefetchProblems } from '../scripts/lib/sizes.ts';
+import { firstLoad, firstLoadProblems, htmlAnswer, htmlGrowthProblems, htmlNodeMismatch, htmlProblems, htmlRoutes, isPrefetch, prefetchProblems } from '../scripts/lib/sizes.ts';
 import { DEFAULT_BUDGETS, budgetsOf } from '../scripts/lib/budgets.ts';
 
 const KiB = 1024;
@@ -65,6 +65,14 @@ describe('HTML and prefetch', () => {
     expect(grown).toEqual({ growth: 'checked', overAllowance: true, problems: ['/services: HTML grew 7.5% over its baseline (cap 5%)'] });
     expect(htmlGrowthProblems({ '/services': 21 * KiB }, { growthPct: 5, baseline: null })).toEqual({ growth: 'not-configured', overAllowance: false, problems: [] });
   });
+  it('reports a redirect as a page with no HTML of its own, and any other answer as a problem', () => {
+    expect(htmlAnswer('/usage', 200, 'its HTML is held')).toEqual({ kind: 'ok' });
+    // A sign-in redirect, or a page that moves: the bytes belong to the page it moves to, and the sweep must not fail.
+    expect(htmlAnswer('/usage', 307, 'its HTML is held')).toEqual({ kind: 'moved', text: '/usage: its HTML is held, but the route redirected (307); it has no HTML of its own to hold' });
+    // A page that was meant to answer and answered with an error is still a failure of the check.
+    expect(htmlAnswer('/usage', 500, 'its HTML is held')).toMatchObject({ kind: 'problem' });
+  });
+
   it('measures the pages a person opens: no API, no dynamic segment, no not-found', () => {
     expect(htmlRoutes(['/', '/_not-found', '/api/live', '/customers', '/customers/[id]', '/system/[...slug]'])).toEqual(['/', '/customers']);
   });

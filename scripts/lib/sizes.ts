@@ -101,6 +101,20 @@ export function htmlProblems(sizes: Record<string, number>, capsKiB: Record<stri
 }
 
 /**
+ * What one page's answer says about measuring it.
+ *
+ * `ok` is a page with HTML of its own. A redirect is `moved`: the page a person reaches is another page's, so there are
+ * no bytes of its own to hold, and `--write-baseline` already left such a page out of the baseline while the check
+ * failed the whole sweep on it — a product with a sign-in redirect could not pass. Anything else is a `problem`: the
+ * page was meant to answer and did not.
+ */
+export function htmlAnswer(route: string, status: number, why: string): { kind: 'ok' } | { kind: 'moved' | 'problem'; text: string } {
+  if (status === 200) return { kind: 'ok' };
+  if (status >= 300 && status < 400) return { kind: 'moved', text: `${route}: ${why}, but the route redirected (${status}); it has no HTML of its own to hold` };
+  return { kind: 'problem', text: `${route}: ${why}, but the route answered ${status}` };
+}
+
+/**
  * A router prefetch is a page request carrying `next-router-prefetch` with a positive integer. Next 16's segment cache
  * sends `1` for a segment or loading-boundary prefetch, `3` for a route's runtime shell (every link's default prefetch
  * under partialPrefetching asks for one) and `2` for the URL data a full prefetch (`prefetch={true}`) resolves. Counting
