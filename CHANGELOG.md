@@ -2,6 +2,13 @@
 
 Every release of ZZ Meridian, newest first. Versions follow semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Each entry says what breaks and what to do instead.
 
+## [0.39.8] · 2026-11-15
+
+### Fixed
+
+- **The last-green marker records the tree a run proved, not whatever `HEAD` is when it finishes.** `out/last-green` was stamped at the end of a run, so a commit made *while* a gate was running was recorded as proven although nothing had tested it: seven commits landed during one `test:t2` on 2026-11-15, the marker named the last of them, and the next `pnpm test:t1` printed `nothing changed since the last green run` and exited 0 — the gate that should have proven them did nothing, and it was found only because the marker was cleared by hand. The marker now writes the commit the run read when it started, and prints one line when `HEAD` moved underneath it, leaving the newer commit as the next run's work. If you clear `out/last-green` by hand today, you no longer need to: a run that looks instant is a run that proved nothing, and the note says so.
+- **The type contracts behind six `@ts-expect-error` cases are gated.** A dialog must have a name, `formatRelative` must be told the clock, and four chart and proposal forms must refuse what they cannot draw — six cases assert each of those only as an expected TypeScript error. Nothing failed when one of those types widened: the directive becomes unused (`error TS2578`), `tsc --noEmit` exits non-zero, and the type check is Tier 3, which reports and never blocks. `tests/type-contracts.test.ts` is the Tier 1 check they never had: it compiles the tree and fails the run on any TypeScript error, and it imports the six subjects so a change to any of them selects it. The type check itself is still Tier 3, as `docs/testing.md` promises.
+
 ## [0.39.7] · 2026-11-15
 
 ### Fixed
