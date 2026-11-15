@@ -73,10 +73,12 @@ const until = async <T>(what: string, read: () => Promise<T>, done: (v: T) => bo
 /** A browser whose every page defines the deep-DOM helpers. */
 const browser = async () => { const p = await launch(); await p.send('Page.addScriptToEvaluateOnNewDocument', { source: DEEP_SOURCE }); return p; };
 const page = await browser();
-/** Page expressions: the panel, the page's own content, and the controls in the panel. The panel is an empty-marked
- *  `[data-assistant=""]`: the column is an `aside` and the phone sheet a dialog's own element, and page nodes that the
- *  assistant must not read are marked `data-assistant="omit"`, so the empty value is what names the panel in both shapes. */
-const PANEL = `deepQuery('[data-assistant=""]')`;
+/** Page expressions: the panel, the page's own content, and the controls in the panel. The panel is a `[data-assistant]`
+ *  element that is not marked `omit`: the column is an `aside` and the phone sheet a dialog's own element, and page nodes
+ *  the assistant must not read are marked `data-assistant="omit"`. A bare `data-assistant` in JSX renders as
+ *  `data-assistant="true"` — React stringifies a boolean on a custom attribute — so `[data-assistant=""]` matched nothing
+ *  and every step after the first timed out. */
+const PANEL = `deepQuery('[data-assistant]:not([data-assistant="omit"])')`;
 const CONTENT = `deepQuery('[data-scroll-region]')`;
 const MESSAGE = `deepQuery('textarea[aria-label="Message"]', ${PANEL})`;
 const SEND = `deepQuery('button[aria-label="Send"]', ${PANEL})`;
