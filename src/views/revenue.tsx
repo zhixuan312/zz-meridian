@@ -2,9 +2,9 @@
 
 import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
-import { useState } from 'react';
 import { Row, Stack } from '@/components/base/shell';
 import { useShareView } from '@/components/base/use-share-view';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useLive, type Revisions } from '@/lib/live';
 import { Card, CardBody, CardFooter, CardHeader } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -309,7 +309,18 @@ const isEmpty = (data: RevenueData) => data.days !== null && data.days.series.le
  * follows it.
  */
 export function RevenueBody(data: RevenueData & { revisions?: Revisions; canOpenKeys?: boolean }) {
-  const [order, setOrder] = useState<WallOrder>('largest');
+  // The wall's order is view state, and every view's state is in its address (`docs/surfaces.md`, "Addressable"): a link
+  // opens the same order, a reload keeps it, and an agent can name it. It was local state, so it survived neither.
+  const params = useSearchParams();
+  const router = useRouter();
+  const path = usePathname();
+  const asked = params.get('order');
+  const order: WallOrder = WALL_ORDERS.some((o) => o.value === asked) ? (asked as WallOrder) : 'largest';
+  const setOrder = (next: WallOrder) => {
+    const q = new URLSearchParams(params);
+    q.set('order', next);
+    router.replace(`${path}?${q}`, { scroll: false });
+  };
   useShareView(revenueContext(data, order));
   // Exactly the feature's needs (FEATURES.revenue): /api/live refuses a name the caller may not read.
   useLive(['customers', 'days', 'usage', 'models', 'regions'], data.revisions);
