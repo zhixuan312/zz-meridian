@@ -41,6 +41,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { bin } from './lib/bin.ts';
 import { GATE_DEPTHS, STAGE_DEPTHS } from './lib/browser-plan.ts';
+import { CI_NODE_MAJOR } from './lib/ci-node.ts';
 import { consumerSmokeKind } from './lib/consumer-smoke.ts';
 import { deepFiles, deepPart, deepPlan, deepReach } from './lib/deep-inputs.ts';
 import { recordMarker } from './lib/marker.ts';
@@ -233,11 +234,10 @@ async function reportTier2(values: Value[]): Promise<string[]> {
 }
 
 /** What a local Node major other than CI's leaves unjudged, said before any step runs. */
-const ciGaps = (major: number): string[] => major === 22 ? [] : [
-  `sizes: html growth is not judged under another major (the baseline records Node 22, this build used Node ${major})`,
+const ciGaps = (major: number): string[] => major === CI_NODE_MAJOR ? [] : [
+  `sizes: html growth is not judged under another major (CI builds on Node ${CI_NODE_MAJOR}, this build used Node ${major})`,
   'everything else — the tests, the type check, lint, the build, the browser suites and the timed runs — is judged',
 ];
-
 
 
 /** The Chrome every browser suite opens (scripts/lib/chrome.ts): `CHROME`, or the platform's usual install. */
