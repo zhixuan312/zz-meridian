@@ -1,6 +1,6 @@
 'use client';
 
-import type { FormEvent, ReactNode } from 'react';
+import { useEffect, useRef, type FormEvent, type ReactNode } from 'react';
 import { Lock } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { Banner } from '@/components/ui/banner';
@@ -68,6 +68,19 @@ export function FormSection({
 }) {
   // Inside the shell, leaving while this is dirty asks first; the save bar is the answer to that question.
   useUnsavedChanges(dirty);
+  // After a save the bar folds away, `aria-hidden`, and its Save button — which had the focus — goes with it: the ring
+  // vanished and focus sat in a hidden region. Focus goes back to the section's first field instead, where a person
+  // carries on reading or editing. Only when the bar held the focus: a section that became clean because the page moved
+  // must not pull focus away.
+  const bar = useRef<HTMLDivElement>(null);
+  const wasDirty = useRef(dirty);
+  useEffect(() => {
+    const held = wasDirty.current && !dirty && bar.current?.contains(document.activeElement);
+    wasDirty.current = dirty;
+    if (!held) return;
+    const first = bar.current?.parentElement?.querySelector<HTMLElement>('fieldset input:not([type="hidden"]):not(:disabled), fieldset select:not(:disabled), fieldset textarea:not(:disabled), fieldset button:not(:disabled)');
+    first?.focus({ preventScroll: true });
+  }, [dirty]);
   const submit = (e: FormEvent) => {
     e.preventDefault();
     if (dirty && !saving) void onSave?.();
@@ -111,6 +124,7 @@ export function FormSection({
         <fieldset data-flush={flush ? '' : undefined} disabled={readOnly || saving} className={cn(body, readOnly && '[&_button:disabled]:text-ink-2 [&_input:disabled]:text-ink-2 [&_textarea:disabled]:text-ink-2', onSave && as === 'form' && '[&_*]:scroll-mb-20')}>{inner}</fieldset>
         {onSave && as === 'form' ? (
           <div
+            ref={bar}
             aria-hidden={!dirty}
             className={cn(
               'sticky bottom-4 z-10 grid transition-[grid-template-rows,opacity] duration-(--dur-enter) ease-out',
