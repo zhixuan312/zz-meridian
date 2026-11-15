@@ -6,6 +6,18 @@ describe('colour maths shared by the gate and the Atlas', () => {
     expect(ratio(parse('#FFFFFF'), parse('#000000'))).toBeCloseTo(21, 1);
     expect(ratio(parse('#777777'), parse('#FFFFFF'))).toBeCloseTo(4.48, 1);
   });
+  // Before this, only six digits were read: `#fff` came back as red 1, green 15/255 and a NaN blue — a colour no one wrote
+  // — and `#rrggbbaa` silently lost its alpha. Nothing threw, so a gate computing a ratio from either got NaN, and
+  // `NaN < 4.5` is false: a failing pair would have passed. Every hex form CSS allows is read; anything else is refused.
+  it('parses every hex form CSS allows, and refuses a length that is not a colour', () => {
+    expect(parse('#fff')).toEqual([1, 1, 1, 1]);
+    expect(parse('#FFFFFF')).toEqual([1, 1, 1, 1]);
+    expect(parse('#f00')).toEqual([1, 0, 0, 1]);
+    expect(parse('#0000')).toEqual([0, 0, 0, 0]);
+    expect(parse('#FFFF0080')).toEqual([1, 1, 0, 128 / 255]);
+    expect(() => parse('#fffff')).toThrow(/cannot parse colour/);
+    expect(() => parse('#ggg')).toThrow(/cannot parse colour/);
+  });
   it('parses oklch with and without alpha, and composites', () => {
     const c = parse('oklch(0.56 0.2 277 / 0.16)');
     expect(c[3]).toBeCloseTo(0.16);
