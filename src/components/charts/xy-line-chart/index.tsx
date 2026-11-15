@@ -4,7 +4,7 @@ import { useCallback, useId, useMemo, useState, type KeyboardEvent, type Pointer
 import { cn } from '@/lib/cn';
 import { FORMATTERS } from '@/lib/format';
 import { Readout } from '@/components/charts/readout';
-import { linearPath, niceTicks, SERIES_VAR, stepPath, type SeriesSlot } from '@/components/charts/scale';
+import { linearPath, niceTicks, SERIES_VAR, stepPath, ticksBetween, type SeriesSlot } from '@/components/charts/scale';
 import { useSize } from '@/components/charts/use-size';
 
 export type XYPoint = { x: number; y: number | null };
@@ -68,7 +68,11 @@ export function XYLineChart({
   // forcing zero in made a stated range of 0.5–0.9 report itself widened to 0–1 for no reason. Without a domain the
   // scale is the values' own, rounded to levels; zero is included only when the data itself crosses it.
   const widened = Boolean(held && (Math.min(...ys) < held![0] || Math.max(...ys) > held![1]));
-  const levels = held && !widened ? [held[0], held[1]] : held ? niceTicks(Math.max(held[1], Math.max(...ys)), 4) : niceTicks(Math.max(...ys, 1), 4);
+  // A series that goes under zero is drawn on levels that do too. `niceTicks` always starts at zero, so a signed series sat
+  // below its lowest labelled level with half the plot unlabelled (the "Straight lines over a number" specimen, whose asks
+  // dip to -380). A series that never goes negative keeps its zero-based scale, which is what its pages expect.
+  const yTopData = Math.max(...ys, 1);
+  const levels = held && !widened ? [held[0], held[1]] : held ? niceTicks(Math.max(held[1], Math.max(...ys)), 4) : Math.min(...ys) < 0 ? ticksBetween(Math.min(...ys), Math.max(...ys), 4) : niceTicks(yTopData, 4);
   const yLow = held && !widened ? held[0] : Math.min(...ys, levels[0]);
   const yTop = levels[levels.length - 1];
   const ySpan = yTop - yLow || 1;
