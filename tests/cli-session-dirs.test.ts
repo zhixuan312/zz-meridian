@@ -6,6 +6,8 @@ import path from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 import { sessionDirs } from '../cli/src/session.ts';
 
+const SOURCE = fs.readFileSync(path.join(path.resolve(import.meta.dirname, '..'), 'cli/src/session.ts'), 'utf8');
+
 /**
  * A session folder is something `update` opened. The same directory holds whatever a person's tools leave beside it, and
  * one of those read as a session is a version that does not exist: a project with Finder's `.DS_Store` in
@@ -48,5 +50,21 @@ describe('the sessions a project holds', () => {
 
   it('orders versions by their numbers, so 0.9.0 is older than 0.10.0', () => {
     expect(sessionDirs(project({ name: '0.10.0', dir: true }, { name: '0.9.0', dir: true }))).toEqual(['0.9.0', '0.10.0']);
+  });
+});
+
+// A folder with no readable `state.json` — a crash between creating it and writing the journal, or anything else a
+// person's tools left under `.meridian/update/` — was a dead end: `update` refused it as active, and `--resume`,
+// `--finalize` and `--abort` all refused the same folder, so nothing short of deleting it by hand was possible. Each
+// refusal names that one recovery instead of prescribing a command that will refuse again.
+describe('a session folder with no readable journal', () => {
+  it('is refused by name, with the recovery that works', () => {
+    expect(SOURCE).toContain('holds no readable state.json, so no update session can be resumed, finalized or aborted there');
+    expect(SOURCE).toContain('then remove that folder by hand and run this again');
+  });
+
+  it('is refused by resume, finalize and abort the same way, never with a command that refuses again', () => {
+    expect(SOURCE).toContain('No command can resume, finalize or abort this folder; check that no update is running, then remove');
+    expect(SOURCE).not.toMatch(/state\.json cannot be used: \$\{\(e as Error\)\.message\}`;$/m);
   });
 });

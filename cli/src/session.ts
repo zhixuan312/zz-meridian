@@ -441,6 +441,10 @@ export function start(ctx: Context, o: StartOptions): number {
         try { const l = JSON.parse(fs.readFileSync(lockFile, 'utf8')); who = `pid ${l.pid}, ${pidAlive(l.pid) ? 'running' : 'not running (stale)'}`; } catch { /* named as unreadable */ }
         return refuse(`.meridian/update.lock exists (${who}; session phase: ${active?.phase ?? 'none'}). Another update is running or was killed. Nothing was changed; the lock is never deleted for you. ${active ? `Run npx zz-meridian@${active.version} update --resume to continue it, or --abort.` : 'Remove the lock only after checking no update is running.'}`);
       }
+      // A folder with no readable state.json is not a session anyone can resume: a crash between creating the folder and
+      // writing it, or anything else a person's tools left there. Refusing alone was a dead end — resume, --finalize and
+      // --abort all refused the same folder — so the refusal says what does work, which is removing it by hand.
+      if (active?.phase === 'unreadable') return refuse(`${active.dir} holds no readable state.json, so no update session can be resumed, finalized or aborted there. Nothing was changed. Check that no update is running, then remove that folder by hand and run this again`);
       if (active) return refuse(`an update session is already active at ${active.dir} (phase ${active.phase}); run npx zz-meridian@${active.version} update --resume, --finalize or --abort`);
       if (dirty && !o.allowDirty) return refuse(`the git tree has uncommitted changes (${dirty} ${dirty === 1 ? 'path' : 'paths'}); commit them or pass --allow-dirty`);
       try {
@@ -575,7 +579,10 @@ function loadSession(ctx: Context): Loaded | string {
   if (names.length > 1) return `.meridian/update/ holds ${names.length} sessions (${names.join(', ')}); finish or abort all but one by hand`;
   const rel = `.meridian/update/${names[0]}`;
   let journal: UpdateJournal;
-  try { journal = parseJournal(fs.readFileSync(path.join(base, names[0]!, 'state.json'), 'utf8')); } catch (e) { return `${rel}/state.json cannot be used: ${(e as Error).message}`; }
+  try { journal = parseJournal(fs.readFileSync(path.join(base, names[0]!, 'state.json'), 'utf8')); } catch (e) {
+    // Nothing here can resume, finalize or abort a folder with no usable journal, so name the one recovery there is.
+    return `${rel}/state.json cannot be used: ${(e as Error).message}. No command can resume, finalize or abort this folder; check that no update is running, then remove ${rel} by hand`;
+  }
   if (journal.targetVersion !== names[0]) return `${rel}/state.json names target ${journal.targetVersion}, not ${names[0]}`;
   if (journal.targetVersion !== ctx.version || journal.targetIntegrity !== ctx.targetIntegrity) {
     return `this session belongs to zz-meridian@${journal.targetVersion} (package ${journal.targetIntegrity.slice(0, 19)}…), not to the running ${ctx.version} (${ctx.targetIntegrity.slice(0, 19)}…); run it as npx zz-meridian@${journal.targetVersion} update --resume, --finalize or --abort`;
