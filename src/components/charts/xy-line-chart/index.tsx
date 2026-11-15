@@ -121,6 +121,9 @@ export function XYLineChart({
     [series, curve, width, height, xLow, xHigh, yLow, yTop, left],
   );
 
+  // No points anywhere is the card's Empty state, never a chart: with none, the x range is Infinity–-Infinity and the
+  // axis read "Infinity ms" over a NaN plot (the "Nothing measured" specimen). The card says it; this draws nothing.
+  if (!series.some((s) => s.points.length)) return null;
   return (
     <figure ref={box} aria-label={label} className={cn('relative min-w-0 select-none', className)} onPointerLeave={() => setActive(null)}>
       {widened ? <p data-widened className="mb-1 text-2xs text-ink-3">{`Scale widened from ${format(held![0])}–${format(held![1])} to ${format(yLow)}–${format(yTop)}`}</p> : null}
