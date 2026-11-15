@@ -99,7 +99,7 @@ Write the status on the line under the title: `Status: beta`.
 | `node scripts/vitals.ts [--atlas]` | Diagnostic, with a production build running: LCP, INP, CLS and dropped frames on a mid-range phone | Directly, on a quiet machine |
 | `node scripts/interactions.ts` | Diagnostic, with the app running: presses every control and follows every link | Directly, after a change that could break a control |
 | `node scripts/keyboard.ts` | Diagnostic, with the app running: Tab through each page and back | Directly, after a change to focus or order |
-| `pnpm exec vitest run tests/deep- --no-file-parallelism` | The browser-fixture tests of the check scripts: each planted defect is found and each corrected twin passes | Inside `pnpm test:t2` when a script changed, and inside `pnpm test:release`; Meridian's repository only |
+| `pnpm exec vitest run tests/deep- --no-file-parallelism` | The browser-fixture tests of the check scripts: each planted defect is found and each corrected twin passes | Its own stage of `pnpm test:t1` and `pnpm test:t2` when a script changed, and of `pnpm test:release`; Meridian's repository only |
 | `node scripts/brand.ts --name … [--hue … --chroma …]` | Renames and rebrands a copy in place; a brand hue becomes an accent preset that holds contrast in every theme | Starting a project |
 | `node scripts/shot.ts <routes> --width 1440,390 --theme light,dark [--whole-page]` | Screenshots into `out/shots/` | While editing |
 
