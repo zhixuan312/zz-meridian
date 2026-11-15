@@ -20,6 +20,13 @@ const reads = (period: Period, over: Partial<RevenueReads> = {}): RevenueReads =
 const context = (period: Period, over?: Partial<RevenueReads>) => revenueContext(revenueData(reads(period, over)));
 
 describe("Revenue's context", () => {
+  // The wall's order is view state and lives in the address; the context names the view it describes, so an agent
+  // that opens the address it was given sees the wall it was told about. The default order adds no parameter.
+  it('carries the wall order it describes in its address, and the default order adds nothing', () => {
+    expect(revenueContext(revenueData(reads('30d')), 'fell').address).toBe('/business?period=30d&order=fell');
+    expect(context('30d').address).toBe('/business?period=30d');
+  });
+
   it('names its address and the period, and states the four tiles, who pays and the customers', () => {
     const c = context('30d');
     expect(c.address).toBe('/business?period=30d');

@@ -245,5 +245,8 @@ export function revenueContext(data: RevenueData, order: WallOrder = 'largest'):
   if (series.length && days?.revenue.previous === null) unknowns.push(NO_PREVIOUS);
   if (days?.running) unknowns.push(`${formatDay(days.running.date)} is in progress and counted in no total.`);
 
-  return { view: 'revenue', title: 'Revenue', address: `/business?period=${period}`, scope, freshness: freshnessOf(data.updatedAt, data.now), facts, insights, unknowns };
+  // The wall's order is the person's, and it is in the page's address (`?order=`): the context names the same view, so an
+  // agent opening this address opens the wall it was told about, and the default order adds nothing.
+  const address = `/business?period=${period}${order === 'largest' ? '' : `&order=${order}`}`;
+  return { view: 'revenue', title: 'Revenue', address, scope, freshness: freshnessOf(data.updatedAt, data.now), facts, insights, unknowns };
 }
