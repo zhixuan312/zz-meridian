@@ -42,8 +42,7 @@ const NEW = {
 };
 const IDS = ['shell-assistant-promise', 'assistant-available-promise', 'clock-now-required', 'cache-components-config', 'connection-boundaries', 'authorized-read', 'scoped-invalidation', 'live-provider', 'authorized-endpoints'];
 
-describe("this release's migrations", () => {
-  it('are all declared for 0.5.0', () => {
+describe("this release's migrations", () => {  it('are all declared for 0.5.0', () => {
     for (const id of IDS) expect(byId(id).since, id).toBe('0.5.0');
   });
   it('apply to a project on the old shapes, naming the files', () => {
@@ -826,5 +825,35 @@ describe('a prepared query filter with no type', () => {
 
   it('says nothing about a file that declares no source', () => {
     expect(pathsOnFilter(project({ 'src/logic/orders.ts': 'export const x = 1;\n' }))).toBeNull();
+  });
+});
+
+// 0.39.5's two workflow migrations read the team's CI files. `teamSources` walks app, pages, src and tests and SOURCE
+// reads only script extensions, so both entries tested a `.github/workflows/` path that could never be in that list: an
+// update reported neither, while the changelog promised it would name the affected workflows.
+describe('the 0.39.5 migrations about a CI workflow', () => {
+  const CI = '.github/workflows/ci.yml';
+  const workflow = (steps: string) => project({ [CI]: `name: CI\non: push\njobs:\n  gate:\n    runs-on: ubuntu-latest\n    steps:\n${steps}` });
+
+  it('are reported for a workflow that runs the test commands and holds nothing itself', () => {
+    const root = workflow('      - run: pnpm test:release\n');
+    expect(releaseMigrations(root, '0.39.4', '0.40.0').map((m) => [m.id, m.paths])).toEqual(expect.arrayContaining([
+      ['perf-outside-the-gate', [CI]],
+      ['reported-not-blocking', [CI]],
+    ]));
+  });
+
+  it('leave a workflow alone once it holds lint and types itself', () => {
+    const root = workflow('      - run: pnpm exec eslint .\n      - run: pnpm exec tsc --noEmit\n      - run: pnpm test:t1\n');
+    const ids = releaseMigrations(root, '0.39.4', '0.40.0').map((m) => m.id);
+    expect(ids).not.toContain('reported-not-blocking');
+    expect(ids).not.toContain('perf-outside-the-gate');
+  });
+
+  it('say nothing about a project with no workflows', () => {
+    const root = project({ 'src/views/home.tsx': 'export const x = 1;\n' });
+    const ids = releaseMigrations(root, '0.39.4', '0.40.0').map((m) => m.id);
+    expect(ids).not.toContain('perf-outside-the-gate');
+    expect(ids).not.toContain('reported-not-blocking');
   });
 });

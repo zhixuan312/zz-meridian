@@ -112,6 +112,28 @@ const matching = (root: string, test: (rel: string, src: string) => boolean): st
 };
 
 /**
+ * The team's GitHub workflow files, with their text.
+ *
+ * A migration about a CI step has nothing to read in `app`, `pages`, `src` or `tests`, and `SOURCE` reads only script
+ * extensions, so a workflow could never be found: `perf-outside-the-gate` and `reported-not-blocking` declared an
+ * `applies` that matched nothing and so never fired, while the changelog promised an update would report them.
+ */
+function workflowSources(root: string): { rel: string; src: string }[] {
+  const files: string[] = [];
+  walk(root, '.github/workflows', files, /\.ya?ml$/);
+  return files.flatMap((rel) => {
+    const src = text(root, rel);
+    return src === null ? [] : [{ rel, src }];
+  });
+}
+
+/** The paths of the team's workflow files where `test` holds, or null when none does. */
+const matchingWorkflows = (root: string, test: (rel: string, src: string) => boolean): string[] | null => {
+  const hits = workflowSources(root).filter((f) => test(f.rel, f.src)).map((f) => f.rel);
+  return hits.length > 0 ? hits : null;
+};
+
+/**
  * The commands 0.39.0 removed, and the two files it retired. `audit` is matched only as `run audit`: pnpm, npm and yarn
  * run their own dependency audit ahead of a script of that name, so a bare `pnpm audit` was never Meridian's. A bare
  * `test` is left to `reconcilePackage`, which reports the script: `npm test` is usually a team's own, and `bun test` is
@@ -403,7 +425,7 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     id: 'perf-outside-the-gate',
     since: '0.39.5',
     recurring: true,
-    applies: (root) => matching(root, (rel, src) => /^\.github\/workflows\//.test(rel) && /\btest:release\b/.test(src)),
+    applies: (root) => matchingWorkflows(root, (rel, src) => /\btest:release\b/.test(src)),
     summary: '`pnpm test:release` no longer runs the 20-sample protocol: it has its own stage, in its own non-blocking job.',
     instructions: 'Read "Test runs" in AGENTS.md. `pnpm test:release` no longer asks the browser for `--depth perf`: 20 samples across three conditions and two devices outran the clock a gate can carry, and on one product it took that product\'s push gate from 1 h 47 m to 2 h 37 m against a 180-minute limit, so the gate failed for the wrong reason. The protocol now has a stage of its own, `node scripts/test-run.ts stage perf`: it builds, measures, records its values into the same Tier 2 record the timed suites write, reports, and exits 0, so it can never fail the job that runs it. Run it from a job or step of its own with `continue-on-error: true` and a limit sized to it — a scheduled workflow is the usual home, and `.github/workflows/weekly.yml` in Meridian\'s repository is that shape — and leave `test:release` where it is in your push gate. The release-to-release comparison keeps the protocol\'s values: `out/perf-record.json` carries them beside the timed ones.',
     checks: [],
@@ -412,8 +434,7 @@ export const RELEASE_MIGRATIONS: ReleaseMigration[] = [
     id: 'reported-not-blocking',
     since: '0.39.5',
     recurring: true,
-    applies: (root) => matching(root, (rel, src) => /^\.github\/workflows\//.test(rel)
-      && /\btest:(?:t1|t2|release)\b/.test(src)
+    applies: (root) => matchingWorkflows(root, (rel, src) => /\btest:(?:t1|t2|release)\b/.test(src)
       && !/\beslint\b|\btsc\b|\btypecheck\b|\bnext build\b/.test(src)),
     summary: '`test:t1`, `test:t2` and `test:release` report lint, type and contrast findings and no longer fail on them.',
     instructions: 'Read "The tiers" in `references/validation.md`. Only Tier 1 fails a run now. Lint and the type check are Tier 3 and the contrast pairs are Tier 2: each of the three test commands prints what they found on its last line as `reported, not failed` and exits 0, so a workflow whose only hold on lint or types was one of those commands no longer holds anything. Add a step of your own where you want them to block — `pnpm exec eslint .` and `pnpm exec tsc --noEmit` — and decide whether it stops the job. Compilation is still Tier 1: `next build` fails on anything that cannot compile, and the test commands build. The same sort reaches the audit: a target under 44px, low contrast, text cut but still visible, a page that scrolls sideways, a heading that skips a level and a card that scrolls on its own are printed under `reported:` and fail nothing, while a page that answered an error, content nobody can see or reach at all, an unnamed control and a focus ring that never appears still fail the run. The closing line names all of it; read it rather than the exit code alone.',
