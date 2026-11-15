@@ -12,12 +12,24 @@ import { revalidateTag, updateTag } from 'next/cache';
  * MCP server. `revalidateTag` is the call that works in both, so a write from an agent invalidates the same tag
  * instead of failing the change. Found by the assistant walk-through in a built app: suspending a member through an
  * approved Proposal answered "updateTag can only be called from within a Server Action" and the rows never moved.
+ *
+ * Neither call may fail a write that has already committed. Both are cache bookkeeping after the store's answer, so a
+ * cache that cannot be dropped leaves reads stale for longer — which is logged — rather than reporting a made change as
+ * failed: the person would press again and make a second record, and the first is already in the store. Returns whether
+ * the tag was dropped, for a caller that can say so to the person.
  */
-export function invalidate(t: string) {
+export function invalidate(t: string): boolean {
   try {
     updateTag(t);
+    return true;
   } catch {
-    revalidateTag(t, { expire: 0 });
+    try {
+      revalidateTag(t, { expire: 0 });
+      return true;
+    } catch (e) {
+      console.error(`the change committed, but the cached reads for ${t} could not be refreshed`, e);
+      return false;
+    }
   }
 }
 

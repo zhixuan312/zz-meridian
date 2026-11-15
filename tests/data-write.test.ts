@@ -1,8 +1,8 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const cache = vi.hoisted(() => ({ updated: [] as string[] }));
-vi.mock('next/cache', () => ({ cacheTag: () => {}, cacheLife: () => {}, updateTag: (t: string) => { cache.updated.push(t); }, revalidateTag: () => {} }));
+const cache = vi.hoisted(() => ({ updated: [] as string[], fail: false }));
+vi.mock('next/cache', () => ({ cacheTag: () => {}, cacheLife: () => {}, updateTag: (t: string) => { if (cache.fail) throw new Error('no store'); cache.updated.push(t); }, revalidateTag: () => { if (cache.fail) throw new Error('no store'); } }));
 const gate = vi.hoisted(() => ({ allow: true, deniedIds: [] as string[] }));
 vi.mock('@/data/access', async (importOriginal) => {
   const real = await importOriginal<typeof import('@/data/access')>();
@@ -17,7 +17,7 @@ import { collectionTag } from '@/data/read';
 
 const listen = () => { const seen: unknown[] = []; const off = members.subscribe!((e) => seen.push(e)); return { seen, off }; };
 
-beforeEach(() => { cache.updated.length = 0; gate.allow = true; gate.deniedIds = []; });
+beforeEach(() => { cache.updated.length = 0; cache.fail = false; gate.allow = true; gate.deniedIds = []; });
 
 describe('a page write', () => {
   it('commits, emits one hint and invalidates exactly its tenant collection', async () => {
@@ -29,6 +29,21 @@ describe('a page write', () => {
     expect(l.seen).toEqual([{ collection: 'members' }]);
     l.off();
   });
+  // The cache is bookkeeping after the store's answer. When neither invalidation call works, the write must still be
+  // reported as made: the opposite, a FAILED action over a committed row, invites a second press — and a second member or
+  // ticket (reported by the data review on 2026-11-15; the keys actions had already learned this, `refreshKeys`).
+  it('keeps reporting a committed change when the cache cannot be dropped, and logs why reads may be stale', async () => {
+    cache.fail = true;
+    const before = (await members.query({})).total;
+    const said = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      expect(await inviteMember({ name: 'Cache Fail', email: 'cache@northwind.example', role: 'Member', team: 'Engineering' })).toEqual({ ok: true });
+      expect((await members.query({})).total).toBe(before + 1);
+      expect(cache.updated).toEqual([]);
+      expect(said).toHaveBeenCalled();
+    } finally { said.mockRestore(); }
+  });
+
   it('is refused before it mutates, emits or invalidates when the caller may not make it', async () => {
     gate.allow = false;
     const before = await members.query({});
