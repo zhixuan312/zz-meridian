@@ -2,6 +2,12 @@
 
 Every release of ZZ Meridian, newest first. Versions follow semver: a removed or renamed token, prop or card is major; a new card, token or variant is minor; a corrected value is a patch. Each entry says what breaks and what to do instead.
 
+## [Unreleased]
+
+### Fixed
+
+- **A timed script of a project's own can survive a browser that stops drawing frames.** 0.39.6 put the probe and the single relaunch in the navigation run, inline; a project's own timed check had no such thing, and on 2026-11-15 one paid for it — 46 routes reported no content within 20 s, the browser recovered by itself about 16 minutes later, and the stage that should take 741 s took 1343 s, while the same routes passed the audit and the states sweep in the same run. The recovery is now one export, `scripts/lib/stall.ts` (`StallGuard`): `stopped(page)` asks a fresh tab whether the browser is still painting, `restart(page, work, why)` relaunches it once, prepares it, and returns it to measure the same work again — a second stall of that work is the same `not run: the browser stopped drawing frames` with exit 2, and `report()` counts every relaunch in one closing line. `scripts/navigate.ts` is the first caller; a script that launches its own browser needs no change, and one that measures through a page of its own adds three lines. Nothing about the cause is new: it is still not established.
+
 ## [0.39.6] · 2026-11-15
 
 ### Fixed

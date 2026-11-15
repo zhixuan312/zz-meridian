@@ -105,11 +105,20 @@ describe('a browser that stops answering', () => {
     expect(painting(5)).toBe(true);
   });
 
-  it('is what the journey asks, and what the navigation run does about it', () => {
+  it('is what the journey asks, and what every timed script does about it', () => {
     expect(fs.readFileSync(path.join(ROOT, 'scripts/lib/journey.ts'), 'utf8')).toContain("'compositor-stalled'");
+    // The recovery is one export (scripts/lib/stall.ts) because the navigation run had it inline and a product's own timed
+    // check had none: on 2026-11-15 that cost it 46 routes. The messages stay in the module, so a script cannot drift from
+    // the wording a run is read by.
+    const stall = fs.readFileSync(path.join(ROOT, 'scripts/lib/stall.ts'), 'utf8');
+    expect(stall).toContain('the browser stopped drawing frames; relaunching it once');
+    expect(stall).toContain('not run: the browser stopped drawing frames');
+    expect(stall).toContain('reported: the browser stopped drawing frames');
     const nav = fs.readFileSync(path.join(ROOT, 'scripts/navigate.ts'), 'utf8');
-    expect(nav).toContain('the browser stopped drawing frames; relaunching it once');
-    expect(nav).toContain('not run: the browser stopped drawing frames');
+    expect(nav).toContain('new StallGuard(');
+    expect(nav).toContain('await stalls.restart(');
+    // Nothing inline: a second copy is a second behaviour waiting to drift.
+    expect(nav).not.toContain('await launch()');
   });
 
   // Before this, a path that named no browser killed the suite with an unhandled `error` event and a stack trace: the run
