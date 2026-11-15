@@ -110,14 +110,3 @@ export function declaredNotRun(entry: string): boolean {
     || /^the size baseline is the release's, not the project's;/.test(entry)
     || /^the project has no scripts\/verify\.baseline\.json;/.test(entry);
 }
-
-/**
- * A failed suite's output without the audit's design-metrics table: one line per route, printed last, so on a product of
- * fifty routes the lines kept beneath a failure were nearly all metrics and the FAIL blocks above them were cut off.
- */
-export function withoutMetrics(out: string[]): string[] {
-  const start = out.findIndex((l) => /^Design metrics at \d+:$/.test(l));
-  if (start < 0) return out;
-  const end = out.findIndex((l, i) => i > start && l.trim() === '');
-  return [...out.slice(0, start), ...(end < 0 ? [] : out.slice(end))];
-}
