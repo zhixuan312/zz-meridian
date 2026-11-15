@@ -170,7 +170,7 @@ A migration only reads team-owned files (the ownership rule's managed paths are 
 A project already on the new shape gets no line. Every entry names the command that proves it — `test:release` where the change reaches the build, `test:t1` where a test run is enough — and its
 instructions name the section of a reference (`cache.md`, `live.md`, `validation.md`, `agents.md`, `customize.md`), of the Start guide or of `docs/assistant.md` to follow.
 
-Twenty-nine arrived after 0.5.0 and are resolved as the skill's `references/update.md` says: `share-view-context` and `agent-reads-section` (0.9.0), `assistant-view-tools` (0.10.0), `nav-needs` (0.13.0), `agent-reads-own-group` (0.15.0), `refusal-declared`, `managed-exports-removed`, `view-tool-page-explore`, `agent-does-here-section` and `sample-pages-renamed` (0.16.0), `marker-measured-on-observe` (0.16.2), `view-page-matched-as-next`, `journey-moved` and `today-in-timezone` (0.16.3), `no-data-mark` (0.19.0), `table-grid` (0.26.0), `four-layers` (0.28.0), which moves thirty-eight modules into `src/logic/`, `env-reset-before-each` (0.29.0), `direct-query-escape` and `app-description` (0.30.0), `live-stream-shutdown` (0.31.1), `missing-routes` and `computed-series-slot` (0.32.0), `use-size-callback-ref` (0.33.0), `self-hosted-fonts` (0.34.0), and `nav-item-fields` and `workspace-homes-moved` (0.36.0), and `proposal-approve-required` and `open-command-moved` (0.37.0). The ten of 0.5.0 are:
+Thirty-three arrived after 0.5.0 and are resolved as the skill's `references/update.md` says: `share-view-context` and `agent-reads-section` (0.9.0), `assistant-view-tools` (0.10.0), `nav-needs` (0.13.0), `agent-reads-own-group` (0.15.0), `refusal-declared`, `managed-exports-removed`, `view-tool-page-explore`, `agent-does-here-section` and `sample-pages-renamed` (0.16.0), `marker-measured-on-observe` (0.16.2), `view-page-matched-as-next`, `journey-moved` and `today-in-timezone` (0.16.3), `no-data-mark` (0.19.0), `table-grid` (0.26.0), `four-layers` (0.28.0), which moves thirty-eight modules into `src/logic/`, `env-reset-before-each` (0.29.0), `direct-query-escape` and `app-description` (0.30.0), `live-stream-shutdown` (0.31.1), `missing-routes` and `computed-series-slot` (0.32.0), `use-size-callback-ref` (0.33.0), `self-hosted-fonts` (0.34.0), and `nav-item-fields` and `workspace-homes-moved` (0.36.0), and `proposal-approve-required` and `open-command-moved` (0.37.0), `kept-file-lacks-export` and `explore-filter-type` (0.39.2), `perf-outside-the-gate` and `reported-not-blocking` (0.39.5). The ten of 0.5.0 are:
 
 | Id | Reported when a team-owned file still has | Completion step |
 |----|-------------------------------------------|-----------------|
@@ -244,8 +244,9 @@ Modelled on the release pipeline of the owner's earlier packages, one package in
    build once and run one Tier 1 browser sweep (`node scripts/test-run.ts stage sweep <name>`). `deep` runs the
    browser-fixture tests `tests/deep-*` that the changes since the previous tag reach, all of them when `scripts/`,
    `journeys/` or a deep test changed, in two parts. `consumer` runs the consumer smoke from the built tarball (step
-   4). `tier2` runs the timed suites and the 20-sample protocol beside them with `continue-on-error`: it is reported
-   and never blocks the publish or the tag. The Postgres suite is not run here, because no job holds a service.
+   4). `tier2` runs the timed suites with `continue-on-error`: it is reported and never blocks the publish or the tag.
+   The 20-sample protocol is not here — it has its own `perf` job, off the gate, and its values are attached to the
+   Release after it finishes (see "The release, end to end"). The Postgres suite is not run here, because no job holds a service.
    Recovery and failure cases, and the created dashboard's whole `test:release`, run weekly (below). When each command
    runs, in a project and in this repository, is `docs/testing.md`'s `## When each runs`.
 3. **Pack and assert, before anything is irreversible**: `npm pack` in `cli/`, then on the tarball: the bin has its

@@ -72,7 +72,7 @@ Write the status on the line under the title: `Status: beta`.
 ## Done means
 
 - Every state is specified and previewed: rest, hover, pressed, focus, selected, disabled, loading, empty, error.
-- It holds in both themes, all four accents and both densities, with contrast computed in each by `pnpm contrast`: text 4.5:1, focus rings, control outlines and chart marks 3:1. A new pair goes into `scripts/lib/contrast-pairs.ts`, which the checks and the Atlas colour page both read.
+- It holds in both themes, all four accents and both densities, with contrast computed in each by `pnpm contrast`: text 4.5:1, focus rings, control outlines and chart marks 3:1. A new pair goes into `src/lib/contrast-pairs.ts`, which the checks and the Atlas colour page both read.
 - It holds at the widths `node scripts/audit.ts` measures, 2560, 1440, 1024, 768, 390 and 320px, and in an embed at 720 and 420px, inline and in fullscreen.
 - Nothing scrolls sideways, nothing clips, and no label shrinks to fit (cut words instead).
 - Under reduced motion it shows its final state with nothing moving.
