@@ -21,7 +21,10 @@ export const servicesExplore: PreparedQuery = {
         services: { label: 'Services', unit: 'services', definition: 'Monitored services, in the state they are in now.', agg: 'count' },
         latency: { label: 'Highest latency now', unit: 'ms', definition: 'The highest latency of a service at this moment.', agg: 'max', field: 'latency' },
       },
-      // No date, so the drill reads the services in the collection's order: the team's, the gateway first.
+      // No date, so the drill asks for no sort, and a query with none is ordered by the collection's key (`normalizeQuery`
+      // in `src/lib/collection.ts`): these rows come alphabetically by name. The page lists them in the team's own order
+      // (the services' `order`), so the same rows are ordered differently here and there. The claim used to say the drill
+      // read the team's order; nothing supplied it, so it read the key's.
       drill: { columns: ['name', 'status', 'uptimePercent', 'latency'], address: () => '/services' },
       cannot: 'A service keeps its last 90 days as one uptime and a mark a day, so its uptime over any other window, or on one day, cannot be said.',
     },
