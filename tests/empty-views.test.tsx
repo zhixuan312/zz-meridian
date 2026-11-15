@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { render, screen } from '@testing-library/react';
 import { Tooltip } from 'radix-ui';
 import { describe, expect, it } from 'vitest';
@@ -73,5 +75,15 @@ describe('a page body with no data shows its empty state, not a route error', ()
   it('Customers, with no customers', () => {
     render(<Tooltip.Provider><CustomersView rows={[]} /></Tooltip.Provider>);
     expect(screen.getByText('No customers yet')).toBeTruthy();
+  });
+});
+
+// The embed cannot ask whether the person in the host frame may read the keys, so its Home withholds the empty state's
+// API-keys link: a Viewer it sent there would land on the refusal, and a host frame is not where console navigation
+// belongs anyway (the embed frame carries its own `consolePath`).
+describe('the API-keys link inside an embed', () => {
+  it('is never drawn, whatever the viewer may open', () => {
+    const view = fs.readFileSync(path.join(path.resolve(import.meta.dirname, '..'), 'app/embed/home/view.tsx'), 'utf8');
+    expect(view).toContain('<HomeBody {...p} finding={p.record} canOpenKeys={false} />');
   });
 });

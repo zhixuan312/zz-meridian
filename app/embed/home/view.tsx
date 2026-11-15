@@ -22,7 +22,10 @@ export function EmbedHome(p: HomeData) {
       meta={<Freshness updatedAt={new Date(p.updatedAt)} now={new Date(p.now)} />}
       consolePath={`/?period=${p.period}${p.day ? `&day=${p.day}` : ''}`}
     >
-      {s.mode === 'fullscreen' || isEmpty(p) ? <HomeBody {...p} finding={p.record} /> : <Inline {...p} />}
+      {/* The empty state's API-keys link is withheld here: a host frame is not the place to send someone into the console,
+          and the embed cannot ask whether this viewer may read the keys — a Viewer it sent there would land on the
+          refusal. The frame's own consolePath is the way back. */}
+      {s.mode === 'fullscreen' || isEmpty(p) ? <HomeBody {...p} finding={p.record} canOpenKeys={false} /> : <Inline {...p} />}
     </EmbedFrame>
   );
 }
