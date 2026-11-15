@@ -657,7 +657,7 @@ jobs:
             for (const v of perf.values ?? []) byKey.set(key(v), v);
             merged.values = [...byKey.values()];
             fs.writeFileSync("/tmp/tier2/perf-record.json", JSON.stringify(merged, null, 2));
-            console.log(`tier2 record: ${merged.values.length} values after merging the protocol's ${(perf.values ?? []).length}`);
+            console.log(`tier2 record: ${merged.values.length} values after merging the protocol (${(perf.values ?? []).length})`);
           '
       - name: The next history, from the release before this one's
         run: |
