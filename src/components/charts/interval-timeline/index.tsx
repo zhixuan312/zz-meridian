@@ -88,11 +88,14 @@ export function IntervalTimeline({
   // An instant as the axis reads it, and a run's length in words: both are used by the axis and by every run's name.
   const read = useCallback((iso: string) => (tick ? tick(iso) : dayOf(iso)), [tick]);
   const words = useCallback((run: TimelineRun) => {
-    const a = ms(run.from), b = run.to === null ? null : ms(run.to);
+    // A run that has not ended says so once: its tone word ("Completed") would contradict "still running" in the same
+    // sentence — "Build 4823, Completed: 09:40–now, still running" — so an open run is named by what it is doing.
+    if (run.to === null) return `${run.label}, running since ${read(run.from)}`;
+    const a = ms(run.from), b = ms(run.to);
     const s = a === null || b === null ? null : Math.max(0, Math.round((b - a) / 1000));
     const m = s === null ? null : Math.round(s / 60);
-    const length = s === null ? 'still running' : s < 60 ? `${s} s` : m! < 60 ? `${m} min` : `${Math.floor(m! / 60)} h ${m! % 60 ? `${m! % 60} min` : ''}`.trim();
-    return `${run.label}, ${TONE_WORD[run.tone]}: ${read(run.from)}–${run.to === null ? 'now' : read(run.to)}, ${length}`;
+    const length = s === null ? 'length unknown' : s < 60 ? `${s} s` : m! < 60 ? `${m} min` : `${Math.floor(m! / 60)} h ${m! % 60 ? `${m! % 60} min` : ''}`.trim();
+    return `${run.label}, ${TONE_WORD[run.tone]}: ${read(run.from)}–${read(run.to)}, ${length}`;
   }, [read]);
 
   // One axis line and one row of ticks serve every row: a timeline read across rows needs one axis, not one per row.

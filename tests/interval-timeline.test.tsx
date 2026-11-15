@@ -35,6 +35,16 @@ describe('IntervalTimeline', () => {
     expect(container.querySelectorAll('[data-tick]').length).toBeGreaterThan(1);
   });
 
+  // A run that has not ended was named by its tone word as well as its state: "Build 4823, Completed: 09:40–now, still
+  // running". One sentence cannot say both.
+  it('names a run that has not ended by what it is doing, not by its tone word', () => {
+    const open: TimelineRow[] = [{ key: 'build', label: 'Build', runs: [{ from: '2026-10-01T09:40:00Z', to: null, tone: 'neutral', label: 'Build 4823' }] }];
+    const { container } = draw({ rows: open, now: '2026-10-01T09:55:00Z' });
+    const said = [...container.querySelectorAll('[data-run]')].map((r) => r.getAttribute('title') ?? r.textContent ?? '').join(' ');
+    expect(said).toContain('Build 4823, running since');
+    expect(said).not.toContain('Completed');
+  });
+
   it('keeps a run’s length proportional, and a very short run as a marker rather than a widened bar', () => {
     const { container } = render(
       <IntervalTimeline
